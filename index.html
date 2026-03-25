@@ -2260,6 +2260,7 @@ QUARTERS.forEach((q, qi) => {
 function saveField(q, field, value) {
   if (!currentStoreId) return;
   localStorage.setItem(lsKey(currentStoreId, q, field), value);
+  window.fbSetStoreEval && window.fbSetStoreEval(currentStoreId, q, field, value);
 }
 
 function loadStoreData(storeId) {
@@ -2334,6 +2335,8 @@ function selectStore(storeId) {
   // load data
   loadStoreData(storeId);
   applyStateToUI();
+  // Firebase 실시간 구독 (매장 변경 시 이전 구독 해제 후 새로 구독)
+  window.fbSubscribeStoreEval && window.fbSubscribeStoreEval(storeId);
 
   // 현재 활성 탭 기준으로 패널 표시
   const activeTab = document.querySelector('.nav-tab.active');
@@ -2388,6 +2391,7 @@ document.querySelectorAll('.grade-btn').forEach(btn => {
     // save
     if (state[q][id]) localStorage.setItem(lsKey(currentStoreId, q, id), state[q][id]);
     else localStorage.removeItem(lsKey(currentStoreId, q, id));
+    window.fbSetStoreEval && window.fbSetStoreEval(currentStoreId, q, id, state[q][id] || null);
 
     document.querySelectorAll(`.grade-btn[data-q="${q}"][data-id="${id}"]`).forEach(b => {
       b.className = 'grade-btn';
@@ -2701,7 +2705,9 @@ function renderCriteria() {
 }
 
 function saveCriteria() {
-  localStorage.setItem('store_criteria_v1', JSON.stringify(CRITERIA.map(item=>({id:item.id,grades:{...item.grades}}))));
+  const _cd = CRITERIA.map(item=>({id:item.id,grades:{...item.grades}}));
+  localStorage.setItem('store_criteria_v1', JSON.stringify(_cd));
+  window.fbSetCriteria && window.fbSetCriteria(_cd);
 }
 function loadCriteria() {
   try {
@@ -2743,6 +2749,7 @@ function loadStoreList() {
 
 function saveStoreList(list) {
   localStorage.setItem('store_list_v2', JSON.stringify(list));
+  window.fbSetStoreList && window.fbSetStoreList(list);
 }
 
 function renderSidebar() {
@@ -3434,7 +3441,7 @@ function ctag(ch){const m={'HAUS':'chHAUS','FS':'chFS','DS':'chDS','MALL':'chMAL
 function getP(){try{return JSON.parse(localStorage.getItem('hrP')||'{}')}catch{return{}}}
 function setP(id,b){const p=getP();p[id]=b;localStorage.setItem('hrP',JSON.stringify(p))}
 function getH(){try{return JSON.parse(localStorage.getItem('hrH')||'{}')}catch{return{}}}
-function setH(id,a){const h=getH();h[id]=a;localStorage.setItem('hrH',JSON.stringify(h))}
+function setH(id,a){const h=getH();h[id]=a;localStorage.setItem('hrH',JSON.stringify(h));window.fbSetEdit&&window.fbSetEdit(id,'fb_storeHistory',a);}
 function getM(){try{return JSON.parse(localStorage.getItem('hrM')||'{}')}catch{return{}}}
 function setM(id,t){const m=getM();m[id]=t;localStorage.setItem('hrM',JSON.stringify(m))}
 function gHist(e){const h=getH();return h[e.id]||e.store_history||[]}
@@ -5560,6 +5567,117 @@ onAuthStateChanged(_auth, async (user) => {
       window.lvRender?.(); window.lvRenderSB?.(); window.ppRender?.();
     } catch(e) { console.warn('[FB] 백그라운드 로드 오류:', e); }
   })();
+
+/* ════════════════════════════════════════════
+   스토어 평가 Firebase 헬퍼 (실시간 공유)
+   ════════════════════════════════════════════ */
+const COL_STORE_EVAL = 'storeEvals';   // 매장별 평가 데이터
+
+/* ── 스토어 평가 debounce 버퍼 ── */
+const _fbEvalBuf    = {};  // storeId → {field: value}
+const _fbEvalTimers = {};
+
+window.fbSetStoreEval = function(storeId, q, field, value) {
+  if (!storeId) return;
+  const key = `${q}_${field}`;
+  if (!_fbEvalBuf[storeId]) _fbEvalBuf[storeId] = {};
+  if (value === null || value === undefined || value === '') {
+    _fbEvalBuf[storeId][key] = null;
+  } else {
+    _fbEvalBuf[storeId][key] = value;
+  }
+  clearTimeout(_fbEvalTimers[storeId]);
+  _fbEvalTimers[storeId] = setTimeout(async () => {
+    try {
+      const batch = { ..._fbEvalBuf[storeId], _updatedAt: serverTimestamp() };
+      delete _fbEvalBuf[storeId];
+      await setDoc(doc(_db, COL_STORE_EVAL, storeId), batch, { merge: true });
+    } catch(e) { console.warn('[FB] storeEval 저장 오류:', e.code, e.message); }
+  }, 300);
+};
+
+/* ── 매장 목록 Firebase 저장 ── */
+window.fbSetStoreList = async function(list) {
+  try {
+    await setDoc(doc(_db, COL_STORELIST, 'data'), { list, _updatedAt: serverTimestamp() });
+  } catch(e) { console.warn('[FB] storeList 저장 오류:', e.code, e.message); }
+};
+
+/* ── 등급 기준표 Firebase 저장 ── */
+window.fbSetCriteria = async function(criteriaArr) {
+  try {
+    await setDoc(doc(_db, COL_CRITERIA, 'data'), { criteria: criteriaArr, _updatedAt: serverTimestamp() });
+  } catch(e) { console.warn('[FB] criteria 저장 오류:', e.code, e.message); }
+};
+
+/* ── 매장 목록 실시간 리스너 ── */
+onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (!data.list) return;
+  try {
+    localStorage.setItem('store_list_v2', JSON.stringify(data.list));
+    if (window.__fbReady && typeof renderSidebar === 'function') {
+      renderSidebar();
+      console.log('[FB] 매장 목록 동기화:', data.list.length, '개');
+    }
+  } catch(e) {}
+});
+
+/* ── 등급 기준표 실시간 리스너 ── */
+onSnapshot(doc(_db, COL_CRITERIA, 'data'), (snap) => {
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (!data.criteria) return;
+  try {
+    localStorage.setItem('store_criteria_v1', JSON.stringify(data.criteria));
+    // CRITERIA 배열 업데이트
+    if (typeof CRITERIA !== 'undefined') {
+      data.criteria.forEach(si => {
+        const f = CRITERIA.find(c => c.id === si.id);
+        if (f) Object.assign(f.grades, si.grades);
+      });
+    }
+    console.log('[FB] 기준표 동기화 완료');
+  } catch(e) {}
+});
+
+/* ── 스토어 평가 실시간 구독 (매장 선택 시 호출) ── */
+window.__storeEvalUnsub = null;
+window.fbSubscribeStoreEval = function(storeId) {
+  // 이전 리스너 해제
+  if (window.__storeEvalUnsub) {
+    window.__storeEvalUnsub();
+    window.__storeEvalUnsub = null;
+  }
+  if (!storeId) return;
+  window.__storeEvalUnsub = onSnapshot(doc(_db, COL_STORE_EVAL, storeId), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    // localStorage 동기화
+    Object.keys(data).forEach(key => {
+      if (key === '_updatedAt') return;
+      // key = 'q1_kindness', 'q2_comment_clean' 등
+      const parts = key.match(/^(q[1-4])_(.+)$/);
+      if (!parts) return;
+      const [, q, field] = parts;
+      const lsKeyStr = `eval_${storeId}_${q}_${field}`;
+      if (data[key] === null || data[key] === '') {
+        localStorage.removeItem(lsKeyStr);
+      } else {
+        localStorage.setItem(lsKeyStr, data[key]);
+      }
+    });
+    // 현재 선택된 매장이면 UI 반영
+    if (typeof currentStoreId !== 'undefined' && currentStoreId === storeId) {
+      if (typeof loadStoreData === 'function' && typeof applyStateToUI === 'function') {
+        loadStoreData(storeId);
+        applyStateToUI();
+        console.log('[FB] 스토어 평가 실시간 반영:', storeId);
+      }
+    }
+  });
+};
 });
 </script>
 
