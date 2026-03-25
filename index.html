@@ -1644,6 +1644,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
   <button class="edit-bar-done" onclick="toggleEditMode()">✅ 편집 완료</button>
 </div>
 
+
+<!-- ══ 스토어 평가 상단 내비게이션 ══ -->
+<nav class="top-nav">
+  <div class="nav-sidebar-toggle" onclick="toggleSidebar()">☰</div>
+  <span class="nav-logo" id="nav-logo">스토어 분기별 평가표</span>
+  <span id="nav-store-label" style="font-size:13px;color:#9B9A97;margin:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;"></span>
+  <div class="nav-tabs" id="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('q1')">1분기</button>
+    <button class="nav-tab" onclick="switchTab('q2')">2분기</button>
+    <button class="nav-tab" onclick="switchTab('q3')">3분기</button>
+    <button class="nav-tab" onclick="switchTab('q4')">4분기</button>
+    <button class="nav-tab summary-tab" onclick="switchTab('annual')">📊 연간 비교</button>
+  </div>
+  <div class="nav-actions">
+    <button class="nav-btn" onclick="openGuide()">📋 등급 기준</button>
+    <button class="nav-btn edit-btn" id="editModeBtn" onclick="toggleEditMode()">✏️ 편집모드</button>
+    <button class="nav-btn" onclick="applyStateToUI()">🔄 리셋</button>
+    <button class="nav-btn" onclick="window.print()">🖨️</button>
+  </div>
+</nav>
 <!-- ══════════ APP BODY ══════════ -->
 <div class="app-body">
 
@@ -3090,6 +3110,34 @@ window.selectStore = function(id) {
   localStorage.setItem('last_selected_store', id);
 };
 
+
+// ── 스토어 함수 window 명시 등록 ──
+window.selectStore   = window.selectStore || selectStore;
+window.switchTab     = switchTab;
+window.toggleSidebar = toggleSidebar;
+window.toggleGroup   = toggleGroup;
+window.openStoreCtxMenu = openStoreCtxMenu;
+window.openStoreEditMenu = typeof openStoreEditMenu !== 'undefined' ? openStoreEditMenu : openStoreCtxMenu;
+window.filterSidebar = filterSidebar;
+window.applyStateToUI = applyStateToUI;
+window.openGuide     = openGuide;
+window.closeGuide    = closeGuide;
+window.closeGuideOutside = closeGuideOutside;
+window.resetCriteria = resetCriteria;
+window.toggleEditMode = toggleEditMode;
+window.openAddStoreModal = openAddStoreModal;
+window.closeStoreEditModal = closeStoreEditModal;
+window.closeStoreEditOutside = closeStoreEditOutside;
+window.confirmAddStore = confirmAddStore;
+window.confirmDeleteStore = confirmDeleteStore;
+window.openRenameStore = openRenameStore;
+window.closeRenameModal = closeRenameModal;
+window.confirmRename = confirmRename;
+window.openOrderModal = openOrderModal;
+window.openOrderModalForChannel = openOrderModalForChannel;
+window.closeOrderModal = closeOrderModal;
+window.saveOrder = saveOrder;
+window.openMoveChannel = openMoveChannel;
 </script>
 
 <div id="fb-user-info" style="position:fixed;top:10px;right:16px;z-index:9999;background:rgba(255,255,255,.95);border:1px solid #eaecf2;border-radius:10px;padding:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,.08);"></div>
@@ -4088,6 +4136,44 @@ function handlePhoto(e){
   reader.onload=ev=>{const b=ev.target.result;setP(curEmp.id,b);const pp=document.getElementById('pp');pp.innerHTML=`<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;pp.className='pp';refresh();};
   reader.readAsDataURL(file);
 }
+
+
+// ── 전역 함수 window 명시 등록 (onclick 핸들러에서 호출 가능하도록) ──
+window.switchMain  = switchMain;
+window.doBrand     = doBrand;
+window.setView     = setView;
+window.sortBy      = sortBy;
+window.doSearch    = doSearch;
+window.refresh     = refresh;
+window.renderBar   = renderBar;
+window.renderTbl   = renderTbl;
+window.getList     = getList;
+window.openP       = openP;
+window.closeP      = closeP;
+window.saveCell    = saveCell;
+window.saveABC     = saveABC;
+window.saveAbcFromTbl = saveAbcFromTbl;
+window.saveQual    = saveQual;
+window.saveMemo    = saveMemo;
+window.saveSwitch  = saveSwitch;
+window.delH        = delH;
+window.openAddH    = openAddH;
+window.closeAddH   = closeAddH;
+window.confirmAddH = confirmAddH;
+window.togB        = togB;
+window.togCG       = togCG;
+window.togSC       = togSC;
+window.togSF       = togSF;
+window.togglePEdit = togglePEdit;
+window.togglePraiseLog = togglePraiseLog;
+window.submitPraise = submitPraise;
+window.deletePraise = deletePraise;
+window.renderPraiseLog = renderPraiseLog;
+window.trigPhoto   = trigPhoto;
+window.handlePhoto = handlePhoto;
+window.setPEditMode = setPEditMode;
+window.saveFieldEdit = saveFieldEdit;
+window.guessChannel = guessChannel;
 
 window.addEventListener('DOMContentLoaded',()=>{
   // Firebase 로드 후 hrEdits 적용됨 (localStorage 무시)
