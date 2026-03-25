@@ -3877,7 +3877,11 @@ function openP(emp){
   if(gSel) gSel.value=emp.growth||'';
   renderHist(emp);
   // 메모
-  document.getElementById('pmemo').value=getM()[emp.id]||'';
+  // memo: Firebase 캐시(__fbEdits) 우선, 없으면 localStorage(getM), 없으면 emp.memo
+  const _memoVal=(window.__fbEdits&&window.__fbEdits[emp.id]&&window.__fbEdits[emp.id].memo!=null)
+    ? window.__fbEdits[emp.id].memo
+    : (getM()[emp.id]||emp.memo||'');
+  document.getElementById('pmemo').value=_memoVal;
   // 평가/피드백
   const fb=getF(emp.id);
   // 칭찬 횟수 표시
@@ -3921,7 +3925,7 @@ function confirmAddH(){
   const p=document.getElementById('hip').value.trim(),r=document.getElementById('hir').value.trim();
   const h=gHist(curEmp);h.push({store:s,period:p,role:r});setH(curEmp.id,h);renderHist(curEmp);closeAddH();
 }
-function saveMemo(){if(!curEmp)return;setM(curEmp.id,document.getElementById('pmemo').value)}
+function saveMemo(){if(!curEmp)return;const _mv=document.getElementById('pmemo').value;setM(curEmp.id,_mv);window.fbSetEdit&&window.fbSetEdit(curEmp.id,'memo',_mv);}
 
 // ── 피드백 저장소 ──
 function getF(id){
@@ -5407,6 +5411,17 @@ function startRealtimeListeners() {
           directFields.forEach(f => {
             if (data[f] !== undefined) emp[f] = data[f];
           });
+          // 현재 열린 직원 패널 실시간 동기화 (다른 기기/사용자 수정 반영)
+          if (typeof curEmp !== 'undefined' && curEmp && curEmp.id === id) {
+            if (data.memo !== undefined) {
+              const _pm = document.getElementById('pmemo');
+              if (_pm && _pm !== document.activeElement) _pm.value = data.memo;
+            }
+            if (data['fb_qual'] !== undefined) {
+              const _pq = document.getElementById('pqual');
+              if (_pq && _pq !== document.activeElement) _pq.value = data['fb_qual'];
+            }
+          }
           // fb_ 접두어 피드백 (localStorage에도 반영)
           const fbData = {};
           Object.keys(data).forEach(k => {
