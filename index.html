@@ -3459,6 +3459,14 @@ function switchMain(tab){
   const lv   = document.getElementById('layoutv');
   if(hrv)   hrv.style.display   = tab==='hr'     ? 'flex' : 'none';
   if(hrbar) hrbar.style.display = tab==='hr'     ? 'flex' : 'none';
+  if(tab==='hr'){
+    resetSidebarTreeState();
+    setTimeout(()=>{
+      const l = getList();
+      renderBar(l);
+      collapseSidebarTreeDOM();
+    }, 0);
+  }
   // stv는 position:fixed라 display만 토글 (nav z-index:9999 아래)
   if(stv)   stv.style.display   = tab==='store'  ? 'flex' : 'none';
   if(lv){
@@ -3509,6 +3517,23 @@ let openB  = {'GM':false,'ATS':false,'NUF':false};
 let openCG = {};   // brand_chGrp  → bool
 let openSC = {};   // brand_chGrp_subCh → bool
 let openSF = {};   // brand_chGrp_subCh__store → bool
+
+function resetSidebarTreeState(){
+  openB = {'GM':false,'ATS':false,'NUF':false};
+  openCG = {};
+  openSC = {};
+  openSF = {};
+}
+
+function collapseSidebarTreeDOM(){
+  const root = document.getElementById('barscroll');
+  if(!root) return;
+  root.querySelectorAll(':scope > .bg > [id^="bb-"]').forEach(el=>{ el.style.display='none'; });
+  root.querySelectorAll('.cbody').forEach(el=>{ el.style.display='none'; });
+  root.querySelectorAll('.scbody').forEach(el=>{ el.style.display='none'; });
+  root.querySelectorAll('.sfbody').forEach(el=>{ el.classList.remove('on'); });
+  root.querySelectorAll('.barr, .carr, .scarr, .sfarr').forEach(el=>{ el.classList.remove('on'); });
+}
 
 // ── Helper: make safe DOM id key ──
 function safeId(s){ return s.replace(/[^a-zA-Z0-9가-힣]/g,'_'); }
@@ -4189,7 +4214,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Firebase 로드 후 hrEdits 적용됨 (localStorage 무시)
   try{ void 0; // noop
   }catch(e){}
+  resetSidebarTreeState();
   const l=getList();renderBar(l);renderTbl(l);
+  collapseSidebarTreeDOM();
 });
 </script>
 
