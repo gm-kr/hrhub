@@ -3505,7 +3505,7 @@ function chGrp(ch){
 }
 
 // open/close state
-let openB  = {'GM':true,'ATS':false,'NUF':false};
+let openB  = {'GM':false,'ATS':false,'NUF':false};
 let openCG = {};   // brand_chGrp  → bool
 let openSC = {};   // brand_chGrp_subCh → bool
 let openSF = {};   // brand_chGrp_subCh__store → bool
@@ -3548,7 +3548,7 @@ function renderBar(list){
     if(!byB[brand]) return;
     const brandAll = Object.values(byB[brand])
       .flatMap(cg=>Object.values(cg).flatMap(sc2=>Object.values(sc2).flat()));
-    const isO = openB[brand] !== false;
+    const isO = openB[brand] === true;
 
     // ── Level 1: Brand ──
     const brandEl = document.createElement('div');
@@ -3568,7 +3568,7 @@ function renderBar(list){
       const cgData = byB[brand][cg];
       const cgAll  = Object.values(cgData).flatMap(sc2=>Object.values(sc2).flat());
       const cgKey  = brand + '__CG__' + cg;
-      const cgOpen = openCG[cgKey] !== false;
+      const cgOpen = openCG[cgKey] === true;
 
       // ── Level 2: ChannelGroup ──
       const cgEl = document.createElement('div');
@@ -3589,7 +3589,7 @@ function renderBar(list){
         const scData = cgData[subCh];
         const scAll  = Object.values(scData).flat();
         const scKey  = cgKey + '__SC__' + subCh;
-        const scOpen = openSC[scKey] !== false;
+        const scOpen = openSC[scKey] === true;
 
         // ── Level 3: SubChannel ──
         const scEl = document.createElement('div');
@@ -3609,7 +3609,7 @@ function renderBar(list){
         sortedStores.forEach(store=>{
           const stEmps = scData[store];
           const stKey  = scKey + '__ST__' + store;
-          const stOpen = openSF[stKey] !== false;
+          const stOpen = openSF[stKey] === true;
           // Short store label: last 2 segments
           const storeLbl = store.split('_').slice(-2).join(' ') || store;
 
@@ -3639,29 +3639,28 @@ function renderBar(list){
 
 // ── Toggle functions ──
 function togB(b){
-  openB[b] = !openB[b];
+  openB[b] = openB[b] !== true;
   const el = document.getElementById('bb-'+b);
-  if(el) el.style.display = openB[b] ? 'block' : 'none';
-  el?.previousElementSibling?.querySelector('.barr')?.classList.toggle('on', openB[b]);
+  if(el) el.style.display = openB[b] === true ? 'block' : 'none';
+  el?.previousElementSibling?.querySelector('.barr')?.classList.toggle('on', openB[b] === true);
 }
 function togCG(key){
-  openCG[key] = openCG[key] === false ? true : false;
+  openCG[key] = openCG[key] !== true;
   const el = document.getElementById('cgb-'+safeId(key));
-  if(el) el.style.display = openCG[key]===false ? 'none' : 'block';
-  el?.previousElementSibling?.querySelector('.carr')?.classList.toggle('on', openCG[key]!==false);
+  if(el) el.style.display = openCG[key] === true ? 'block' : 'none';
+  el?.previousElementSibling?.querySelector('.carr')?.classList.toggle('on', openCG[key] === true);
 }
 function togSC(key){
-  openSC[key] = openSC[key] === false ? true : false;
+  openSC[key] = openSC[key] !== true;
   const el = document.getElementById('scb-'+safeId(key));
-  if(el) el.style.display = openSC[key]===false ? 'none' : 'block';
-  el?.previousElementSibling?.querySelector('.scarr')?.classList.toggle('on', openSC[key]!==false);
+  if(el) el.style.display = openSC[key] === true ? 'block' : 'none';
+  el?.previousElementSibling?.querySelector('.scarr')?.classList.toggle('on', openSC[key] === true);
 }
 function togSF(key){
-  const isOpen = openSF[key] !== false;
-  openSF[key] = !isOpen;
+  openSF[key] = openSF[key] !== true;
   const el = document.getElementById('sfb-'+safeId(key));
-  if(el) el.classList.toggle('on', openSF[key]);
-  el?.previousElementSibling?.querySelector('.sfarr')?.classList.toggle('on', openSF[key]);
+  if(el) el.classList.toggle('on', openSF[key] === true);
+  el?.previousElementSibling?.querySelector('.sfarr')?.classList.toggle('on', openSF[key] === true);
 }
 
 // ── FILTER ──
