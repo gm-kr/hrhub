@@ -754,6 +754,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 }
 
 /* ══ 투입예정 패널 ══ */
+.lv-pp-resizer {
+  width:8px; flex-shrink:0; cursor:col-resize;
+  background:linear-gradient(180deg,rgba(91,108,248,0) 0%,rgba(91,108,248,.12) 50%,rgba(91,108,248,0) 100%);
+  border-left:1px solid #eef1f7;
+  border-right:1px solid #eef1f7;
+  transition:background .15s;
+}
+.lv-pp-resizer:hover,
+.lv-pp-resizer.dragging {
+  background:linear-gradient(180deg,rgba(91,108,248,.08) 0%,rgba(91,108,248,.25) 50%,rgba(91,108,248,.08) 100%);
+}
+
 .lv-pp {
   width:320px; flex-shrink:0;
   background:#fff;
@@ -3205,6 +3217,7 @@ window.openMoveChannel = openMoveChannel;
         <div class="lv-scroll" id="lv-scroll"></div>
       </div>
       <!-- 투입예정 패널 -->
+      <div class="lv-pp-resizer" id="lv-pp-resizer" title="드래그해서 폭 조절"></div>
       <div class="lv-pp" id="lv-pp">
         <div class="lv-pp-head">
           <span class="lv-pp-head-title">📋 투입예정 리스트</span>
@@ -4299,6 +4312,7 @@ function storeInit(n){
 
 /* ─ state ─ */
 let lvCurTab='ALL', lvDragType=null, lvDragId=null, lvDragSec=null, lvQ='';
+let lvPPWidth = parseInt(localStorage.getItem('lvPPWidth')||'320',10);
 
 /* ─ store order ─ */
 function getStoreOrder(sec){try{return JSON.parse(localStorage.getItem('lvOrder_'+sec)||'null');}catch{return null;}}
@@ -4323,6 +4337,71 @@ function showSaved(){
   const el=$('lv-saved');if(!el)return;
   el.style.opacity='1';clearTimeout(el._t);
   el._t=setTimeout(()=>el.style.opacity='0',1800);
+}
+
+function syncScheduleForEmp(emp, status, shouldSave=true){
+  if(!emp) return;
+  const data=ppLoad();
+  const map={joining:'joining', returning:'returning'};
+  const targetType=map[status]||null;
+  ['joining','returning'].forEach(type=>{
+    const rows=data[type]||[];
+    const existing=rows.find(r=>r.empId===emp.id);
+    if(type===targetType){
+      if(existing){
+        existing.name=emp.name||existing.name||'';
+        existing.store=existing.store||emp.current_store||'';
+      } else {
+        rows.push({
+          id:ppNewId(),
+          empId:emp.id,
+          name:emp.name||'',
+          store:emp.current_store||'',
+          date:'',
+          note:''
+        });
+      }
+      data[type]=rows;
+      return;
+    }
+    data[type]=rows.filter(r=>r.empId!==emp.id);
+  });
+  if(shouldSave) ppSave(data);
+}
+
+function applyLvPPWidth(){
+  const panel=$('lv-pp');
+  if(!panel) return;
+  const next=Math.max(260, Math.min(520, Number.isFinite(lvPPWidth)?lvPPWidth:320));
+  lvPPWidth=next;
+  panel.style.width=next+'px';
+}
+
+function initLvPPResize(){
+  const handle=$('lv-pp-resizer');
+  const panel=$('lv-pp');
+  const layout=$('lv-main-layout');
+  if(!handle||!panel||!layout||handle.dataset.bound==='1') return;
+  handle.dataset.bound='1';
+  applyLvPPWidth();
+  handle.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    handle.classList.add('dragging');
+    const startX=e.clientX;
+    const startWidth=panel.getBoundingClientRect().width;
+    const onMove=ev=>{
+      lvPPWidth=Math.max(260, Math.min(520, startWidth - (ev.clientX-startX)));
+      applyLvPPWidth();
+    };
+    const onUp=()=>{
+      handle.classList.remove('dragging');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      localStorage.setItem('lvPPWidth', String(lvPPWidth));
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
 }
 
 /* ═══ 투입예정 패널 ═══ */
@@ -4413,6 +4492,11 @@ function ppUpdateField(rowId, field, val){
     if(row){ row[field]=val; foundType=type; foundRow=row; }
   });
   /* 이름 필드 변경 시 → 해당 직원 상태 자동 적용 */
+  if(foundRow && field==='name'){
+    const linkedEmp=EMPS.find(e=>e.name===val);
+    foundRow.empId=linkedEmp ? linkedEmp.id : null;
+    if(!foundRow.store && linkedEmp) foundRow.store=linkedEmp.current_store||'';
+  }
   if(field==='name'){
     /* 이전 이름 직원 상태 복원 */
     if(foundRow && foundRow._prevName){
@@ -4433,7 +4517,7 @@ function ppDelete(rowId, type){
   const data=ppLoad();
   /* 삭제 전 해당 행의 이름으로 상태 active 복원 */
   const delRow=(data[type]||[]).find(r=>r.id===rowId);
-  if(delRow && delRow.name) lvSetStatusSilent(delRow.name, 'active');
+  if(delRow && (delRow.empId || delRow.name)) lvSetStatusSilent(delRow.empId || delRow.name, 'active');
   data[type]=(data[type]||[]).filter(r=>r.id!==rowId);
   ppSave(data);
   ppRender();
@@ -4460,9 +4544,10 @@ function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
   emp.status=status;
   window.fbSetEdit(empId, 'status', status);
+  syncScheduleForEmp(emp, status);
   hideCtxMenu(); showSaved();
   lvToast('💾 '+emp.name+' → '+STATUS_CFG[status].label);
-  lvRender(); lvRenderSB();
+  lvRender(); lvRenderSB(); ppRender();
 }
 window.lvSetStatus=lvSetStatus;
 /* 토스트·메뉴 없이 조용히 상태 변경 (투입예정 리스트 자동연동용) */
@@ -4472,7 +4557,8 @@ function lvSetStatusSilent(empName, status){
   emp.status=status;
   const key=emp.id||emp.name;
   window.fbSetEdit(key, 'status', status);
-  lvRender(); lvRenderSB();
+  syncScheduleForEmp(emp, status);
+  lvRender(); lvRenderSB(); ppRender();
 }
 window.lvSetStatusSilent=lvSetStatusSilent;
 
@@ -4821,8 +4907,8 @@ function buildCard(storeKey,emps,secKey,accent){
       if(chip.classList.contains('dragging')) return;
       const emp=EMPS.find(x=>x.id===chip.dataset.id);
       if(emp){
-        switchMain('hr');   // 직원관리 탭으로 이동
-        setTimeout(()=>openP(emp), 80);  // 탭 전환 후 패널 열기
+        hideCtxMenu();
+        openP(emp);
       }
     });
     chip.addEventListener('contextmenu',e=>{
@@ -4896,11 +4982,15 @@ function lvLoadStatuses(){
       if(d.tenure)        e.tenure        = d.tenure;
     }
   });
+  EMPS.forEach(e=>syncScheduleForEmp(e, getEmpStatus(e), false));
+  ppSave(ppLoad());
 }
 
 function lvInit(){
   lvLoadStatuses();
   buildEmpDatalist();
+  applyLvPPWidth();
+  initLvPPResize();
   lvRender();
   lvRenderSB();
 }
@@ -5694,6 +5784,9 @@ window.fbSubscribeStoreEval = function(storeId) {
         localStorage.setItem(lsKeyStr, data[key]);
       }
     });
+    if (typeof updateSidebarBadge === 'function') {
+      updateSidebarBadge(storeId);
+    }
     // 현재 선택된 매장이면 UI 반영
     if (typeof currentStoreId !== 'undefined' && currentStoreId === storeId) {
       if (typeof loadStoreData === 'function' && typeof applyStateToUI === 'function') {
