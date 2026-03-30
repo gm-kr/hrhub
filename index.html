@@ -4939,6 +4939,58 @@ function startRealtimeListeners() {
     }
   });
 }
+let _embedFastSyncTimer = null;
+let _embedFastSyncBusy  = false;
+let _embedFastSyncMs    = 0;
+function isEmbeddedContext() {
+  try { return window.top !== window.self; }
+  catch(_) { return true; }
+}
+function getEmbedFastSyncInterval() {
+  // Visible in Notion iframe: near-real-time feel, hidden: slower to reduce load.
+  return document.hidden ? 7000 : 2500;
+}
+async function runEmbedFastSync(reason) {
+  if (_embedFastSyncBusy) return;
+  if (!window.__fbReady) return;
+  _embedFastSyncBusy = true;
+  try {
+    await Promise.all([loadAllEdits(), loadSchedule()]);
+    if (typeof getList === 'function' && typeof renderTbl === 'function') {
+      const l = getList();
+      renderBar(l);
+      renderTbl(l);
+    }
+    if (!window.lvDragId) {
+      window.lvRender?.();
+      window.lvRenderSB?.();
+    }
+    window.ppRender?.();
+  } catch(e) {
+    console.warn('[FB] embed fast sync error:', reason, e);
+  } finally {
+    _embedFastSyncBusy = false;
+  }
+}
+function startEmbedFastSyncIfNeeded() {
+  const forceFastSync = /[?&](embedRealtime|notionRealtime)=1(?:&|$)/.test(location.search);
+  if (!isEmbeddedContext() && !forceFastSync) return;
+  const restart = () => {
+    const nextMs = getEmbedFastSyncInterval();
+    if (_embedFastSyncTimer && _embedFastSyncMs === nextMs) return;
+    if (_embedFastSyncTimer) clearInterval(_embedFastSyncTimer);
+    _embedFastSyncMs = nextMs;
+    _embedFastSyncTimer = setInterval(() => { runEmbedFastSync('interval'); }, nextMs);
+  };
+  restart();
+  document.addEventListener('visibilitychange', () => {
+    restart();
+    if (!document.hidden) runEmbedFastSync('visibility');
+  });
+  window.addEventListener('focus', () => runEmbedFastSync('focus'));
+  window.addEventListener('pageshow', () => runEmbedFastSync('pageshow'));
+  setTimeout(() => runEmbedFastSync('init'), 400);
+}
 const _fbEditBuf = {};
 const _fbEditTimers = {};
 function persistEditsCache() {
@@ -5014,6 +5066,7 @@ updateLoginUserInfo(user);
     try {
       await Promise.all([loadAllEdits(), loadSchedule()]);
       startRealtimeListeners();
+      startEmbedFastSyncIfNeeded();
       if (typeof getList === 'function' && typeof renderTbl === 'function') {
         const l = getList(); renderBar(l); renderTbl(l);
       }
