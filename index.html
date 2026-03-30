@@ -3965,7 +3965,7 @@ function lvRenderSB(){
     const empsByBrand=EMPS.filter(e=>brandMatch(e,bk));
     const activeEmps=empsByBrand.filter(e=>{
       const st=getEmpStatus(e);
-      return st==='active' || st==='returning';
+      return st==='active' || st==='returning' || st==='support';
     });
     const leave=empsByBrand.filter(e=>getEmpStatus(e)==='leave').length;
     const reg=activeEmps.filter(e=>lvPosKey(e.position)!=='IN').length;
@@ -3992,7 +3992,7 @@ function lvRenderSB(){
     const lC=b.leaving>0?`<span style="color:#e84040;font-weight:700">-${b.leaving}</span>`:`<span style="color:#ddd">-</span>`;
     return `<tr>
       <td class="brand-name"><span style="font-size:11px;background:#eef0fe;color:#5b6cf8;padding:2px 7px;border-radius:5px;font-weight:700">${tag}</span></td>
-      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)"></td><td title="재직중(active)+복직예정(returning) 정직원 수">${b.reg}</td><td title="재직중(active)+복직예정(returning) 인턴 수">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
+      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)"></td><td title="재직중(active)+복직예정(returning)+지원근무(support) 정직원 수">${b.reg}</td><td title="재직중(active)+복직예정(returning)+지원근무(support) 인턴 수">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
       <td>${jC}</td><td>${lC}</td>
       <td class="col-formula"><b>${b.cur}</b></td>
       <td class="lv-sb-${gCls(b.gap)}">${gStr(b.gap)}</td><td>${r}%</td></tr>`;
@@ -4036,7 +4036,7 @@ function lvRenderSB(){
       </tbody></table>
     </div>
     <div class="lv-sb-formula-note">
-      📐 공식: <span>정직원(재직중+복직예정)</span>+<span>인턴(재직중+복직예정)</span>+<span>무급휴직</span>+<span>입사예정↑</span>−<span>퇴사예정↓</span>=<span>현인원</span>
+      📐 공식: <span>정직원(재직중+복직예정+지원근무)</span>+<span>인턴(재직중+복직예정+지원근무)</span>+<span>무급휴직</span>+<span>입사예정↑</span>−<span>퇴사예정↓</span>=<span>현인원</span>
        ·  기준인원은 브랜드별 입력칸에서 직접 수정 가능
     </div>`;
 }
