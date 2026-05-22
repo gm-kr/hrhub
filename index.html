@@ -57,6 +57,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .vbtn{padding:4px 10px;border-radius:var(--r);border:1px solid transparent;background:transparent;cursor:pointer;font-size:12px;color:var(--t2);font-family:var(--font);transition:all .12s}
 .vbtn:hover{background:var(--hov)}
 .vbtn.on{background:var(--act);color:var(--t1);border-color:var(--bd)}
+.praise-dashboard{display:none;flex:1;overflow:auto;background:var(--bg);padding:16px 20px 28px}
+.pdash-panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--rl);box-shadow:var(--sh);margin-bottom:12px}
+.pdash-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--bdl)}
+.pdash-title{font-size:15px;font-weight:700}
+.pdash-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap;padding:12px 14px}
+.pdash-field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--t3);font-weight:600}
+.pdash-field input{height:30px;border:1px solid var(--bd);border-radius:var(--r);background:#fff;padding:4px 8px;font-family:var(--font);font-size:12px;color:var(--t1)}
+.pdash-btn{height:30px;border:1px solid var(--bd);border-radius:var(--r);background:#fff;color:var(--t2);padding:0 10px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer}
+.pdash-btn:hover{background:var(--hov);color:var(--t1)}
+.pdash-btn.primary{background:#5B6BE8;border-color:#5B6BE8;color:#fff}
+.pdash-btn.danger{color:#c0392b}
+.pdash-summary{margin-left:auto;color:var(--t2);font-size:12px}
+.pdash-table{width:100%;border-collapse:collapse;font-size:12px}
+.pdash-table th{background:var(--sbg);padding:8px 10px;text-align:left;color:var(--t3);font-size:11px;font-weight:600;border-bottom:1px solid var(--bd)}
+.pdash-table td{padding:9px 10px;border-bottom:1px solid var(--bdl);vertical-align:middle}
+.pdash-table tbody tr:hover td{background:var(--hov)}
+.pdash-empty{padding:22px;text-align:center;color:var(--t3);font-size:13px}
+.praise-score-input{width:64px;border:1px solid #e0e0e0;border-radius:6px;padding:3px 6px;font-size:12px}
+.praise-log-score{width:56px;border:1px solid #e0e0e0;border-radius:6px;padding:2px 5px;font-size:11px}
 .chips{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
 .chip{padding:3px 10px;border-radius:20px;border:1px solid var(--bd);background:transparent;cursor:pointer;font-size:12px;color:var(--t2);font-family:var(--font);transition:all .12s}
 .chip:hover{background:var(--hov)}
@@ -224,6 +243,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 #layoutv.on { display: flex !important; }
 .lv-toolbar{display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e4e6eb; flex-shrink: 0;}
 .lv-title { font-size:15px; font-weight:700; color:#1a1d23; }
+.lv-title-tab{border:none;background:transparent;padding:4px 0;font-family:inherit;font-size:15px;font-weight:700;color:#1a1d23;cursor:pointer;}
+.lv-title-tab:hover{color:#5b6cf8;}
+.lv-title-tab.active{color:#5b6cf8;}
 .lv-stat-pill{padding: 3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#f0f2f5; color:#5a6170;}
 .lv-sep { flex:1; }
 .lv-search-wrap { position:relative; }
@@ -232,6 +254,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-search-icon{position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#aab0be; font-size:13px; pointer-events:none;}
 .lv-btn{padding:6px 14px; border-radius:8px; border:1px solid #dde1e9; background:#fff; font-size:12px; font-weight:600; cursor:pointer; color:#3a4053; transition:all .15s;}
 .lv-btn:hover { background:#f5f7ff; border-color:#5b6cf8; color:#5b6cf8; }
+.lv-btn.active{background:#eef0fe;border-color:#5b6cf8;color:#5b6cf8;}
+.lv-btn.danger{color:#e84040;border-color:#f4c7c7;background:#fffafa;}
+.lv-btn.danger:hover{background:#fff0f0;border-color:#e84040;color:#e84040;}
+.lv-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.lv-card.draft-mode{border-color:#f4d2a6;}
+.lv-card.draft-mode .lv-card-head{background:#fffaf2;}
 .lv-tabs{display:flex; align-items:center; gap:2px; padding:0 20px; background:#fff; border-bottom:1px solid #e4e6eb; flex-shrink:0; overflow-x: auto;}
 .lv-tabs::-webkit-scrollbar { height:3px; }
 .lv-tabs::-webkit-scrollbar-thumb { background:#d4d8e4; border-radius:2px; }
@@ -260,11 +288,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pos-label{font-size:9.5px; font-weight:600; color:#aab0be; letter-spacing:.5px; text-transform:uppercase; padding-left:2px; margin:6px 0 3px;}
 .lv-pos-label:first-child { margin-top:0; }
 .lv-pos-row { display:flex; flex-wrap:wrap; gap:4px; }
-.lv-chip{display:inline-flex; align-items:center; gap:5px; padding:4px 8px 4px 4px; border-radius:20px; border:1px solid #eaecf2; background:#f8f9fc; cursor:grab; transition:all .15s; user-select:none; font-size:11.5px; font-weight:500; color:#3a4053;}
+.lv-chip{position:relative; display:inline-flex; align-items:center; gap:5px; padding:4px 8px 4px 4px; border-radius:20px; border:1px solid #eaecf2; background:#f8f9fc; cursor:grab; transition:all .15s; user-select:none; font-size:11.5px; font-weight:500; color:#3a4053;}
 .lv-chip:hover { background:#eef0fe; border-color:#c0c6f5; color:#5b6cf8; }
 .lv-chip.dragging { opacity:.4; transform:scale(.95); cursor:grabbing; }
 .lv-chip.highlight { background:#fffbe6 !important; border-color:#f6d860 !important; }
 .lv-chip.dim { opacity:.25; }
+.lv-chip.has-memo::after{content:''; position:absolute; top:-1px; right:-1px; width:6px; height:6px; border-radius:50%; background:#5b6cf8; border:1.5px solid #fff; box-shadow:0 0 0 1px rgba(91,108,248,.18);}
 .lv-avatar{width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; flex-shrink:0; overflow:hidden; color:#fff;}
 .lv-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .lv-chip-name { max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -276,7 +305,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-drag-handle:hover { color:#8a93b0; }
 .lv-card.card-dragging{opacity:.5; transform:scale(.97); border: 2px dashed #a0a8c8 !important;}
 .lv-card.card-drag-over{border-color:#f6d860 !important; box-shadow:0 0 0 3px rgba(246,216,96,.3) !important; background:#fffdf0 !important;}
-#lv-saved{font-size:11px; color:#2daa72; font-weight:600; opacity:0; transition:opacity .3s; display:flex; align-items:center; gap:4px;}
+#lv-saved{display:none!important;font-size:11px; color:#2daa72; font-weight:600; opacity:0; transition:opacity .3s; align-items:center; gap:4px;}
 .lv-sb-wrap{background:#fff; border-radius:14px; border:1.5px solid #eaecf2; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:24px; overflow:hidden;}
 .lv-sb-head{display:flex; align-items:center; justify-content:space-between; padding:14px 18px 10px; border-bottom:1px solid #f2f4f8; background:linear-gradient(135deg,#f5f6ff 0%,#fff 100%);}
 .lv-sb-title { font-size:14px; font-weight:700; color:#1a1d23; }
@@ -548,6 +577,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
   .kn-wifi-group{grid-template-columns:1fr}
   .kn-accounts{grid-template-columns:1fr}
 }
+
+/* ── 파트타이머 섹션 ── */
+.pt-section { border-top: 1px dashed #e0e4ee; margin-top: 6px; padding-top: 6px; }
+.pt-header { display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
+.pt-label { font-size:10px; font-weight:700; color:#7b8fb7; letter-spacing:.3px; }
+.pt-base-badge { font-size:10px; color:#5b6cf8; font-weight:700; background:#eef0ff; border-radius:10px; padding:1px 7px; cursor:pointer; border:1px solid transparent; transition:border-color .15s; }
+.pt-base-badge:hover { border-color:#5b6cf8; }
+.pt-base-input { font-size:11px; width:40px; border:1px solid #5b6cf8; border-radius:6px; padding:1px 5px; text-align:center; outline:none; }
+.pt-groups { display:flex; flex-direction:column; gap:6px; }
+.pt-group { background:#fafbff; border:1px solid #e7ebf7; border-radius:8px; padding:6px; }
+.pt-group-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px; }
+.pt-group-name { font-size:11px; font-weight:700; color:#5b6cf8; }
+.pt-group-count { font-size:10px; color:#9aa5c2; }
+.pt-chips-wrap { display:flex; flex-wrap:wrap; gap:4px; min-height:20px; }
+.pt-chip { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:600; background:#f0f4ff; color:#3a4a7a; border-radius:12px; padding:2px 8px 2px 8px; cursor:pointer; border:1px solid #d8dfff; transition:background .12s; user-select:none; }
+.pt-chip:hover { background:#e0e8ff; }
+.pt-chip .pt-del { color:#a0aac8; font-size:10px; margin-left:1px; cursor:pointer; line-height:1; padding:0 1px; }
+.pt-chip .pt-del:hover { color:#e84040; }
+.pt-add-btn { font-size:11px; color:#8a96b8; border:1px dashed #c5ccdd; border-radius:12px; padding:2px 8px; cursor:pointer; background:none; transition:all .12s; }
+.pt-add-btn:hover { border-color:#5b6cf8; color:#5b6cf8; background:#f0f4ff; }
+.pt-hidden .pt-section { display:none; }
+.lv-btn-pt-toggle { padding:4px 12px; border-radius:8px; border:1px solid #c5ccdd; background:#f8f9fc; font-size:12px; cursor:pointer; color:#5a6170; transition:all .15s; }
+.lv-btn-pt-toggle.active { background:#eef0ff; color:#5b6cf8; border-color:#5b6cf8; font-weight:600; }
+
 </style>
 <style>
 #fb-loading{position:fixed; inset:0; z-index:99998; background:rgba(255,255,255,.9); display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px;}
@@ -903,29 +956,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 .inv-memo-empty { color: #d4d0c8; }
 </style>
 </head>
-<body>
-<div id="fb-login-screen">
-  <div class="fb-login-card">
-    <div class="fb-login-logo">🏪</div>
-    <div class="fb-login-title">SB 인사관리 시스템</div>
-    <div class="fb-login-sub">스토어브랜딩팀 전용 · 로그인이 필요합니다</div>
-    <button id="fb-login-btn" onclick="window.fbSignIn()">
-      <svg width="18" height="18" viewBox="0 0 24 24">
-        <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-        <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      Google 계정으로 로그인
-    </button>
-    <div id="fb-login-error"></div>
-  </div>
-</div>
-<div id="fb-loading">
-  <div class="fb-spinner"></div>
-  <div class="fb-loading-text">데이터 불러오는 중...</div>
-</div>
-<nav class="nav">
+<body><nav class="nav">
   <div class="logo"><span class="logo-dot"></span>HR Hub</div>
   <div class="nsep"></div>
   <div class="tabs">
@@ -955,6 +986,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
         <div class="tsep"></div>
         <button class="vbtn on" id="btn-tbl" onclick="setView('tbl')">☰ 리스트</button>
         <button class="vbtn" id="btn-grd" onclick="setView('grd')">⊞ 카드</button>
+        <button class="vbtn" id="btn-praise-dash" onclick="setPraiseDashboardView()">👏 칭찬 점수 대시보드</button>
         <div class="chips">
           <button class="chip on" data-b="ALL" onclick="doBrand(this)">전체</button>
           <button class="chip" data-b="GM" onclick="doBrand(this)">GM</button>
@@ -975,7 +1007,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
             <th class="sth" onclick="sortBy('residence')" data-col="residence">거주지</th>
             <th class="sth" onclick="sortBy('kindness')" data-col="kindness" title="친절함 ABC등급">😊 친절함</th>
             <th class="sth" onclick="sortBy('growth')" data-col="growth" title="성장의지 ABC등급">🌱 성장의지</th>
-            <th class="sth" onclick="sortBy('praiseCount')" data-col="praiseCount" title="칭찬 횟수">👏 칭찬</th>
+            <th class="sth" onclick="sortBy('praiseCount')" data-col="praiseCount" title="칭찬 점수">👏 칭찬 점수</th>
             <th class="sth" onclick="sortBy('switching')" data-col="switching" title="스위칭 횟수">🔁 스위칭</th>
             <th class="sth" onclick="sortBy('language')" data-col="language">언어</th>
             <th class="sth">편집</th>
@@ -987,6 +1019,57 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
       <div class="gwrap" id="gwrap" style="display:none">
         <div class="grid" id="grid"></div>
       </div>
+      <div class="praise-dashboard" id="praise-dashboard">
+        <div class="pdash-panel">
+          <div class="pdash-head">
+            <div class="pdash-title">칭찬 점수 대시보드</div>
+            <div class="pdash-summary" id="pdash-summary"></div>
+          </div>
+          <div class="pdash-controls">
+            <label class="pdash-field">평가 시작일
+              <input type="date" id="pdash-start" onchange="renderPraiseDashboard()">
+            </label>
+            <label class="pdash-field">평가 종료일
+              <input type="date" id="pdash-end" onchange="renderPraiseDashboard()">
+            </label>
+            <button class="pdash-btn" onclick="setPraisePeriodQuick('thisQuarter')">이번 분기</button>
+            <button class="pdash-btn" onclick="setPraisePeriodQuick('lastQuarter')">지난 분기</button>
+            <button class="pdash-btn" onclick="renderPraiseDashboard()">직접 설정</button>
+          </div>
+          <table class="pdash-table">
+            <thead><tr>
+              <th>순위</th>
+              <th>직원명</th>
+              <th>소속 매장</th>
+              <th>기간 내 칭찬 점수</th>
+              <th>기간 내 칭찬 기록 수</th>
+              <th>최근 칭찬일</th>
+              <th>포상 지급 여부</th>
+              <th>포상 지급</th>
+            </tr></thead>
+            <tbody id="praise-rank-body"></tbody>
+          </table>
+        </div>
+        <div class="pdash-panel">
+          <div class="pdash-head">
+            <div class="pdash-title">포상 지급 이력</div>
+            <div class="pdash-summary" id="preward-summary"></div>
+          </div>
+          <table class="pdash-table">
+            <thead><tr>
+              <th>평가 기간</th>
+              <th>포상 지급일</th>
+              <th>수상자 이름</th>
+              <th>소속 매장</th>
+              <th>해당 기간 칭찬 점수</th>
+              <th>해당 기간 순위</th>
+              <th>메모</th>
+              <th>관리</th>
+            </tr></thead>
+            <tbody id="praise-reward-body"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
     <div id="stv">
 <div class="modal-overlay" id="storeEditOverlay" onclick="closeStoreEditOutside(event)">
@@ -997,32 +1080,56 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
     </div>
     <div class="se-body">
       <div>
-        <div class="se-label">지역</div>
-        <select class="se-select" id="se-region">
+        <div class="se-label">브랜드</div>
+        <select class="se-select" id="se-brand" onchange="updateStoreNamePreview()">
+          <option value="GM" selected>GM</option>
+        </select>
+      </div>
+      <div>
+        <div class="se-label">권역</div>
+        <select class="se-select" id="se-region" onchange="updateStoreNamePreview()">
           <option value="서울">서울</option>
+          <option value="경기">경기</option>
           <option value="인천">인천</option>
           <option value="부산">부산</option>
           <option value="대구">대구</option>
           <option value="대전">대전</option>
-          <option value="제주">제주</option>
+          <option value="광주">광주</option>
           <option value="천안">천안</option>
+          <option value="제주">제주</option>
           <option value="기타">기타</option>
         </select>
       </div>
       <div>
         <div class="se-label">채널</div>
-        <select class="se-select" id="se-channel">
-          <option value="하우스 노웨어">하우스 노웨어</option>
+        <select class="se-select" id="se-channel" onchange="updateStoreNamePreview()">
           <option value="FS">FS</option>
-          <option value="MALL">MALL</option>
-          <option value="PU">PU</option>
           <option value="DS" selected>DS</option>
           <option value="DFS">DFS</option>
+          <option value="MALL">MALL</option>
+          <option value="PU">PU</option>
+          <option value="하우스 노웨어">하우스 노웨어</option>
+          <option value="HAUS">HAUS</option>
+          <option value="기타">기타</option>
         </select>
       </div>
       <div>
-        <div class="se-label">매장명</div>
-        <input class="se-input" id="se-name" type="text" placeholder="예) 현대_목동">
+        <div class="se-label">유통사</div>
+        <select class="se-select" id="se-vendor" onchange="updateStoreNamePreview()">
+          <option value="현대">현대</option>
+          <option value="롯데">롯데</option>
+          <option value="신세계">신세계</option>
+          <option value="갤러리아">갤러리아</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div>
+        <div class="se-label">지점명</div>
+        <input class="se-input" id="se-name" type="text" placeholder="예) 판교" oninput="updateStoreNamePreview()">
+      </div>
+      <div>
+        <div class="se-label">Preview</div>
+        <div class="se-input" id="se-preview" style="background:#F7F7F5;color:#5b6cf8;font-weight:700;min-height:36px">GM_서울_DS_현대_</div>
       </div>
       <div id="se-warning" style="font-size:12px;color:#C0392B;display:none;"></div>
     </div>
@@ -1070,12 +1177,14 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
         <div class="se-label">지역</div>
         <select class="se-select" id="rename-region">
           <option value="서울">서울</option>
+          <option value="경기">경기</option>
           <option value="인천">인천</option>
           <option value="부산">부산</option>
           <option value="대구">대구</option>
           <option value="대전">대전</option>
-          <option value="제주">제주</option>
+          <option value="광주">광주</option>
           <option value="천안">천안</option>
+          <option value="제주">제주</option>
           <option value="기타">기타</option>
         </select>
       </div>
@@ -2065,31 +2174,222 @@ function resetCriteria() {
   if(!confirm('등급 기준표를 초기값으로 되돌릴까요?')) return;
   localStorage.removeItem('store_criteria_v1'); location.reload();
 }
-const CHANNEL_ORDER_JS = ['하우스 노웨어','FS','MALL','PU','DS','DFS'];
+const CHANNEL_ORDER_JS = ['HAUS','하우스 노웨어','FS','MALL','PU','DS','DFS','기타'];
 const CHANNEL_LABEL_JS = {
-  '하우스 노웨어': '🏠 하우스 노웨어',
-  'FS':'🛍️ FS', 'MALL':'🏪 MALL', 'PU':'📦 PU', 'DS':'🏬 DS', 'DFS':'✈️ DFS'
+  'HAUS': '🏠 HAUS', '하우스 노웨어': '🏠 하우스 노웨어',
+  'FS':'🛍️ FS', 'MALL':'🏪 MALL', 'PU':'📦 PU', 'DS':'🏬 DS', 'DFS':'✈️ DFS', '기타':'🏪 기타'
 };
 const CHANNEL_ICON_JS = {
-  '하우스 노웨어':'🏠','FS':'🛍️','MALL':'🏪','PU':'📦','DS':'🏬','DFS':'✈️'
+  'HAUS':'🏠','하우스 노웨어':'🏠','FS':'🛍️','MALL':'🏪','PU':'📦','DS':'🏬','DFS':'✈️','기타':'🏪'
 };
-const REGION_ORDER_JS = ['서울','경기','인천','부산','대구','대전','제주','천안','광주'];
-function makeStoreId(region, channel, name) {
-  return `GM_${region}_${channel}_${name}`.replace(/ /g,'_').replace(/__+/g,'_');
+const REGION_ORDER_JS = ['서울','경기','인천','부산','대구','대전','광주','제주','천안','기타'];
+function cleanStorePart(v){ return String(v||'').trim().replace(/\s+/g,'_').replace(/__+/g,'_'); }
+function makeStoreId(region, channel, name, brand='GM', vendor='') {
+  // STORE NAME BUILDER
+  const parts=[brand, region, channel, vendor, name].map(cleanStorePart).filter(Boolean);
+  return parts.join('_').replace(/__+/g,'_');
 }
+// [PERF] parseStoreName 결과 메모이즈 - 매장 ID 파싱은 빈번하게 호출되므로 캐싱
+const __parseStoreCache = new Map();
+function parseStoreName(id){
+  const key = String(id||'');
+  const cached = __parseStoreCache.get(key);
+  if(cached) return cached;
+  let result;
+  if(/^PU\s+/.test(key)) {
+    result = {brand:'GM',region:'서울',channel:'PU',vendor:'',branch:key.replace(/^PU\s+/,'')};
+  } else {
+    const p=key.split('_');
+    result = {brand:p[0]||'GM',region:p[1]||'',channel:p[2]||'',vendor:p[3]||'',branch:p.slice(4).join('_')||''};
+  }
+  __parseStoreCache.set(key, result);
+  return result;
+}
+function normalizeStoreName(name) {
+  return String(name || '').trim();
+}
+function isFullStoreId(v){
+  return /^[A-Z]+_[^_]+_[^_]+_/.test(normalizeStoreName(v));
+}
+function canonicalStoreKey(store){
+  const id = normalizeStoreName((store&&store.id)||store);
+  const name = normalizeStoreName((store&&store.name)||id);
+  if(id==='GM_서울_PU_포켓' || id==='PU 성수 포켓 팝업'       || name==='포켓' || name==='PU_성수_Pocket_팝업') return 'PU 성수 포켓 팝업';
+  if(isFullStoreId(id)) return id;
+  if(isFullStoreId(name)) return name;
+  return id || name;
+}
+function normalizeStoreEntry(s){
+  const id=s.id||s.raw||s.name||'';
+  if(id==='GM_서울_PU_포켓' || id==='PU_성수_Pocket_팝업' || s.name==='포켓' || s.name==='PU_성수_Pocket_팝업'){
+    return {id:'PU 성수 포켓 팝업',region:'서울',channel:'PU',name:'PU 성수 포켓 팝업',displayName:'성수 포켓 팝업',brand:'GM',vendor:'',branch:'성수 포켓 팝업'};
+  }
+  const parsed=parseStoreName(id);
+  return {
+    id,
+    region:s.region||parsed.region||'기타',
+    channel:s.channel||parsed.channel||'기타',
+    name:s.name||[parsed.vendor,parsed.branch].filter(Boolean).join('_')||id,
+    displayName:s.displayName||s.display||[parsed.vendor,parsed.branch].filter(Boolean).join('_')||s.name||id,
+    brand:s.brand||parsed.brand||'GM',
+    vendor:s.vendor||parsed.vendor||'',
+    branch:s.branch||parsed.branch||''
+  };
+}
+function storeEntryQuality(store){
+  let score=0;
+  if(isFullStoreId(store.id)) score+=10;
+  if(store.displayName||store.display) score+=5;
+  if(store.region&&store.region!=='기타') score+=3;
+  if(store.channel&&store.channel!=='기타') score+=3;
+  if(store.vendor) score+=2;
+  if(store.branch) score+=2;
+  return score;
+}
+function dedupeStoreList(list){
+  // STORE CRUD FIX
+  const byKey = new Map();
+  (list||[]).map(normalizeStoreEntry).forEach(store => {
+    const key = canonicalStoreKey(store);
+    if (!key) return;
+    store.id = key;
+    store.name = key;
+    const prev = byKey.get(key);
+    if (!prev || storeEntryQuality(store) > storeEntryQuality(prev)) byKey.set(key, store);
+  });
+  return Array.from(byKey.values());
+}
+function getBaselineStoreList(){
+  // STORE CRUD FIX
+  const rows = [...STORES];
+  if(window.SB_DATA && window.SB_DATA.stores){
+    Object.keys(window.SB_DATA.stores).forEach(id=>{
+      rows.push(Object.assign({id, raw:id, name:id}, parseStoreName(id)));
+    });
+  }
+  return dedupeStoreList(rows);
+}
+// [FIX] 사이드바(스토어 진단)에서는 GM 브랜드 매장만 노출하여 서울/도산 중복 표시 제거
+// ATS_/NUF_ 등 다른 브랜드 store 키는 직원 데이터 참조용으로만 사용(배치현황에는 표시됨)
+function isSidebarVisibleStore(s){
+  if(!s) return false;
+  const id=s.id||s.raw||'';
+  if(id==='PU 성수 포켓 팝업' || id==='육아휴직' || /^PU\s/.test(id)) return true;
+  const parsed=parseStoreName(id);
+  const brand=(s.brand||parsed.brand||'').toUpperCase();
+  return !brand || brand==='GM';
+}
+function mergeStoreLists(primary, fallback){
+  // STORE CRUD FIX
+  return dedupeStoreList([...(primary||[]), ...(fallback||[])]);
+}
+function updateStoreNamePreview(){
+  // STORE NAME BUILDER
+  const brand=document.getElementById('se-brand')?.value||'GM';
+  const region=document.getElementById('se-region')?.value||'서울';
+  const channel=document.getElementById('se-channel')?.value||'DS';
+  const vendor=document.getElementById('se-vendor')?.value||'현대';
+  const branch=document.getElementById('se-name')?.value||'';
+  const preview=makeStoreId(region,channel,branch,brand,vendor);
+  const el=document.getElementById('se-preview');
+  if(el) el.textContent=preview;
+  return preview;
+}
+function saveData(){
+  // STORE CRUD FIX
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e) {}
+  try { if(window.CUSTOM_STORES) localStorage.setItem('lvCustomStores', JSON.stringify(window.CUSTOM_STORES)); } catch(e) {}
+}
+function buildStoreAliasMap(){
+  // STORE CRUD FIX
+  const rows=[...STORES];
+  if(window.SB_DATA && window.SB_DATA.stores){
+    Object.keys(window.SB_DATA.stores).forEach(id=>{
+      rows.push(Object.assign({id, raw:id, name:id}, parseStoreName(id)));
+    });
+  }
+  try{
+    JSON.parse(localStorage.getItem('store_list_v2')||'[]').forEach(s=>rows.push(s));
+  }catch(e){}
+  const map={};
+  dedupeStoreList(rows).forEach(store=>{
+    const key=canonicalStoreKey(store);
+    [store.id,store.raw,store.name,store.display,store.displayName].forEach(alias=>{
+      alias=normalizeStoreName(alias);
+      if(alias && !map[alias]) map[alias]=key;
+    });
+  });
+  map['GM_서울_PU_포켓']='PU 성수 포켓 팝업';
+  map['PU_성수_Pocket_팝업']='PU 성수 포켓 팝업';
+  map['포켓']='PU 성수 포켓 팝업';
+  return map;
+}
+function cleanupStoreReferences(){
+  // STORE CRUD FIX
+  const aliasMap=buildStoreAliasMap();
+  const normalizeRef=v=>aliasMap[normalizeStoreName(v)]||v;
+  EMPS.forEach(emp=>{
+    const next=normalizeRef(emp.current_store||'');
+    if(next!==emp.current_store){
+      emp.current_store=next;
+      emp.channel=guessChannel(next)||emp.channel;
+    }
+  });
+  ['layoutActualData','layoutDraftData'].forEach(key=>{
+    try{
+      const map=JSON.parse(localStorage.getItem(key)||'{}');
+      Object.keys(map).forEach(empId=>{
+        if(map[empId]&&map[empId].current_store){
+          map[empId].current_store=normalizeRef(map[empId].current_store);
+          map[empId].channel=guessChannel(map[empId].current_store)||map[empId].channel||'';
+        }
+      });
+      localStorage.setItem(key,JSON.stringify(map));
+    }catch(e){}
+  });
+}
+// [PERF] loadStoreList 마이크로태스크 캐싱 - 한 렌더 사이클 내 여러번 호출 시 재계산 방지
+let __lslCache = null;
+function __lslInvalidate(){ __lslCache = null; }
 function loadStoreList() {
+  if(__lslCache) return __lslCache;
+  cleanupStoreReferences();
+  let result;
   try {
     const raw = localStorage.getItem('store_list_v2');
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  return STORES.map(s => ({id:s.id, region:s.region, channel:s.channel, name:s.name}));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const deduped = mergeStoreLists(parsed, getBaselineStoreList());
+      // 변경된 경우에만 localStorage/Firebase 쓰기 (불필요한 IO 절감)
+      const dedupedStr = JSON.stringify(deduped);
+      if(dedupedStr !== raw){
+        localStorage.setItem('store_list_v2', dedupedStr);
+        window.fbSetStoreList && window.fbSetStoreList(deduped);
+      }
+      result = deduped;
+    } else {
+      result = getBaselineStoreList();
+    }
+  } catch(e) {
+    result = getBaselineStoreList();
+  }
+  __lslCache = result;
+  // 다음 마이크로태스크에 캐시 해제
+  Promise.resolve().then(__lslInvalidate);
+  return result;
 }
 function saveStoreList(list) {
-  localStorage.setItem('store_list_v2', JSON.stringify(list));
-  window.fbSetStoreList && window.fbSetStoreList(list);
+  // STORE CRUD FIX
+  const normalized=dedupeStoreList(list||[]);
+  localStorage.setItem('store_list_v2', JSON.stringify(normalized));
+  window.fbSetStoreList && window.fbSetStoreList(normalized);
+  window.CUSTOM_STORES = Array.from(new Set([...(window.CUSTOM_STORES||[]), ...normalized.map(s=>s.id)]));
+  try { localStorage.setItem('lvCustomStores', JSON.stringify(window.CUSTOM_STORES)); } catch(e) {}
+  if(typeof __lslInvalidate==='function') __lslInvalidate(); // [PERF] 캐시 무효화
 }
 function renderSidebar() {
-  const list = loadStoreList();
+  // [FIX] 사이드바에서 ATS_/NUF_ 등 비-GM 브랜드 중복 매장 숨김(서울/도산 중복 제거)
+  const list = loadStoreList().filter(s => (typeof isSidebarVisibleStore==='function') ? isSidebarVisibleStore(s) : true);
   const grouped = {};
   CHANNEL_ORDER_JS.forEach(c => { grouped[c] = []; });
   list.forEach(s => {
@@ -2103,7 +2403,8 @@ function renderSidebar() {
     });
   });
   const scroll = document.getElementById('sidebar-scroll');
-  scroll.innerHTML = '';
+  // [PERF] DocumentFragment로 일괄 처리 - 사이드바 렌더링 리플로우 최소화
+  const frag = document.createDocumentFragment();
   CHANNEL_ORDER_JS.forEach(ch => {
     const stores = grouped[ch];
     if (!stores || !stores.length) return;
@@ -2120,15 +2421,16 @@ function renderSidebar() {
       const icon = CHANNEL_ICON_JS[s.channel] || '🏪';
       const item = document.createElement('div');
       item.className = 'sidebar-item';
-      item.id = `si-${s.id.replace(/ /g,'_')}`;
+      const safeId = s.id.replace(/ /g,'_');
+      item.id = `si-${safeId}`;
       item.title = s.id;
       item.innerHTML = `
         <span class="si-icon">${icon}</span>
         <div class="si-text">
           <div class="si-channel">${s.region}</div>
-          <div class="si-name">${s.name}</div>
+          <div class="si-name">${s.displayName||s.name}</div>
         </div>
-        <div class="si-grade-badge" id="sig-${s.id.replace(/ /g,'_')}"></div>
+        <div class="si-grade-badge" id="sig-${safeId}"></div>
         <div class="si-edit-btn" title="매장 편집">⋯</div>
       `;
       item.querySelector('.si-edit-btn').addEventListener('click', (e) => {
@@ -2139,12 +2441,14 @@ function renderSidebar() {
       body.appendChild(item);
     });
     group.appendChild(body);
-    scroll.appendChild(group);
+    frag.appendChild(group);
   });
+  scroll.innerHTML = '';
+  scroll.appendChild(frag);
   document.getElementById('store-count-label').textContent = `총 ${list.length}개 매장`;
   list.forEach(s => updateSidebarBadge(s.id));
   if (currentStoreId) {
-    const si = document.getElementById(`si-${currentStoreId}`);
+    const si = document.getElementById(`si-${currentStoreId.replace(/ /g,'_')}`);
     if (si) si.classList.add('active');
   }
 }
@@ -2170,33 +2474,76 @@ document.addEventListener('click', e => {
   if (!document.getElementById('storeCtxMenu').contains(e.target)) closeCtxMenu();
 });
 function confirmDeleteStore() {
+  // STORE CRUD FIX
+  const targetId = _ctxTargetId;
   closeCtxMenu();
-  if (!_ctxTargetId) return;
+  if (!targetId) return;
   const list = loadStoreList();
-  const s = list.find(x => x.id === _ctxTargetId);
+  const s = list.find(x => x.id === targetId);
   if (!s) return;
-  if (!confirm(`"🏬 ${s.name}" 매장을 삭제하시겠습니까?
-평가 데이터는 유지됩니다.`)) return;
-  const newList = list.filter(x => x.id !== _ctxTargetId);
+  if (!confirm(`"🏬 ${s.displayName||s.name}" 매장을 삭제하시겠습니까?
+해당 매장에 배치된 직원은 미배정 처리됩니다.`)) return;
+  const newList = list.filter(x => x.id !== targetId);
   saveStoreList(newList);
-  if (currentStoreId === _ctxTargetId) {
+  EMPS.forEach(emp=>{
+    if(emp.current_store===targetId){
+      emp.current_store='';
+      emp.store='';
+      emp.channel='';
+      if(window.fbSetEdit){
+        window.fbSetEdit(emp.id,'current_store','');
+        window.fbSetEdit(emp.id,'store','');
+        window.fbSetEdit(emp.id,'channel','');
+      }
+      if(!window.__fbEdits) window.__fbEdits={};
+      if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
+      window.__fbEdits[emp.id].current_store='';
+      window.__fbEdits[emp.id].store='';
+      window.__fbEdits[emp.id].channel='';
+      try{
+        const fb=JSON.parse(localStorage.getItem('hr_fb_'+emp.id)||'{}');
+        fb.current_store=''; fb.store=''; fb.channel='';
+        localStorage.setItem('hr_fb_'+emp.id,JSON.stringify(fb));
+      }catch(e){}
+    }
+  });
+  try{
+    ['layoutActualData','layoutDraftData'].forEach(key=>{
+      const map=JSON.parse(localStorage.getItem(key)||'{}');
+      Object.keys(map).forEach(empId=>{
+        if(map[empId]&&map[empId].current_store===targetId){
+          map[empId].current_store='';
+          map[empId].channel='';
+        }
+      });
+      localStorage.setItem(key,JSON.stringify(map));
+    });
+  }catch(e){}
+  if(window.CUSTOM_STORES) window.CUSTOM_STORES=window.CUSTOM_STORES.filter(x=>x!==targetId);
+  if (currentStoreId === targetId) {
     currentStoreId = null;
     document.getElementById('nav-store-label').textContent = '매장을 선택하세요';
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('empty-state').style.display = '';
   }
+  saveData();
   renderSidebar();
+  if(typeof refresh==='function') refresh();
+  window.lvRender?.(); window.lvRenderSB?.();
 }
 function openAddStoreModal() {
   document.getElementById('se-modal-title').textContent = '매장 추가';
+  if(document.getElementById('se-brand')) document.getElementById('se-brand').value = 'GM';
   document.getElementById('se-region').value = '서울';
   document.getElementById('se-channel').value = 'DS';
+  if(document.getElementById('se-vendor')) document.getElementById('se-vendor').value = '현대';
   document.getElementById('se-name').value = '';
   document.getElementById('se-warning').style.display = 'none';
   document.getElementById('se-confirm-btn').textContent = '추가';
   document.getElementById('se-confirm-btn').onclick = confirmAddStore;
   document.getElementById('storeEditOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  updateStoreNamePreview();
   setTimeout(() => document.getElementById('se-name').focus(), 100);
 }
 function closeStoreEditModal() {
@@ -2207,18 +2554,26 @@ function closeStoreEditOutside(e) {
   if (e.target === document.getElementById('storeEditOverlay')) closeStoreEditModal();
 }
 function confirmAddStore() {
+  // STORE NAME BUILDER
+  const brand   = document.getElementById('se-brand')?.value.trim() || 'GM';
   const region  = document.getElementById('se-region').value.trim();
   const channel = document.getElementById('se-channel').value.trim();
-  const name    = document.getElementById('se-name').value.trim();
+  const vendor  = document.getElementById('se-vendor')?.value.trim() || '';
+  const branch  = document.getElementById('se-name').value.trim();
   const warn    = document.getElementById('se-warning');
-  if (!name) { warn.textContent = '매장명을 입력해주세요.'; warn.style.display='block'; return; }
-  const id = makeStoreId(region, channel, name);
+  if (!branch) { warn.textContent = '지점명을 입력해주세요.'; warn.style.display='block'; return; }
+  const id = makeStoreId(region, channel, branch, brand, vendor);
+  const displayName = [vendor,branch].filter(Boolean).join('_');
+  const name = id;
   const list = loadStoreList();
-  if (list.find(s => s.id === id)) { warn.textContent = '이미 동일한 매장이 있습니다.'; warn.style.display='block'; return; }
-  list.push({id, region, channel, name});
+  const newKey = canonicalStoreKey({id, name});
+  if (list.find(s => canonicalStoreKey(s) === newKey)) { alert('이미 등록된 매장입니다.'); warn.textContent = '이미 등록된 매장입니다.'; warn.style.display='block'; return; }
+  list.push({id, region, channel, name, displayName, brand, vendor, branch});
   saveStoreList(list);
+  saveData();
   closeStoreEditModal();
   renderSidebar();
+  window.lvRender?.(); window.lvRenderSB?.();
   selectStore(id);
 }
 function openRenameStore() {
@@ -2229,7 +2584,7 @@ function openRenameStore() {
   if (!s) return;
   document.getElementById('rename-region').value  = s.region;
   document.getElementById('rename-channel').value = s.channel;
-  document.getElementById('rename-name').value    = s.name;
+  document.getElementById('rename-name').value    = s.displayName||s.branch||s.name;
   document.getElementById('storeRenameOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('rename-name').focus(), 100);
@@ -2260,8 +2615,9 @@ function confirmRename() {
       if (ov) localStorage.setItem(lsKey(newId, q, 'overall'), ov);
     });
   }
-  list[idx] = {id: newId, region, channel, name};
+  list[idx] = {id: newId, region, channel, name:newId, displayName:name};
   saveStoreList(list);
+  saveData();
   if (currentStoreId === oldId) { currentStoreId = null; }
   closeRenameModal();
   renderSidebar();
@@ -2446,9 +2802,14 @@ window.openMoveChannel = openMoveChannel;
     </div>
   <div id="layoutv">
     <div class="lv-toolbar">
-      <span class="lv-title">📋 배치현황</span>
-      <span class="lv-stat-pill" id="lv-total-pill">전체 279명</span>
+      <button class="lv-title-tab" id="lv-actual-tab" onclick="lvSetMode('actual')" title="실제 적용된 현재 배치 보기">📋 배치현황</button>
       <div class="lv-sep"></div>
+      <div class="lv-actions">
+        <button class="lv-btn" id="lv-pt-toggle-btn" onclick="lvTogglePT()" title="파트타이머 표시/숨김">파트타이머 제외</button>
+        <button class="lv-btn" id="lv-mode-draft" onclick="lvSetMode('draft')">운영팀 테스트</button>
+        <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
+        <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
+      </div>
       <span id="lv-saved">✓ 저장됨</span>
     </div>
     <div class="lv-tabs" id="lv-ch-tabs">
@@ -2574,7 +2935,15 @@ window.openMoveChannel = openMoveChannel;
       </div>
       <div class="prow"><span class="pk">💼 직책</span>
         <span class="pv" id="pposition"></span>
-        <span class="pv pedit-field" id="pposition-edit" style="display:none"><input class="pedit-input" id="pposition-inp" onblur="saveFieldEdit('position',this.value)"></span>
+        <span class="pv pedit-field" id="pposition-edit" style="display:none">
+          <select class="pedit-sel" id="pposition-inp" onchange="saveFieldEdit('position',this.value)">
+            <option value="매니저">매니저</option>
+            <option value="부매니저">부매니저</option>
+            <option value="팀원">팀원</option>
+            <option value="인턴">인턴</option>
+            <option value="HAUS 매니저">HAUS 매니저</option>
+          </select>
+        </span>
       </div>
       <div class="prow"><span class="pk">🌐 언어</span>
         <span class="pv" id="plang"></span>
@@ -2616,21 +2985,37 @@ window.openMoveChannel = openMoveChannel;
         </span>
       </div>
       <div class="prow" style="margin-top:12px;align-items:flex-start">
-        <span class="pk" style="padding-top:4px">👏 칭찬 횟수</span>
+        <span class="pk" style="padding-top:4px">👏 칭찬 점수</span>
         <span class="pv" style="flex:1">
           <span style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
             <span id="ppraise-count"
               onclick="togglePraiseLog()"
               style="font-size:18px;font-weight:700;color:#5B6BE8;min-width:32px;text-align:center;cursor:pointer;text-decoration:underline dotted"
               title="클릭하면 기록 보기">0</span>
-            <span style="font-size:12px;color:var(--t3)">회</span>
+            <span style="font-size:12px;color:var(--t3)">점</span>
           </span>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            <select id="praise-type" onchange="applyPraiseDefaultScore()"
+              style="border:1px solid #e0e0e0;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit">
+              <option value="short">짧은 칭찬 0.5점</option>
+              <option value="long">긴 칭찬 1점</option>
+            </select>
+            <input id="praise-score" class="praise-score-input" type="number" min="0" step="0.5" value="0.5" list="praise-score-options" title="0.5 단위 선택 또는 직접 입력">
+            <datalist id="praise-score-options">
+              <option value="0.5"></option>
+              <option value="1"></option>
+              <option value="1.5"></option>
+              <option value="2"></option>
+            </datalist>
+            <input id="praise-date" type="date"
+              style="border:1px solid #e0e0e0;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit">
+          </div>
           <div style="display:flex;gap:6px;align-items:flex-start">
             <textarea id="praise-input"
               placeholder="칭찬 내용을 입력하세요..."
               style="flex:1;border:1px solid #e0e0e0;border-radius:8px;padding:6px 10px;font-size:12px;font-family:inherit;resize:none;height:56px;line-height:1.5"></textarea>
             <button onclick="submitPraise()"
-              style="background:#5B6BE8;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;white-space:nowrap;height:56px">저장<br>＋1</button>
+              style="background:#5B6BE8;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px;white-space:nowrap;height:56px">저장<br>＋점수</button>
           </div>
           <div id="praise-log" style="margin-top:8px;max-height:150px;overflow-y:auto;display:none;background:#f5f3ff;border-radius:8px;padding:8px 10px"></div>
         </span>
@@ -2684,6 +3069,7 @@ function getM(){try{return JSON.parse(localStorage.getItem('hrM')||'{}')}catch{r
 function setM(id,t){const m=getM();m[id]=t;localStorage.setItem('hrM',JSON.stringify(m))}
 function gHist(e){const h=getH();return h[e.id]||e.store_history||[]}
 function switchMain(tab){
+  // [SYNC FIX] 같은 탭 중복 클릭 방지 최적화는 제거 - 연동 안정성 우선
   document.querySelectorAll('.tab[data-tab]').forEach(el=>{
     el.classList.toggle('on', el.dataset.tab===tab);
   });
@@ -2696,12 +3082,12 @@ function switchMain(tab){
   if(tab==='hr'){
     resetSidebarTreeState();
     setTimeout(()=>{
-      /* [BUG FIX 2] hr 탭 전환 시 최신 편집값을 EMPS에 재적용 후 렌더링 */
+      // [SYNC] 최신 __fbEdits를 EMPS에 적용 + 테이블 전체 재렌더링 (배치현황 편집 반영)
       if(window.__fbEdits && Object.keys(window.__fbEdits).length > 0){
         if(typeof applyEditsToEmps === 'function') applyEditsToEmps(window.__fbEdits);
       }
-      const l = getList();
-      renderBar(l);
+      if(typeof refresh === 'function') refresh();
+      else { const l = getList(); renderBar(l); }
       collapseSidebarTreeDOM();
     }, 0);
   }
@@ -2733,20 +3119,13 @@ function switchMain(tab){
   if(lv){
     if(tab==='layout'){
       lv.classList.add('on');
+      // [CLEANUP] 중복 lvInit 호출 제거 - setTimeout 안에서만 한 번 실행
       setTimeout(()=>{
-        /* [BUG FIX] 탭 전환 시 최신 편집값을 EMPS에 재적용 후 렌더링 */
         if(window.__fbEdits && Object.keys(window.__fbEdits).length > 0){
           if(typeof applyEditsToEmps === 'function') applyEditsToEmps(window.__fbEdits);
         }
-        window.lvRender?.();
-        window.lvRenderSB?.();
-      }, 0);
-      if(window.__fbReady) {
-        console.log('[SW] 배치현황 탭: Firebase 준비됨, lvRender 호출');
-      } else {
-        console.log('[SW] 배치현황 탭: Firebase 대기중, lvInit 호출');
         window.lvInit?.();
-      }
+      }, 0);
     } else {
       lv.classList.remove('on');
     }
@@ -2942,8 +3321,37 @@ function clearStoreFilter(){
   if(pill) pill.style.display='none';
   refresh();
 }
+const DELETED_EMP_IDS_KEY = 'hrDeletedEmpIds_v1';
+function getDeletedEmpIds(){
+  try {
+    const raw = localStorage.getItem(DELETED_EMP_IDS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch(e) { return []; }
+}
+function isDeletedEmpId(empId){
+  return getDeletedEmpIds().includes(empId);
+}
+function saveDeletedEmpIds(ids){
+  try { localStorage.setItem(DELETED_EMP_IDS_KEY, JSON.stringify(Array.from(new Set(ids||[])))); } catch(e) {}
+}
+function markDeletedEmpId(empId){
+  if(!empId) return;
+  const ids = getDeletedEmpIds();
+  if(!ids.includes(empId)) ids.push(empId);
+  saveDeletedEmpIds(ids);
+}
+function unmarkDeletedEmpId(empId){
+  if(!empId) return;
+  saveDeletedEmpIds(getDeletedEmpIds().filter(id => id !== empId));
+}
 function getList(){
-  let l=EMPS;
+  let l=EMPS.filter(e=>{
+    if(isDeletedEmpId(e.id)) return false;
+    const ed = window.__fbEdits || {};
+    const st = (ed[e.id] && ed[e.id].status !== undefined) ? ed[e.id].status : (e.status || 'active');
+    return st !== 'deleted';
+  });
   if(curBrand!=='ALL')l=l.filter(e=>e.brand===curBrand);
   if(curStoreFilter)l=l.filter(e=>(e.current_store||'')=== curStoreFilter);
   if(searchQ){const q=searchQ.toLowerCase();l=l.filter(e=>e.name.toLowerCase().includes(q)||(e.current_store||'').toLowerCase().includes(q)||(e.position||'').toLowerCase().includes(q)||(e.channel||'').toLowerCase().includes(q))}
@@ -2951,7 +3359,7 @@ function getList(){
     l=[...l].sort((a,b)=>{
       let av,bv;
       if(sortCol==='praiseCount'){
-        av=getF(a.id).praiseCount||0; bv=getF(b.id).praiseCount||0;
+        av=totalPraiseScore(a.id); bv=totalPraiseScore(b.id);
         return sortDir==='asc'?av-bv:bv-av;
       }
       if(sortCol==='switching'){
@@ -3002,7 +3410,7 @@ function renderTbl(list){
     tr.style.cursor='pointer';
     tr.onclick=(e)=>{ if(!e.target.closest('.edit-badge')&&!e.target.closest('.del-badge')&&!e.target.closest('.tbl-abc'))openP(emp); };
     const fbData=getF(emp.id);
-    const praiseCount=fbData.praiseCount||0;
+    const praiseScore=totalPraiseScore(emp.id);
     const switchCount=fbData.switching||emp.switching||0;
     const abcBadge=(v,field)=>{
       const colors={A:'background:#d1fae5;color:#065f46',B:'background:#dbeafe;color:#1e40af',C:'background:#fce7f3;color:#9d174d'};
@@ -3026,7 +3434,7 @@ function renderTbl(list){
       <td style="text-align:center">${abcBadge(fbData.kindness||emp.kindness||'','kindness')}</td>
       <td style="text-align:center">${abcBadge(fbData.growth||emp.growth||'','growth')}</td>
       <td style="text-align:center;cursor:pointer" onclick="event.stopPropagation();openP(EMPS.find(e=>e.id==='${emp.id}'))">
-        <span class="praise-count-badge" style="background:#ede9fe;color:#5b21b6;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700">${praiseCount}회</span>
+        <span class="praise-count-badge" data-id="${emp.id}" style="background:#ede9fe;color:#5b21b6;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700">칭찬 ${praiseScoreFmt(praiseScore)}점</span>
       </td>
       <td data-id="${emp.id}" data-col="switching" style="text-align:center;font-size:12px;color:var(--t2)">${switchCount||'-'}</td>
       <td style="font-size:12px">${emp.language||''}</td>
@@ -3068,6 +3476,11 @@ function saveCell(el){
   if(field==='current_store'){
     const newCh=guessChannel(val);
     if(newCh){ emp.channel=newCh; }
+    try{
+      const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+      actual[id]={current_store:val,channel:newCh||emp.channel||''};
+      localStorage.setItem('layoutActualData',JSON.stringify(actual));
+    }catch(_){}
     refresh();
   }
   if(field==='hire_date'){
@@ -3086,6 +3499,10 @@ function saveCell(el){
   if(!window.__fbEdits[id]) window.__fbEdits[id]={};
   window.__fbEdits[id][field]=val;
   window.fbSetEdit(id, field, val);
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e) {}
+  // [SYNC] 직원관리 인라인 편집 → 배치현황 즉시 반영
+  if(typeof window.lvRender === 'function') { try { window.lvRender(); } catch(_){ } }
+  if(typeof window.lvRenderSB === 'function') { try { window.lvRenderSB(); } catch(_){ } }
 }
 function saveSel(el){
   const id=el.dataset.id, field=el.dataset.field, val=el.value;
@@ -3098,11 +3515,15 @@ function saveSel(el){
   if(!window.__fbEdits[id]) window.__fbEdits[id]={};
   window.__fbEdits[id][field]=val;
   window.fbSetEdit(id, field, val);
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e) {}
   if(curEmp&&curEmp.id===id){
     if(field==='channel') document.getElementById('pch').innerHTML=ctag(val);
     if(field==='kindness') document.getElementById('pkindness')?.setAttribute('data-val',val);
     if(field==='growth') document.getElementById('pgrowth')?.setAttribute('data-val',val);
   }
+  // [SYNC] 직원관리 셀렉트 편집 → 배치현황 즉시 반영
+  if(typeof window.lvRender === 'function') { try { window.lvRender(); } catch(_){ } }
+  if(typeof window.lvRenderSB === 'function') { try { window.lvRenderSB(); } catch(_){ } }
 }
 function guessChannel(store){
   if(!store)return null;
@@ -3127,11 +3548,159 @@ function renderGrd(list){
 }
 function setView(v){
   curView=v;
+  const dash=document.getElementById('praise-dashboard');
+  if(dash) dash.style.display='none';
   document.getElementById('twrap').style.display=v==='tbl'?'flex':'none';
   document.getElementById('gwrap').style.display=v==='grd'?'flex':'none';
   document.getElementById('btn-tbl').classList.toggle('on',v==='tbl');
   document.getElementById('btn-grd').classList.toggle('on',v==='grd');
+  document.getElementById('btn-praise-dash')?.classList.remove('on');
   const l=getList();v==='tbl'?renderTbl(l):renderGrd(l);
+}
+function setPraiseDashboardView(){
+  document.getElementById('twrap').style.display='none';
+  document.getElementById('gwrap').style.display='none';
+  document.getElementById('praise-dashboard').style.display='block';
+  document.getElementById('btn-tbl').classList.remove('on');
+  document.getElementById('btn-grd').classList.remove('on');
+  document.getElementById('btn-praise-dash').classList.add('on');
+  initPraiseDashboardPeriod();
+  renderPraiseDashboard();
+}
+function quarterRange(offset){
+  const now=new Date();
+  let q=Math.floor(now.getMonth()/3)+offset;
+  let y=now.getFullYear();
+  while(q<0){q+=4;y--;}
+  while(q>3){q-=4;y++;}
+  const sm=q*3;
+  const start=new Date(y,sm,1);
+  const end=new Date(y,sm+3,0);
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return {start:iso(start),end:iso(end)};
+}
+function initPraiseDashboardPeriod(){
+  const s=document.getElementById('pdash-start'), e=document.getElementById('pdash-end');
+  if(!s||!e) return;
+  if(!s.value||!e.value){const r=quarterRange(0);s.value=r.start;e.value=r.end;}
+}
+function setPraisePeriodQuick(kind){
+  const r=kind==='lastQuarter'?quarterRange(-1):quarterRange(0);
+  document.getElementById('pdash-start').value=r.start;
+  document.getElementById('pdash-end').value=r.end;
+  renderPraiseDashboard();
+}
+function currentPraisePeriod(){
+  initPraiseDashboardPeriod();
+  return {
+    start:document.getElementById('pdash-start')?.value||'',
+    end:document.getElementById('pdash-end')?.value||''
+  };
+}
+function praiseRankingRows(){
+  const p=currentPraisePeriod();
+  const records=getPraiseRecords().filter(r=>{
+    const d=parsePraiseDate(r.date);
+    return d && (!p.start||d>=p.start) && (!p.end||d<=p.end);
+  });
+  const map={};
+  records.forEach(r=>{
+    const emp=EMPS.find(e=>e.id===r.employeeId);
+    if(!map[r.employeeId]){
+      map[r.employeeId]={employeeId:r.employeeId,employeeName:r.employeeName||(emp?emp.name:''),store:r.store||(emp?emp.current_store:''),score:0,count:0,recentDate:''};
+    }
+    map[r.employeeId].score+=parseFloat(r.score)||0;
+    map[r.employeeId].count+=1;
+    const d=parsePraiseDate(r.date);
+    if(d && (!map[r.employeeId].recentDate || d>map[r.employeeId].recentDate)) map[r.employeeId].recentDate=d;
+  });
+  return Object.values(map).sort((a,b)=>{
+    if(b.score!==a.score) return b.score-a.score;
+    if(a.recentDate!==b.recentDate) return (a.recentDate||'9999').localeCompare(b.recentDate||'9999');
+    return (a.employeeName||'').localeCompare(b.employeeName||'','ko');
+  }).map((r,i)=>Object.assign(r,{rank:i+1}));
+}
+function hasPraiseReward(empId,start,end){
+  return getPraiseRewards().some(r=>r.employeeId===empId && r.periodStart===start && r.periodEnd===end);
+}
+function renderPraiseDashboard(){
+  const dash=document.getElementById('praise-dashboard');
+  if(!dash) return;
+  const p=currentPraisePeriod();
+  const rows=praiseRankingRows();
+  const body=document.getElementById('praise-rank-body');
+  const sum=document.getElementById('pdash-summary');
+  if(sum) sum.textContent=`${p.start} ~ ${p.end} · ${rows.length}명`;
+  if(body){
+    body.innerHTML=rows.length?rows.map(r=>{
+      const rewarded=hasPraiseReward(r.employeeId,p.start,p.end);
+      return `<tr>
+        <td style="font-weight:700">${r.rank}</td>
+        <td>${r.employeeName||'-'}</td>
+        <td style="color:var(--t2)">${r.store||'-'}</td>
+        <td style="font-weight:700;color:#5B6BE8">${praiseScoreFmt(r.score)}점</td>
+        <td>${r.count}건</td>
+        <td>${displayPraiseDate(r.recentDate)}</td>
+        <td>${rewarded?'<span class="tag tgn">지급 완료</span>':'<span class="tag tgg">미지급</span>'}</td>
+        <td><button class="pdash-btn primary" onclick="grantPraiseReward('${r.employeeId}',${r.rank},${r.score})">${rewarded?'추가 지급':'포상 지급'}</button></td>
+      </tr>`;
+    }).join(''):'<tr><td colspan="8" class="pdash-empty">선택한 기간의 칭찬 기록이 없습니다.</td></tr>';
+  }
+  renderPraiseRewardHistory();
+}
+function grantPraiseReward(empId,rank,score){
+  const emp=EMPS.find(e=>e.id===empId);
+  if(!emp) return;
+  const p=currentPraisePeriod();
+  const memo=prompt('포상 지급 메모를 입력하세요.','')||'';
+  const rewards=getPraiseRewards();
+  rewards.unshift({
+    id:'rw_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    employeeId:emp.id,
+    employeeName:emp.name||'',
+    store:emp.current_store||'',
+    rewardDate:todayISO(),
+    periodStart:p.start,
+    periodEnd:p.end,
+    score:parseFloat(score)||0,
+    rank:rank,
+    memo:memo
+  });
+  setPraiseRewards(rewards);
+  renderPraiseDashboard();
+}
+function renderPraiseRewardHistory(){
+  const body=document.getElementById('praise-reward-body');
+  if(!body) return;
+  const p=currentPraisePeriod();
+  const rewards=getPraiseRewards().filter(r=>(!p.start||r.periodEnd>=p.start)&&(!p.end||r.periodStart<=p.end));
+  const sum=document.getElementById('preward-summary');
+  if(sum) sum.textContent=`표시 이력 ${rewards.length}건`;
+  body.innerHTML=rewards.length?rewards.map(r=>`<tr>
+    <td>${r.periodStart||'-'} ~ ${r.periodEnd||'-'}</td>
+    <td>${displayPraiseDate(r.rewardDate)}</td>
+    <td>${r.employeeName||'-'}</td>
+    <td style="color:var(--t2)">${r.store||'-'}</td>
+    <td style="font-weight:700">${praiseScoreFmt(r.score)}점</td>
+    <td>${r.rank||'-'}위</td>
+    <td>${r.memo||''}</td>
+    <td><button class="pdash-btn" onclick="editPraiseReward('${r.id}')">수정</button> <button class="pdash-btn danger" onclick="deletePraiseReward('${r.id}')">삭제</button></td>
+  </tr>`).join(''):'<tr><td colspan="8" class="pdash-empty">포상 지급 이력이 없습니다.</td></tr>';
+}
+function editPraiseReward(id){
+  const rewards=getPraiseRewards();
+  const idx=rewards.findIndex(r=>r.id===id);
+  if(idx<0) return;
+  const memo=prompt('포상 지급 메모를 수정하세요.',rewards[idx].memo||'');
+  if(memo===null) return;
+  rewards[idx].memo=memo;
+  setPraiseRewards(rewards);
+  renderPraiseRewardHistory();
+}
+function deletePraiseReward(id){
+  if(!confirm('이 포상 지급 이력을 삭제할까요?')) return;
+  setPraiseRewards(getPraiseRewards().filter(r=>r.id!==id));
+  renderPraiseDashboard();
 }
 function openP(emp){
   curEmp=emp;
@@ -3173,9 +3742,12 @@ function openP(emp){
   document.getElementById('pmemo').value=_memoVal;
   const fb=getF(emp.id);
   const praiseCountEl=document.getElementById('ppraise-count');
-  if(praiseCountEl) praiseCountEl.textContent=fb.praiseCount||0;
+  if(praiseCountEl) praiseCountEl.textContent=praiseScoreFmt(totalPraiseScore(emp.id));
   const praiseInp=document.getElementById('praise-input');
   if(praiseInp) praiseInp.value='';
+  const praiseDateEl=document.getElementById('praise-date');
+  if(praiseDateEl) praiseDateEl.value=todayISO();
+  applyPraiseDefaultScore();
   const praiseLogEl=document.getElementById('praise-log');
   if(praiseLogEl){ praiseLogEl.style.display='none'; renderPraiseLog(emp.id,false); }
   /* [FIX 2] __fbEdits에서 최신 switching 읽기 */
@@ -3223,6 +3795,94 @@ function setF(id,key,val){
   localStorage.setItem('hr_fb_'+id, JSON.stringify(d));
   window.fbSetEdit&&window.fbSetEdit(id, 'fb_'+key, val);
 }
+function todayISO(){return new Date().toISOString().slice(0,10)}
+function praiseScoreFmt(n){
+  const v=Math.round((parseFloat(n)||0)*10)/10;
+  return Number.isInteger(v)?String(v):String(v).replace(/\.0$/,'');
+}
+function parsePraiseDate(v){
+  if(!v) return '';
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m=s.match(/(\d{2,4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if(!m) return '';
+  let y=parseInt(m[1],10); if(y<100) y+=2000;
+  const mo=String(parseInt(m[2],10)).padStart(2,'0');
+  const d=String(parseInt(m[3],10)).padStart(2,'0');
+  return `${y}-${mo}-${d}`;
+}
+function displayPraiseDate(v){return parsePraiseDate(v)||v||'-'}
+function getPraiseRecordsRaw(){
+  try{const a=JSON.parse(localStorage.getItem('praiseRecords')||'[]');return Array.isArray(a)?a:[];}catch(e){return[]}
+}
+let __praiseRecordsReady=false;
+function setPraiseRecords(a){localStorage.setItem('praiseRecords',JSON.stringify(a||[]));__praiseRecordsReady=true}
+function getPraiseRewards(){
+  try{const a=JSON.parse(localStorage.getItem('praiseRewards')||'[]');return Array.isArray(a)?a:[];}catch(e){return[]}
+}
+function setPraiseRewards(a){localStorage.setItem('praiseRewards',JSON.stringify(a||[]))}
+function normalizePraiseRecords(){
+  const records=getPraiseRecordsRaw().map(r=>{
+    const emp=EMPS.find(e=>e.id===(r.employeeId||r.empId||r.id));
+    const score=parseFloat(r.score!==undefined?r.score:(r.praiseScore!==undefined?r.praiseScore:1));
+    return {
+      id:r.id||('pr_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)),
+      employeeId:r.employeeId||r.empId||r.id||'',
+      employeeName:r.employeeName||r.name||(emp?emp.name:''),
+      store:r.store||r.current_store||(emp?emp.current_store:''),
+      text:r.text||r.content||r.memo||'',
+      date:parsePraiseDate(r.date||r.praiseDate)||todayISO(),
+      inputBy:r.inputBy||r.writer||'관리자',
+      score:Number.isFinite(score)?score:1
+    };
+  });
+  const keys=new Set(records.map(r=>`${r.employeeId}|${r.date}|${r.text}`));
+  EMPS.forEach(emp=>{
+    const fb=getF(emp.id);
+    (fb.praiseLog||[]).forEach((entry,i)=>{
+      const text=entry.text||(typeof entry==='string'?entry:'');
+      const date=parsePraiseDate(entry.date)||todayISO();
+      const key=`${emp.id}|${date}|${text}`;
+      if(keys.has(key)) return;
+      keys.add(key);
+      records.push({
+        id:`legacy_${emp.id}_${i}_${date.replace(/-/g,'')}`,
+        employeeId:emp.id,
+        employeeName:emp.name||'',
+        store:emp.current_store||'',
+        text:text,
+        date:date,
+        inputBy:entry.inputBy||'관리자',
+        score:entry.score!==undefined?parseFloat(entry.score)||1:1
+      });
+    });
+  });
+  setPraiseRecords(records);
+  syncPraiseTotals();
+  return records;
+}
+function getPraiseRecords(){
+  if(!__praiseRecordsReady){__praiseRecordsReady=true;return normalizePraiseRecords();}
+  return getPraiseRecordsRaw();
+}
+function employeePraiseRecords(empId){return getPraiseRecords().filter(r=>r.employeeId===empId).sort((a,b)=>(b.date||'').localeCompare(a.date||''))}
+function totalPraiseScore(empId){return employeePraiseRecords(empId).reduce((s,r)=>s+(parseFloat(r.score)||0),0)}
+function syncPraiseTotals(){
+  const raw=getPraiseRecordsRaw();
+  EMPS.forEach(emp=>{
+    const rows=raw.filter(r=>r.employeeId===emp.id);
+    const score=rows.reduce((s,r)=>s+(parseFloat(r.score)||0),0);
+    const fb=getF(emp.id);
+    fb.praiseScore=score;
+    fb.praiseCount=rows.length;
+    localStorage.setItem('hr_fb_'+emp.id,JSON.stringify(fb));
+  });
+}
+function applyPraiseDefaultScore(){
+  const type=document.getElementById('praise-type')?.value;
+  const scoreEl=document.getElementById('praise-score');
+  if(scoreEl) scoreEl.value=type==='long'?'1':'0.5';
+}
 function saveABC(field,val){
   if(!curEmp)return;
   curEmp[field]=val;
@@ -3248,42 +3908,55 @@ function submitPraise(){
   const inp=document.getElementById('praise-input');
   const text=(inp?inp.value.trim():'');
   if(!text){inp&&inp.focus();return;}
-  const fb=getF(curEmp.id);
-  const now=new Date().toLocaleDateString('ko-KR',{year:'2-digit',month:'2-digit',day:'2-digit'});
-  if(!fb.praiseLog) fb.praiseLog=[];
-  fb.praiseLog.unshift({date:now,text:text});
-  if(fb.praiseLog.length>50) fb.praiseLog.pop();
-  fb.praiseCount=(fb.praiseCount||0)+1;
-  setF(curEmp.id,'praiseLog',fb.praiseLog);
-  setF(curEmp.id,'praiseCount',fb.praiseCount);
+  const scoreEl=document.getElementById('praise-score');
+  const dateEl=document.getElementById('praise-date');
+  const score=parseFloat(scoreEl?scoreEl.value:'');
+  if(!Number.isFinite(score)||score<0){scoreEl&&scoreEl.focus();return;}
+  const records=getPraiseRecords();
+  records.unshift({
+    id:'pr_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    employeeId:curEmp.id,
+    employeeName:curEmp.name||'',
+    store:curEmp.current_store||'',
+    text:text,
+    date:(dateEl&&dateEl.value)||todayISO(),
+    inputBy:'관리자',
+    score:score
+  });
+  setPraiseRecords(records);
+  syncPraiseTotals();
+  const total=totalPraiseScore(curEmp.id);
   const el=document.getElementById('ppraise-count');
-  if(el) el.textContent=fb.praiseCount;
+  if(el) el.textContent=praiseScoreFmt(total);
   inp.value='';
   renderPraiseLog(curEmp.id, true);
   const badge=document.querySelector(`.praise-count-badge[data-id="${curEmp.id}"]`);
-  if(badge) badge.textContent=fb.praiseCount+'회';
+  if(badge) badge.textContent='칭찬 '+praiseScoreFmt(total)+'점';
   const trs=document.querySelectorAll('tr[data-emp-id]');
   trs.forEach(tr=>{
     if(tr.dataset.empId===curEmp.id){
       const badges=tr.querySelectorAll('.praise-count-badge');
-      badges.forEach(b=>b.textContent=fb.praiseCount+'회');
+      badges.forEach(b=>b.textContent='칭찬 '+praiseScoreFmt(total)+'점');
     }
   });
+  renderPraiseDashboard();
 }
 function renderPraiseLog(empId, forceOpen){
-  const fb=getF(empId);
   const logEl=document.getElementById('praise-log');
   if(!logEl) return;
-  const logs=fb.praiseLog||[];
+  const logs=employeePraiseRecords(empId);
   if(logs.length===0){ logEl.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:4px 0">칭찬 기록이 없습니다.</div>'; if(forceOpen) logEl.style.display='block'; return; }
   logEl.innerHTML=logs.map((entry,i)=>{
-    const date=entry.date||'';
+    const date=displayPraiseDate(entry.date);
     const text=entry.text||(typeof entry==='string'?entry:'');
+    const score=parseFloat(entry.score)||1;
     return `<div style="display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid #ede9fe">
       <div style="flex:1;font-size:12px;line-height:1.5">
         <span style="color:#7c3aed;font-weight:600;font-size:11px">${i+1}. ${date}</span>
         <span style="color:#374151;margin-left:6px">${text}</span>
+        <span style="color:#5b21b6;margin-left:6px;font-weight:700">${praiseScoreFmt(score)}점</span>
       </div>
+      <input class="praise-log-score" type="number" min="0" step="0.5" value="${score}" onchange="updatePraiseScore('${entry.id}',this.value)" title="칭찬 점수 수정">
       <button onclick="deletePraise(${i})" title="이 기록 삭제"
         style="flex-shrink:0;background:none;border:none;color:#d1d5db;cursor:pointer;font-size:14px;padding:0 2px;line-height:1"
         onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#d1d5db'">✕</button>
@@ -3293,21 +3966,36 @@ function renderPraiseLog(empId, forceOpen){
 }
 function deletePraise(idx){
   if(!curEmp) return;
-  const fb=getF(curEmp.id);
-  if(!fb.praiseLog || !fb.praiseLog[idx]) return;
+  const rows=employeePraiseRecords(curEmp.id);
+  const target=rows[idx];
+  if(!target) return;
   if(!confirm('이 칭찬 기록을 삭제할까요?')) return;
-  fb.praiseLog.splice(idx,1);
-  fb.praiseCount=Math.max(0,(fb.praiseCount||1)-1);
-  setF(curEmp.id,'praiseLog',fb.praiseLog);
-  setF(curEmp.id,'praiseCount',fb.praiseCount);
+  setPraiseRecords(getPraiseRecords().filter(r=>r.id!==target.id));
+  syncPraiseTotals();
+  const total=totalPraiseScore(curEmp.id);
   const cntEl=document.getElementById('ppraise-count');
-  if(cntEl) cntEl.textContent=fb.praiseCount;
+  if(cntEl) cntEl.textContent=praiseScoreFmt(total);
   renderPraiseLog(curEmp.id, true);
   document.querySelectorAll('tr[data-emp-id]').forEach(tr=>{
     if(tr.dataset.empId===curEmp.id){
-      tr.querySelectorAll('.praise-count-badge').forEach(b=>b.textContent=fb.praiseCount+'회');
+      tr.querySelectorAll('.praise-count-badge').forEach(b=>b.textContent='칭찬 '+praiseScoreFmt(total)+'점');
     }
   });
+  renderPraiseDashboard();
+}
+function updatePraiseScore(recordId,val){
+  const score=parseFloat(val);
+  if(!Number.isFinite(score)||score<0) return;
+  const records=getPraiseRecords().map(r=>r.id===recordId?Object.assign({},r,{score:score}):r);
+  setPraiseRecords(records);
+  syncPraiseTotals();
+  if(curEmp){
+    const cntEl=document.getElementById('ppraise-count');
+    if(cntEl) cntEl.textContent=praiseScoreFmt(totalPraiseScore(curEmp.id));
+    renderPraiseLog(curEmp.id,true);
+  }
+  refresh();
+  renderPraiseDashboard();
 }
 function togglePraiseLog(){
   const logEl=document.getElementById('praise-log');
@@ -3384,6 +4072,13 @@ function saveFieldEdit(field, val){
   if(field==='brand' || field==='channel'){
     document.getElementById('pdtags').innerHTML=ctag(curEmp.channel)+` <span class="tag tgg">${curEmp.brand}</span><span class="tag tgg">${curEmp.tenure||''}</span>`;
   }
+  if(field==='current_store'){
+    try{
+      const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+      actual[curEmp.id]={current_store:val,channel:guessChannel(val)||curEmp.channel||''};
+      localStorage.setItem('layoutActualData',JSON.stringify(actual));
+    }catch(_){}
+  }
   if(field==='hire_date'){
     const m=val.match(/(\d{4})년/);
     if(m){ const yr=parseInt(m[1]); const ten=(new Date().getFullYear()-yr+1)+'년차'; curEmp.tenure=ten; document.getElementById('pten').textContent=ten; }
@@ -3393,6 +4088,16 @@ function saveFieldEdit(field, val){
   if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id]={};
   window.__fbEdits[curEmp.id][field]=val;
   window.fbSetEdit&&window.fbSetEdit(curEmp.id,field,val);
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e) {}
+  // [SAVE FIX] 직책 등 핵심 필드는 hr_fb_<id> 로컬스토리지에도 이중 저장하여 새로고침/탭이동 후에도 보존
+  try{
+    const _hrFb = JSON.parse(localStorage.getItem('hr_fb_'+curEmp.id)||'{}');
+    _hrFb[field] = val;
+    localStorage.setItem('hr_fb_'+curEmp.id, JSON.stringify(_hrFb));
+  }catch(_e){}
+  // [SYNC] 직원관리 편집 → 배치현황 즉시 반영
+  if(typeof window.lvRender === 'function') { try { window.lvRender(); } catch(_){ } }
+  if(typeof window.lvRenderSB === 'function') { try { window.lvRenderSB(); } catch(_){ } }
 }
 function saveSwitch(){
   if(!curEmp)return;
@@ -3458,6 +4163,14 @@ window.togglePraiseLog = togglePraiseLog;
 window.submitPraise = submitPraise;
 window.deletePraise = deletePraise;
 window.renderPraiseLog = renderPraiseLog;
+window.updatePraiseScore = updatePraiseScore;
+window.applyPraiseDefaultScore = applyPraiseDefaultScore;
+window.setPraiseDashboardView = setPraiseDashboardView;
+window.setPraisePeriodQuick = setPraisePeriodQuick;
+window.renderPraiseDashboard = renderPraiseDashboard;
+window.grantPraiseReward = grantPraiseReward;
+window.editPraiseReward = editPraiseReward;
+window.deletePraiseReward = deletePraiseReward;
 window.trigPhoto   = trigPhoto;
 window.handlePhoto = handlePhoto;
 window.setPEditMode = setPEditMode;
@@ -3505,6 +4218,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       window.__fbSchedule = _sd;
     }
   } catch(_e2) {}
+  normalizePraiseRecords();
   resetSidebarTreeState();
   const l=getList();renderBar(l);renderTbl(l);
   collapseSidebarTreeDOM();
@@ -3527,6 +4241,7 @@ const STATUS_CFG={
   support:  {label:'지원근무', dot:'#0d9488',chipBg:'#e6f7f5',chipColor:'#0d9488',badge:'지원',  sbCount:true, storeCount:false},
 };
 function getEmpStatus(emp){
+  if(emp && isDeletedEmpId(emp.id)) return 'deleted';
   const ed=window.__fbEdits||{};
   if(ed[emp.id]&&ed[emp.id].status) return ed[emp.id].status;
   return emp.status||'active';
@@ -3545,8 +4260,8 @@ function lvSection(emp){
   const ch=emp.channel||'';
   if(ch==='DS')  return 'DS';
   if(ch==='DFS') return 'DFS';
-  if(ch==='HAUS'||ch==='FS'||ch==='MALL'||ch==='PU') return 'FSMALL';
-  if(/^PU /.test(s)) return 'FSMALL';
+  if(ch==='HAUS'||ch==='FS'||ch==='MALL'||ch==='PU'||ch==='하우스 노웨어') return 'FSMALL';
+  if(/^PU /.test(s)||s.includes('하우스 노웨어')||s.includes('하우스')) return 'FSMALL';
   return 'ETC';
 }
 function lvStoreName(k){
@@ -3584,6 +4299,121 @@ function storeInit(n){
 }
 let lvCurTab='ALL', lvDragType=null, lvDragId=null, lvDragSec=null, lvQ='';
 let lvPPWidth = parseInt(localStorage.getItem('lvPPWidth')||'320',10);
+const LV_ACTUAL_KEY='layoutActualData';
+const LV_DRAFT_KEY='layoutDraftData';
+let lvMode=localStorage.getItem('layoutMode')||'draft';
+function lvReadLayout(key){
+  try{const data=JSON.parse(localStorage.getItem(key)||'{}');return data&&typeof data==='object'?data:{};}catch(e){return{};}
+}
+function lvWriteLayout(key,data){localStorage.setItem(key,JSON.stringify(data||{}));}
+function lvActualSnapshot(){
+  const map={};
+  EMPS.forEach(e=>{if(e&&e.id) map[e.id]={current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||''};});
+  return map;
+}
+function lvEnsureActualData(){
+  let actual=lvReadLayout(LV_ACTUAL_KEY);
+  let changed=false;
+  // [FIX] 유효 매장 목록 확보(localStorage stale data 보정)
+  let validStoreIds=null;
+  try{
+    const list=(typeof loadStoreList==='function')?loadStoreList():[...STORES];
+    validStoreIds=new Set((list||[]).map(s=>s&&s.id).filter(Boolean));
+  }catch(_e){ validStoreIds=null; }
+  EMPS.forEach(e=>{
+    if(!e||!e.id) return;
+    if(!actual[e.id]){
+      actual[e.id]={current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||''};
+      changed=true;
+    } else if(validStoreIds && e.current_store){
+      // 매장이 STORES에 새로 추가됐는데 localStorage가 stale인 케이스(예: 하남) 자동 복구
+      const cs=actual[e.id].current_store;
+      if(!cs || (!validStoreIds.has(cs) && cs!=='육아휴직' && !/^PU\s/.test(cs))){
+        actual[e.id].current_store=e.current_store;
+        actual[e.id].channel=e.channel||guessChannel(e.current_store||'')||'';
+        changed=true;
+      }
+    }
+  });
+  if(changed) lvWriteLayout(LV_ACTUAL_KEY,actual);
+  return actual;
+}
+function lvEnsureDraftData(){
+  const actual=lvEnsureActualData();
+  let draft=lvReadLayout(LV_DRAFT_KEY);
+  let changed=false;
+  let validStoreIds=null;
+  try{
+    const list=(typeof loadStoreList==='function')?loadStoreList():[...STORES];
+    validStoreIds=new Set((list||[]).map(s=>s&&s.id).filter(Boolean));
+  }catch(_e){ validStoreIds=null; }
+  EMPS.forEach(e=>{
+    if(!e||!e.id) return;
+    if(!draft[e.id]){
+      draft[e.id]=Object.assign({},actual[e.id]||{current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||''});
+      changed=true;
+    } else if(validStoreIds && e.current_store){
+      const cs=draft[e.id].current_store;
+      if(!cs || (!validStoreIds.has(cs) && cs!=='육아휴직' && !/^PU\s/.test(cs))){
+        draft[e.id].current_store=(actual[e.id]&&actual[e.id].current_store)||e.current_store;
+        draft[e.id].channel=(actual[e.id]&&actual[e.id].channel)||e.channel||guessChannel(e.current_store||'')||'';
+        changed=true;
+      }
+    }
+  });
+  if(changed) lvWriteLayout(LV_DRAFT_KEY,draft);
+  return draft;
+}
+function lvLayoutMap(){return lvMode==='draft'?lvEnsureDraftData():lvEnsureActualData();}
+function lvEmpStore(emp){const row=lvLayoutMap()[emp.id];return (row&&row.current_store!==undefined)?row.current_store:(emp.current_store||'');}
+function lvEmpChannel(emp){const row=lvLayoutMap()[emp.id];return (row&&row.channel!==undefined)?row.channel:(emp.channel||guessChannel(lvEmpStore(emp))||'');}
+function lvViewEmp(emp){
+  if(!emp) return emp;
+  const copy=Object.assign({},emp);
+  copy.current_store=lvEmpStore(emp);
+  copy.channel=lvEmpChannel(emp);
+  return copy;
+}
+function lvModeEmployees(){return EMPS.map(lvViewEmp);}
+function lvSaveDraftMove(empId,storeKey){
+  const draft=lvEnsureDraftData();
+  draft[empId]={current_store:storeKey,channel:guessChannel(storeKey)||''};
+  lvWriteLayout(LV_DRAFT_KEY,draft);
+}
+function lvSetMode(mode){
+  lvMode=mode==='actual'?'actual':'draft';
+  localStorage.setItem('layoutMode',lvMode);
+  const showDraft=lvMode==='draft';
+  const modeBtn=document.getElementById('lv-mode-draft');
+  if(modeBtn) modeBtn.classList.toggle('active',showDraft);
+  document.getElementById('lv-actual-tab')?.classList.toggle('active',!showDraft);
+  lvRender(); lvRenderSB();
+}
+function lvResetDraft(){
+  if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?')) return;
+  lvWriteLayout(LV_DRAFT_KEY,lvEnsureActualData());
+  lvToast('↩ 테스트 배치를 실제 배치 기준으로 초기화했습니다.');
+  showSaved();
+  lvRender(); lvRenderSB();
+}
+function lvApplyDraftToActual(){
+  if(!confirm('현재 테스트 배치 상태를 전체 직원 배치에 적용하시겠습니까? 적용 후 실제 직원 소속 매장이 변경됩니다.')) return;
+  const draft=lvEnsureDraftData();
+  lvWriteLayout(LV_ACTUAL_KEY,draft);
+  EMPS.forEach(emp=>{
+    const row=draft[emp.id];
+    if(!row) return;
+    emp.current_store=row.current_store||'';
+    emp.channel=row.channel||guessChannel(row.current_store||'')||'';
+    lvSaveToHrEdits(emp);
+  });
+  try{ if(typeof persistEditsCache==='function') persistEditsCache(); }catch(e){}
+  if(typeof refresh==='function') refresh();
+  lvMode='actual';
+  lvSetMode('actual');
+  showSaved();
+  lvToast('💾 테스트 배치를 전체 직원 배치에 적용했습니다.');
+}
 function getStoreOrder(sec){try{return JSON.parse(localStorage.getItem('lvOrder_'+sec)||'null');}catch{return null;}}
 function setStoreOrder(sec,keys){localStorage.setItem('lvOrder_'+sec,JSON.stringify(keys));}
 function sortedStoreKeys(sec,keys){
@@ -3712,8 +4542,9 @@ function saveCustomStores(){
 window.saveCustomStores=saveCustomStores;
 window.CUSTOM_STORES = window.CUSTOM_STORES || loadCustomStores();
 function getAllStores(){
-  const set=new Set(EMPS.map(e=>e.current_store||'').filter(Boolean));
-  (window.CUSTOM_STORES||[]).forEach(s=>set.add(s));
+  // STORE CRUD FIX
+  const set=new Set();
+  try { loadStoreList().forEach(s=>{ if(s.id) set.add(s.id); }); } catch(e) {}
   return [...set].filter(s=>s&&s!=='육아휴직').sort((a,b)=>a.localeCompare(b,'ko'));
 }
 function storeOptions(selected){
@@ -3809,7 +4640,7 @@ function buildEmpDatalist(){
   if($('lv-pp-emp-list')) return;
   const dl=document.createElement('datalist');
   dl.id='lv-pp-emp-list';
-  EMPS.forEach(e=>{
+  EMPS.filter(e=>getEmpStatus(e)!=='deleted').forEach(e=>{
     const opt=document.createElement('option');
     opt.value=e.name;
     opt.label=e.position+' · '+(e.current_store||'');
@@ -3820,6 +4651,7 @@ function buildEmpDatalist(){
 function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
   emp.status=status;
+  if(status==='deleted') markDeletedEmpId(empId); else unmarkDeletedEmpId(empId);
   lvPersistEdit(empId, 'status', status);
   if(window.fbSetEdit) window.fbSetEdit(empId, 'status', status);
   /* [FIX 1] 상태 변경 즉시 캐시 저장 보장 */
@@ -3839,12 +4671,25 @@ function lvSetStatusSilent(empName, status){
   if(!emp) return;
   emp.status=status;
   const key=emp.id||emp.name;
+  if(status==='deleted') markDeletedEmpId(key); else unmarkDeletedEmpId(key);
   lvPersistEdit(key, 'status', status);
   if(window.fbSetEdit) window.fbSetEdit(key, 'status', status);
   syncScheduleForEmp(emp, status);
   lvRender(); lvRenderSB(); ppRender();
 }
 window.lvSetStatusSilent=lvSetStatusSilent;
+function lvPersistMemo(empId, memo){
+  if(!empId) return;
+  if(!window.__fbEdits) window.__fbEdits={};
+  if(!window.__fbEdits[empId]) window.__fbEdits[empId]={};
+  window.__fbEdits[empId].memo=memo;
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e){}
+  try{
+    const hr=JSON.parse(localStorage.getItem('hr_fb_'+empId)||'{}');
+    hr.memo=memo;
+    localStorage.setItem('hr_fb_'+empId, JSON.stringify(hr));
+  }catch(e){}
+}
 function lvSaveMemo(){
   const ta=$('lv-ctx-memo-input');
   const empId=window.__ctxEmpId;
@@ -3852,10 +4697,12 @@ function lvSaveMemo(){
   const memo=ta.value.trim();
   const emp=EMPS.find(x=>x.id===empId);
   if(emp) emp.memo=memo;
-  window.fbSetEdit(empId, 'memo', memo);
+  lvPersistMemo(empId, memo);
+  if(typeof window.fbSetEdit==='function') window.fbSetEdit(empId, 'memo', memo);
   hideCtxMenu(); showSaved();
   lvToast('📝 메모 저장됨');
   lvRender();
+  if(typeof refresh==='function') refresh();
 }
 window.lvSaveMemo=lvSaveMemo;
 function buildCtxMenu(){
@@ -3962,7 +4809,7 @@ function lvRenderSB(){
   function calcBrand(bk){
     const sb=brands.find(b=>b.brand===bk)||{};
     const base=getSbBaseValue(bk, sbNum(sb['기준'],0));
-    const empsByBrand=EMPS.filter(e=>brandMatch(e,bk));
+    const empsByBrand=lvModeEmployees().filter(e=>getEmpStatus(e)!=='deleted' && brandMatch(e,bk));
     const activeEmps=empsByBrand.filter(e=>{
       const st=getEmpStatus(e);
       return st==='active' || st==='returning' || st==='support' || st==='transfer';
@@ -4040,6 +4887,235 @@ function lvRenderSB(){
        ·  기준인원은 브랜드별 입력칸에서 직접 수정 가능
     </div>`;
 }
+
+/* ══════════════════════════════════════════════
+   파트타이머 초기 데이터 (엑셀 기준)
+   storeKey → { ptBase: N, names: [...] }
+   엑셀 매장명 → HR 시스템 storeKey 매핑
+   ══════════════════════════════════════════════ */
+const PT_EXCEL_INIT = {
+  /* ── FS·MALL ── */
+  'GM_서울_하우스 노웨어_도산':      { ptBase: 16, names: ['박성현','김유민','조유성','이강','황수하','강수민','장수아','신어진','이현민','박채빈','고나연','김민정','김호범','남궁선','장서영','황수하'] },
+  'GM_서울_하우스 노웨어_서울':      { ptBase: 14, names: ['김덕현','박선우','윤태린','서윤정','정유안','장고은','한지민','김도이','정','윤서현','황세원','송지훈','신예진','조형준'] },
+  'GM_서울_FS_신사':                { ptBase: 10, names: ['정준우','장고은','박연오','황수빈','이승연','조예화','허재','김윤정','김효린','임소연'] },
+  'GM_서울_FS_홍대':                { ptBase: 9,  names: ['이창헌','이채원','이승헌','김희주','강주희','김경은','유가경','임하민'] },
+  'GM_서울_MALL_롯데_월드몰'        : { ptBase: 11, names: ['윤장원','박창민','강소연','배형근','임가영','이윤채','박민선','조수연','이지수','김상진','장원우'] },
+  'GM_경기_MALL_신세계스타필드_하남':{ ptBase: 7, names: ['김강령','조준승','박서희','김민서','박병준','구민채','손승수'] },
+  'PU_성수_Pocket_팝업':            { ptBase: 6,  names: ['김예진','고은이','전효영','윤가희','도지민','박선빈'] },
+  /* ── DS ── */
+  'GM_서울_DS_신세계_명동':         { ptBase: 5,  names: ['김희주','손민서','이우령'] },
+  'GM_서울_DS_신세계_강남':         { ptBase: 5,  names: ['이재환','장진명','박지후','오채윤','문예인'] },
+  'GM_경기_DS_신세계_의정부':       { ptBase: 5,  names: ['최한결','이우령','강지우'] },
+  'GM_경기_DS_신세계_사우스시티':         { ptBase: 5,  names: ['강지우','김예빈'] },
+  'GM_대전_DS_신세계_대전':         { ptBase: 6,  names: ['함형준','김준영','윤수정','윤지은','배현준'] },
+  'GM_천안_DS_신세계_천안아산':     { ptBase: 5,  names: ['박예서','강민영'] },
+  'GM_대구_DS_신세계_대구':         { ptBase: 4,  names: ['조지인','전효경'] },
+  'GM_부산_DS_신세계_센텀':         { ptBase: 5,  names: ['정유진','김아윤','전성문'] },
+  'GM_서울_DS_롯데_명동':           { ptBase: 5,  names: ['이선주','강민아','김동진','손용선','최예린'] },
+  'GM_서울_DS_롯데_잠실':           { ptBase: 5,  names: ['김효림','김진원'] },
+  'GM_경기_DS_롯데_동탄':           { ptBase: 5,  names: ['김승진','서민지'] },
+  'GM_부산_DS_롯데_서면':           { ptBase: 6,  names: ['박주연','김성주','김지영','박미선','최혜원'] },
+  'GM_서울_DS_갤러리아_압구정':     { ptBase: 2,  names: [] },
+  'GM_경기_DS_갤러리아_광교':       { ptBase: 2,  names: ['최지우'] },
+  'GM_대전_DS_갤러리아_대전':       { ptBase: 3,  names: ['김민태'] },
+  'GM_서울_DS_현대_여의도':         { ptBase: 7,  names: ['윤하은','양혜정','고은영','최인준','정민석'] },
+  'GM_서울_DS_현대_무역':           { ptBase: 4,  names: [] },
+  'GM_서울_DS_현대_목동':           { ptBase: 5,  names: ['오수진','김민채'] },
+  'GM_서울_DS_현대_압구정':         { ptBase: 4,  names: [] },
+  'GM_경기_DS_현대_판교':           { ptBase: 5,  names: ['강지민','박승민'] },
+  'GM_대구_DS_현대_대구':           { ptBase: 4,  names: ['박정우'] },
+  /* ── DFS ── */
+  'GM_인천_DFS_현대_인천공항T1'  :   { ptBase: 18, names: ['유현지','김경란','김민정','박성권','이휘주','이윤희','신유진','염혜은','김채은','최선이','한기백','오지현','이나연','노을','신수빈','김가영','이다연','이용준'] },
+  'GM_인천_DFS_신라_인천공항T2'  :   { ptBase: 18, names: ['김서현','한민상','박기업','이휘주','윤혜련','오지현','김윤서','박연우','한지민','최혜원','이윤서','이다연','이용준','심준형','윤민진','김기예','김연서'] },
+  'GM_서울_DFS_롯데_명동':          { ptBase: 10, names: ['안정빈','임시연','고경현','박성권','이휘주','주창환','안효진','허성권','이윤서','김연서'] },
+  'GM_서울_DFS_신세계_명동':        { ptBase: 10, names: ['주창환','안효진','허성권','김일진','오수아','강례빈','강민정','김경우','이혜지','강혜인'] },
+  'GM_서울_DFS_신라_서울':          { ptBase: 6,  names: ['이재우','이재영','김호근','김해은','장준영','홍수정'] },
+  'GM_서울_DFS_롯데_월드몰':        { ptBase: 6,  names: ['이승현','강민정','김해은','박민지','장준영'] },
+  'GM_제주_DFS_신라_제주':          { ptBase: 10, names: ['최현오','강민정','김경우','서아름','윤민진','김기예','김은유','홍수정','강혜인','송지수'] },
+  'GM_제주_DFS_롯데_제주':          { ptBase: 8,  names: ['양동혁','이혜지','서아름','김예진','장준영','송찬호','안준수','송지수'] },
+};
+
+
+/* ══════════════════════════════════════════════
+   파트타이머 관리 함수들
+   ══════════════════════════════════════════════ */
+
+/* ── localStorage 키 ── */
+const PT_LS_KEY  = 'hrPT_v1';   // { storeKey: { ptBase:N, groups:{ weekday:[], weekend:[], friSatSun:[] } } }
+const PT_GROUPS = [
+  { key:'weekday', label:'평일' },
+  { key:'weekend', label:'주말' },
+  { key:'friSatSun', label:'금토일' }
+];
+let __ptVisible = localStorage.getItem('lvPtExcluded') === '1' ? false : true;
+
+function getPTStore() {
+  try { return JSON.parse(localStorage.getItem(PT_LS_KEY)||'{}'); } catch(e) { return {}; }
+}
+function savePTStore(data) {
+  localStorage.setItem(PT_LS_KEY, JSON.stringify(data));
+  // Firebase 실시간 공유
+  if (window.fbSetPT) window.fbSetPT(data);
+}
+function normalizePTData(raw) {
+  const base = parseInt(raw && raw.ptBase, 10);
+  const groups = { weekday: [], weekend: [], friSatSun: [] };
+  if (raw && raw.groups && typeof raw.groups === 'object') {
+    PT_GROUPS.forEach(g => {
+      groups[g.key] = Array.isArray(raw.groups[g.key])
+        ? raw.groups[g.key].filter(Boolean).map(v => String(v).trim()).filter(Boolean)
+        : [];
+    });
+  } else if (raw && Array.isArray(raw.names)) {
+    groups.weekday = raw.names.filter(Boolean).map(v => String(v).trim()).filter(Boolean);
+  }
+  return { ptBase: isNaN(base) || base < 0 ? 0 : base, groups };
+}
+function getPTGroupLabel(groupKey) {
+  const found = PT_GROUPS.find(g => g.key === groupKey);
+  return found ? found.label : '파트타이머';
+}
+function getPTTotalCount(data) {
+  const groups = (data && data.groups) || {};
+  return PT_GROUPS.reduce((sum, g) => sum + ((groups[g.key] || []).length), 0);
+}
+
+/* ── 매장별 PT 데이터 가져오기 (초기값: 엑셀) ── */
+function getPTData(storeKey) {
+  const store = getPTStore();
+  const legacyKey = storeKey==='PU 성수 포켓 팝업' ? 'PU_성수_Pocket_팝업' : storeKey;
+  if (store[storeKey]) return normalizePTData(store[storeKey]);
+  if (legacyKey !== storeKey && store[legacyKey]) {
+    store[storeKey] = normalizePTData(store[legacyKey]);
+    delete store[legacyKey];
+    savePTStore(store);
+    return normalizePTData(store[storeKey]);
+  }
+  // 초기값: 엑셀 데이터
+  const init = PT_EXCEL_INIT[storeKey] || PT_EXCEL_INIT[legacyKey];
+  if (init) return normalizePTData({ ptBase: init.ptBase, names: [...init.names] });
+  return normalizePTData({ ptBase: 0, names: [] });
+}
+
+/* ── PT 데이터 저장 ── */
+function setPTData(storeKey, data) {
+  if(storeKey==='GM_서울_PU_포켓'||storeKey==='PU_성수_Pocket_팝업'||storeKey==='포켓') storeKey='PU 성수 포켓 팝업';
+  const store = getPTStore();
+  store[storeKey] = normalizePTData(data);
+  savePTStore(store);
+  if (typeof window.lvRender === 'function') {
+    try { window.lvRender(); } catch(e) {}
+  }
+  if (typeof window.lvRenderSB === 'function') {
+    try { window.lvRenderSB(); } catch(e) {}
+  }
+}
+
+/* ── 파트타이머 추가 ── */
+window.lvPTAdd = function(storeKey, groupKey) {
+  const label = getPTGroupLabel(groupKey);
+  const name = prompt(`${label} 파트타이머 이름을 입력하세요:`);
+  if (!name || !name.trim()) return;
+  const data = getPTData(storeKey);
+  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  data.groups[key].push(name.trim());
+  setPTData(storeKey, data);
+  lvRender();
+};
+
+/* ── 파트타이머 삭제 ── */
+window.lvPTDel = function(storeKey, groupKey, idx) {
+  const data = getPTData(storeKey);
+  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  data.groups[key].splice(idx, 1);
+  setPTData(storeKey, data);
+  lvRender();
+};
+
+/* ── 파트타이머 이름 변경 ── */
+window.lvPTRename = function(storeKey, groupKey, idx) {
+  const data = getPTData(storeKey);
+  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  const newName = prompt('이름 변경:', data.groups[key][idx]);
+  if (!newName || !newName.trim()) return;
+  data.groups[key][idx] = newName.trim();
+  setPTData(storeKey, data);
+  lvRender();
+};
+
+/* ── 기준인원 저장 ── */
+window.lvPTSaveBase = function(storeKey, val) {
+  const n = parseInt(val);
+  if (isNaN(n) || n < 0) return;
+  const data = getPTData(storeKey);
+  data.ptBase = n;
+  setPTData(storeKey, data);
+  lvRender();
+};
+
+/* ── 기준인원 인라인 편집 클릭 ── */
+window.lvPTEditBase = function(storeKey, el) {
+  const cur = getPTData(storeKey).ptBase;
+  el.outerHTML = `<input class="pt-base-input" type="number" min="0" value="${cur}"
+    onblur="lvPTSaveBase('${storeKey}',this.value)"
+    onkeydown="if(event.key==='Enter')this.blur()"
+    autofocus>`;
+};
+function buildPTGroupRow(storeKey, groupKey, label, names) {
+  const chips = names.map((n,i) => `
+    <span class="pt-chip" onclick="lvPTRename('${storeKey}','${groupKey}',${i})" title="클릭하여 이름 변경">
+      ${n}<span class="pt-del" onclick="event.stopPropagation();lvPTDel('${storeKey}','${groupKey}',${i})" title="삭제">✕</span>
+    </span>`).join('');
+  return `<div class="pt-group">
+    <div class="pt-group-head">
+      <span class="pt-group-name">${label}</span>
+      <span class="pt-group-count">${names.length}명</span>
+    </div>
+    <div class="pt-chips-wrap">
+      ${chips}
+      <button class="pt-add-btn" onclick="lvPTAdd('${storeKey}','${groupKey}')">+ 추가</button>
+    </div>
+  </div>`;
+}
+
+/* ── 파트타이머 섹션 HTML 생성 ── */
+function buildPTSection(storeKey) {
+  const data = getPTData(storeKey);
+  const ptBase = data.ptBase || 0;
+  const curCnt = getPTTotalCount(data);
+  const diff   = curCnt - ptBase;
+  const diffStr = diff === 0 ? '' : (diff > 0 ? `<span style="color:#e84040;font-size:9px;margin-left:2px">+${diff}</span>` : `<span style="color:#5b6cf8;font-size:9px;margin-left:2px">${diff}</span>`);
+  const groupsHtml = PT_GROUPS.map(g => buildPTGroupRow(storeKey, g.key, g.label, data.groups[g.key] || [])).join('');
+
+  return `<div class="pt-section">
+    <div class="pt-header">
+      <span class="pt-label">👥 파트타이머</span>
+      <span class="pt-base-badge" onclick="lvPTEditBase('${storeKey}',this)" title="기준인원 수정">기준 ${ptBase}명</span>
+      <span style="font-size:10px;color:#7b8fb7;">현 ${curCnt}명${diffStr}</span>
+    </div>
+    <div class="pt-groups">${groupsHtml}</div>
+  </div>`;
+}
+
+/* ── 파트타이머 숨기기/보이기 토글 ── */
+function lvSyncPTButton(){
+  const btn = document.getElementById('lv-pt-toggle-btn');
+  if (!btn) return;
+  const excluded = !__ptVisible;
+  btn.textContent = excluded ? '파트타이머 표시' : '파트타이머 제외';
+  btn.classList.toggle('active', excluded);
+  btn.title = excluded ? '파트타이머를 다시 표시합니다' : '파트타이머를 화면에서 숨깁니다';
+}
+window.lvTogglePT = function() {
+  __ptVisible = !__ptVisible;
+  localStorage.setItem('lvPtExcluded', __ptVisible ? '0' : '1');
+  lvSyncPTButton();
+  document.querySelectorAll('.lv-card').forEach(card => {
+    card.classList.toggle('pt-hidden', !__ptVisible);
+  });
+  if(typeof window.lvRender==='function') window.lvRender();
+};
+
 function buildHcBar(storeKey, counted, total){
   const sb=window.SB_DATA&&window.SB_DATA.stores; if(!sb) return '';
   const base=sb[storeKey]; if(base===undefined||base===0) return '';
@@ -4071,17 +5147,21 @@ function lvRender(){
       applyEditsToEmps(_lrEdits);
     }
   } catch(_lrE) {}
+  // STORE CRUD FIX: 배치현황 매장 카드는 stores(loadStoreList) 기준으로만 생성한다.
+  const layoutStores=loadStoreList();
+  const layoutStoreIds=new Set(layoutStores.map(s=>s.id).filter(Boolean));
   const secs={FSMALL:{},DS:{},DFS:{},ATS:{},NUF:{},ETC:{}};
-  EMPS.forEach(emp=>{
-    const sec=lvSection(emp);
+  layoutStores.forEach(store=>{
+    const fakeEmp={id:'__store__',current_store:store.id,channel:store.channel||guessChannel(store.id),brand:store.brand||parseStoreName(store.id).brand||'GM',position:''};
+    const sec=lvSection(fakeEmp);
+    if(!secs[sec][store.id]) secs[sec][store.id]=[];
+  });
+  lvModeEmployees().filter(emp=>getEmpStatus(emp)!=='deleted').forEach(emp=>{
     const sk=emp.current_store||'미배정';
+    if(!layoutStoreIds.has(sk)) return;
+    const sec=lvSection(emp);
     if(!secs[sec][sk]) secs[sec][sk]=[];
     secs[sec][sk].push(emp);
-  });
-  (window.CUSTOM_STORES||[]).forEach(sk=>{
-    const fakeEmp={id:'__cs__',current_store:sk,channel:guessChannel(sk),brand:'GM',position:''};
-    const sec=lvSection(fakeEmp);
-    if(!secs[sec][sk]) secs[sec][sk]=[];
   });
   let total=0;
   Object.entries(secs).forEach(([s,st])=>{
@@ -4093,7 +5173,8 @@ function lvRender(){
   lvRenderSB();
   ppRender();
   const scroll=$('lv-scroll'); if(!scroll) return;
-  scroll.innerHTML='';
+  // [PERF] DocumentFragment로 DOM 일괄 처리(리플로우 최소화)
+  const frag = document.createDocumentFragment();
   const active=lvCurTab==='ALL'?['FSMALL','DS','DFS','ATS','NUF','ETC']:[lvCurTab];
   active.forEach(secKey=>{
     const cfg=SEC_CFG[secKey];
@@ -4102,20 +5183,24 @@ function lvRender(){
     if(!allKeys.length) return;
     const keys=sortedStoreKeys(secKey,allKeys);
     const cnt=keys.reduce((s,k)=>s+stores[k].filter(isStoreCounted).length,0);
-    scroll.insertAdjacentHTML('beforeend',
-      `<div class="lv-sec-header"><div class="lv-sec-dot" style="background:${cfg.dot}"></div>
+    const header = document.createElement('div');
+    header.className='lv-sec-header';
+    header.innerHTML = `<div class="lv-sec-dot" style="background:${cfg.dot}"></div>
        <span class="lv-sec-title">${cfg.icon} ${cfg.label}</span>
-       <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명</span></div>`);
+       <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명</span>`;
+    frag.appendChild(header);
     const grid=document.createElement('div');
     grid.className='lv-grid'; grid.dataset.sec=secKey;
     keys.forEach(k=>grid.appendChild(buildCard(k,stores[k],secKey,cfg.accent)));
-    scroll.appendChild(grid);
+    frag.appendChild(grid);
   });
+  scroll.innerHTML='';
+  scroll.appendChild(frag);
   if(lvQ) lvSearch(lvQ);
 }
 function buildCard(storeKey,emps,secKey,accent){
   const card=document.createElement('div');
-  card.className='lv-card'; card.dataset.store=storeKey; card.dataset.sec=secKey;
+  card.className='lv-card'+(lvMode==='draft'?' draft-mode':''); card.dataset.store=storeKey; card.dataset.sec=secKey;
   card.addEventListener('dragover',e=>{
     e.preventDefault();
     if(lvDragType==='chip') card.classList.add('drag-over');
@@ -4127,18 +5212,25 @@ function buildCard(storeKey,emps,secKey,accent){
     if(lvDragType==='chip'){
       if(!lvDragId) return;
       const emp=EMPS.find(x=>x.id===lvDragId);
-      if(!emp||emp.current_store===storeKey) return;
-      emp.current_store=storeKey; emp.channel=guessChannel(storeKey);
-      lvSaveToHrEdits(emp);
+      if(!emp||lvEmpStore(emp)===storeKey) return;
+      if(lvMode==='draft'){
+        lvSaveDraftMove(emp.id,storeKey);
+      }else{
+        emp.current_store=storeKey; emp.channel=guessChannel(storeKey);
+        lvSaveToHrEdits(emp);
+        const actual=lvEnsureActualData();
+        actual[emp.id]={current_store:emp.current_store,channel:emp.channel};
+        lvWriteLayout(LV_ACTUAL_KEY,actual);
+      }
       const row=document.querySelector('tr[data-id="'+emp.id+'"]')||document.querySelector('tr[data-emp-id="'+emp.id+'"]');
-      if(row){
+      if(row&&lvMode==='actual'){
         row.querySelectorAll('td').forEach(c=>{
           if(c.dataset.field==='current_store'){c.textContent=storeKey;c.style.background='#c7e3ff';setTimeout(()=>{c.style.background='';},900);}
           if(c.dataset.field==='channel') c.textContent=emp.channel;
         });
       }
-      if(typeof refresh==='function') refresh();
-      showSaved(); lvToast('💾 '+emp.name+' → '+lvStoreName(storeKey)+' 저장됨'); lvRender();
+      if(lvMode==='actual'&&typeof refresh==='function') refresh();
+      showSaved(); lvToast((lvMode==='draft'?'🧪 ':'💾 ')+emp.name+' → '+lvStoreName(storeKey)+(lvMode==='draft'?' 테스트 저장됨':' 저장됨')); lvRender();
     } else if(lvDragType==='card'){
       if(!lvDragId||lvDragId===storeKey||lvDragSec!==secKey) return;
       const grid=card.closest('.lv-grid'); if(!grid) return;
@@ -4167,7 +5259,7 @@ function buildCard(storeKey,emps,secKey,accent){
       const av=emp.has_photo&&emp.photo_b64
         ?`<div class="lv-avatar"><img src="${emp.photo_b64}" alt="${emp.name}"></div>`
         :`<div class="lv-avatar" style="background:${ac}">${emp.name.slice(-1)}</div>`;
-      const chipCls=st!=='active'?` lv-chip-${st}`:'';
+      const chipCls=(st!=='active'?` lv-chip-${st}`:'')+(memo?' has-memo':'');
       const badge=scfg.badge?`<span class="lv-status-badge" style="background:${scfg.chipColor}22;color:${scfg.chipColor}">${scfg.badge}</span>`:'';
       const memoIcon=memo?`<span class="lv-memo-icon" title="${memo.replace(/"/g,'"')}">📝</span>`:'';
       const title=`${emp.name} | ${emp.position} | ${scfg.label}${memo?' | 📝 '+memo:''}`;
@@ -4192,7 +5284,8 @@ function buildCard(storeKey,emps,secKey,accent){
       </div>
     </div>
     ${hcBar}
-    <div class="lv-body">${chips}</div>`;
+    <div class="lv-body">${chips}</div>
+    ${__ptVisible ? buildPTSection(storeKey) : ''}`;
   const head=card.querySelector('.lv-card-head');
   head.addEventListener('dragstart',e=>{
     lvDragType='card'; lvDragId=storeKey; lvDragSec=secKey;
@@ -4237,7 +5330,7 @@ function lvSearch(q){
   lvQ=q.trim();
   document.querySelectorAll('.lv-chip').forEach(c=>{
     if(!lvQ){c.classList.remove('highlight','dim');return;}
-    const emp=EMPS.find(x=>x.id===c.dataset.id);
+    const emp=lvViewEmp(EMPS.find(x=>x.id===c.dataset.id));
     const m=emp&&(emp.name.includes(lvQ)||(emp.position||'').includes(lvQ)||(emp.current_store||'').includes(lvQ));
     c.classList.toggle('highlight',!!m); c.classList.toggle('dim',!m);
   });
@@ -4252,7 +5345,7 @@ window.lvToast=lvToast;
 function lvExport(){
   const sb=window.SB_DATA&&window.SB_DATA.stores||{};
   const byStore={};
-  EMPS.forEach(e=>{const sk=e.current_store||'';if(!byStore[sk])byStore[sk]=[];byStore[sk].push(e);});
+  lvModeEmployees().filter(e=>getEmpStatus(e)!=='deleted').forEach(e=>{const sk=e.current_store||'';if(!byStore[sk])byStore[sk]=[];byStore[sk].push(e);});
   const rows=[['섹션','매장','기준인원','현인원(매장)','예정인원','충원현황','직원명','포지션','채널','상태','메모']];
   Object.entries(byStore).forEach(([sk,arr])=>{
     const base=sb[sk]||'-';
@@ -4282,6 +5375,30 @@ function lvLoadStatuses(){
       if(d.current_store !== undefined) e.current_store = d.current_store;
       if(d.channel !== undefined)       e.channel       = d.channel;
       if(d.tenure !== undefined)        e.tenure        = d.tenure;
+      // [SYNC FIX] 직책/브랜드/이름 등도 편집값 복원
+      if(d.position !== undefined) e.position = d.position;
+      if(d.brand !== undefined)    e.brand    = d.brand;
+      if(d.name !== undefined)     e.name     = d.name;
+      if(d.hire_date !== undefined)e.hire_date = d.hire_date;
+      if(d.language !== undefined) e.language = d.language;
+      if(d.residence !== undefined)e.residence = d.residence;
+    }
+    // [SAVE FIX] hr_fb_<id> 보조 복구 - __fbEdits에 값이 없을 때도 보존된 직책 복원
+    try{
+      const _hrFb = JSON.parse(localStorage.getItem('hr_fb_'+e.id)||'{}');
+      if(_hrFb && typeof _hrFb === 'object'){
+        ['position','brand','name','hire_date','language','residence','tenure','memo'].forEach(function(ff){
+          if(_hrFb[ff] !== undefined && (!d || d[ff] === undefined)) e[ff] = _hrFb[ff];
+        });
+      }
+    }catch(_e){}
+  });
+  const actual=lvEnsureActualData();
+  EMPS.forEach(e=>{
+    const row=actual[e.id];
+    if(row&&row.current_store!==undefined){
+      e.current_store=row.current_store;
+      e.channel=row.channel||guessChannel(row.current_store)||e.channel;
     }
   });
   EMPS.forEach(e=>syncScheduleForEmp(e, getEmpStatus(e), false));
@@ -4289,19 +5406,30 @@ function lvLoadStatuses(){
 }
 function lvInit(){
   lvLoadStatuses();
+  saveStoreList(loadStoreList());
+  lvEnsureActualData();
+  lvEnsureDraftData();
   buildEmpDatalist();
   applyLvPPWidth();
   initLvPPResize();
+  lvSyncPTButton();
+  lvSetMode(lvMode);
   lvRender();
   lvRenderSB();
 }
 window.lvInit=lvInit;
 window.lvRender=lvRender;
 window.lvRenderSB=lvRenderSB;
+window.lvSetMode=lvSetMode;
+window.lvApplyDraftToActual=lvApplyDraftToActual;
+window.lvResetDraft=lvResetDraft;
+window.getAllStores=getAllStores;
+window.lvStoreName=lvStoreName;
 })();
 let _aePhoto = null;
 window.openAddEmp = function(){
-  ['ae-name','ae-position','ae-store','ae-hire','ae-residence','ae-language'].forEach(id=>{
+  // EMPLOYEE STORE SELECT
+  ['ae-name','ae-position','ae-hire','ae-residence','ae-language'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const bd=document.getElementById('ae-brand'); if(bd) bd.value='GM';
@@ -4312,8 +5440,11 @@ window.openAddEmp = function(){
   const inp=document.getElementById('ae-photo-input'); if(inp) inp.value='';
   const m=document.getElementById('add-emp-modal');
   if(m) m.classList.add('open');
-  const dl=document.getElementById('ae-store-list');
-  if(dl){ dl.innerHTML=getAllStores().map(s=>`<option value="${s}">${lvStoreName(s)}</option>`).join(''); }
+  const storeSel=document.getElementById('ae-store');
+  if(storeSel){
+    const stores=loadStoreList();
+    storeSel.innerHTML='<option value="">미배정</option>'+stores.map(s=>`<option value="${s.id}">${s.id}</option>`).join('');
+  }
   setTimeout(()=>{ const n=document.getElementById('ae-name'); if(n) n.focus(); },80);
 };
 window.closeAddEmp = function(){
@@ -4335,8 +5466,9 @@ window.doAddEmp = function(){
   if(!name){ alert('\uc774\ub984\uc744 \uc785\ub825\ud558\uc138\uc694'); document.getElementById('ae-name').focus(); return; }
   const brand=document.getElementById('ae-brand').value;
   const position=(document.getElementById('ae-position').value||'').trim();
-  const channel=document.getElementById('ae-channel').value;
+  let channel=document.getElementById('ae-channel').value;
   const store=(document.getElementById('ae-store').value||'').trim();
+  if(store) channel=guessChannel(store)||parseStoreName(store).channel||channel;
   const hire=(document.getElementById('ae-hire').value||'').trim();
   const residence=(document.getElementById('ae-residence').value||'').trim();
   const language=(document.getElementById('ae-language').value||'').trim();
@@ -4353,7 +5485,9 @@ window.doAddEmp = function(){
   }
   const newEmp={
     id:newId, name, brand,
-    current_store:store||(brand+'_\ubbf8\uc815'),
+    // EMPLOYEE STORE SELECT
+    current_store:store,
+    store:store,
     position:position||'\uc9c1\uc6d0',
     hire_date:hire||'',
     tenure,
@@ -4366,6 +5500,14 @@ window.doAddEmp = function(){
     photo_b64:_aePhoto||''
   };
   EMPS.push(newEmp);
+  try{
+    const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+    const draft=JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
+    actual[newId]={current_store:store,channel:channel};
+    draft[newId]={current_store:store,channel:channel};
+    localStorage.setItem('layoutActualData',JSON.stringify(actual));
+    localStorage.setItem('layoutDraftData',JSON.stringify(draft));
+  }catch(e){}
   if(_aePhoto){
     try{
       const hrP=JSON.parse(localStorage.getItem('hrP')||'{}');
@@ -4374,7 +5516,7 @@ window.doAddEmp = function(){
     }catch(e){}
   }
   if(window.fbSetEdit){
-    const fieldsToSave = ['name','brand','position','channel','current_store',
+    const fieldsToSave = ['name','brand','position','channel','current_store','store',
       'hire_date','tenure','language','residence'];
     fieldsToSave.forEach(f => {
       if(newEmp[f] !== undefined && newEmp[f] !== '')
@@ -4384,6 +5526,7 @@ window.doAddEmp = function(){
     window.fbSetEdit(newId, '_isNewEmp', true);
   }
   const l=getList(); renderBar(l); renderTbl(l);
+  saveData();
   window.lvRender?.(); window.lvRenderSB?.();
   window.closeAddEmp();
   alert('\u2713 "'+name+'" \ucd94\uac00 \uc644\ub8cc!\n\uc9c1\uc6d0 \ubaa9\ub85d\uc5d0\uc11c \ud655\uc778\ud558\uc138\uc694.');
@@ -4419,6 +5562,7 @@ window.asPreview = function(){
   if(el) el.textContent=key||'—';
 };
 window.doAddStore = function(){
+  // STORE CRUD FIX
   const ch=document.getElementById('as-channel').value;
   const br=document.getElementById('as-brand').value;
   const rg=document.getElementById('as-region').value;
@@ -4436,10 +5580,26 @@ window.doAddStore = function(){
     alert(`"${storeKey}" 는 이미 존재하는 매장입니다.`);
     return;
   }
+  try{
+    const list=loadStoreList();
+    if(list.find(s=>normalizeStoreName(s.name)===normalizeStoreName(storeKey))){
+      alert('이미 등록된 매장입니다.');
+      return;
+    }
+  }catch(e){}
   if(!window.CUSTOM_STORES) window.CUSTOM_STORES=[];
   if(!window.CUSTOM_STORES.includes(storeKey)) window.CUSTOM_STORES.push(storeKey);
+  try{
+    const parsed=parseStoreName(storeKey);
+    const list=loadStoreList();
+    if(!list.find(s=>s.id===storeKey)){
+      list.push({id:storeKey,region:parsed.region||rg,channel:parsed.channel||ch,name:storeKey,displayName:dt,brand:br,vendor:parsed.vendor||'',branch:parsed.branch||dt});
+      saveStoreList(list);
+    }
+  }catch(e){}
   if(window.saveCustomStores) window.saveCustomStores();
   if(window.fbSetEdit) window.fbSetEdit('__stores__', storeKey, {channel:ch, brand:br, region:rg});
+  saveData();
   window.lvRender?.(); window.lvRenderSB?.();
   document.querySelectorAll('datalist[id$="-store-list"]').forEach(dl=>{
     dl.innerHTML=getAllStores().map(s=>`<option value="${s}">`).join('');
@@ -4466,9 +5626,14 @@ window.confirmDelEmp = function(empId, empName){
   const name=empName||(EMPS.find(e=>e.id===empId)||{}).name||empId;
   const ok=confirm('\ud1f4\uc0ac \ucc98\ub9ac: "'+name+'"\n\n\uc9c1\uc6d0 \ubaa9\ub85d\uc5d0\uc11c \uc0ad\uc81c\ub429\ub2c8\ub2e4.\n\uacc4\uc18d\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?');
   if(!ok) return;
+  markDeletedEmpId(empId);
+  if(!window.__fbEdits) window.__fbEdits={};
+  if(!window.__fbEdits[empId]) window.__fbEdits[empId]={};
+  window.__fbEdits[empId].status='deleted';
   const idx=EMPS.findIndex(e=>e.id===empId);
   if(idx!==-1) EMPS.splice(idx,1);
   if(window.fbSetEdit) window.fbSetEdit(empId,'status','deleted');
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e) {}
   const l=getList(); renderBar(l); renderTbl(l);
   window.lvRender?.(); window.lvRenderSB?.();
   alert('\u2713 "'+name+'" \ud1f4\uc0ac \ucc98\ub9ac \uc644\ub8cc');
@@ -4578,8 +5743,7 @@ window.SB_DATA = SB_DATA;
       </div>
       <div class="ae-field ae-full">
         <label>현재 매장</label>
-        <input id="ae-store" placeholder="GM_서울_FS_신사" list="ae-store-list" autocomplete="off">
-        <datalist id="ae-store-list"></datalist>
+        <select id="ae-store"></select>
       </div>
       <div class="ae-field">
         <label>입사일</label>
@@ -4754,32 +5918,43 @@ function updateLoginUserInfo(user) {
   if (!el || !user) return;
   el.innerHTML = `<span>${user.displayName||user.email}</span>`;
 }
+const EMP_EDIT_FIELDS = ['status','memo','current_store','channel','tenure',
+  'position','hire_date','language','residence','brand','name','kindness','growth'];
 function applyEditsToEmps(edits) {
-  if (typeof EMPS === 'undefined') return;
+  if (typeof EMPS === 'undefined' || !edits) return;
   EMPS.forEach(e => {
     const ed = edits[e.id];
     if (!ed) return;
-    ['status','memo','current_store','channel','tenure',
-     'position','hire_date','language','residence','brand','name',
-     'kindness','growth'].forEach(f => {
+    for(let i=0;i<EMP_EDIT_FIELDS.length;i++){
+      const f = EMP_EDIT_FIELDS[i];
       if (ed[f] !== undefined) e[f] = ed[f];
-    });
-    /* [FINAL FIX H] hr_fb_ 로컬스토리지에서도 current_store/status fallback */
+    }
+    // [SAVE FIX] hr_fb_<id> 로컬스토리지 폴백 - 편집 필드 모두 보존 복구
+    // (saveFieldEdit가 이중 저장하므로 새로고침 후 __fbEdits가 비어도 여기서 복구됨)
     try {
       const _hrFbData = JSON.parse(localStorage.getItem('hr_fb_'+e.id)||'{}');
-      if (e.current_store === undefined || e.current_store === '') {
-        if (_hrFbData.current_store) e.current_store = _hrFbData.current_store;
+      if (_hrFbData && typeof _hrFbData === 'object') {
+        // ed(__fbEdits)에 없는 필드만 hr_fb_에서 복구 (Firebase/캐시 우선 보존)
+        for(let j=0;j<EMP_EDIT_FIELDS.length;j++){
+          const ff = EMP_EDIT_FIELDS[j];
+          if(_hrFbData[ff] !== undefined && (ed[ff] === undefined)){
+            e[ff] = _hrFbData[ff];
+          }
+        }
       }
-      if (_hrFbData.channel && !e.channel) e.channel = _hrFbData.channel;
     } catch(_hfE) {}
-    /* [LAYOUT FIX 7] fb_ prefix 필드도 EMPS에 반영 (fb_kindness→kindness 등) */
     if (ed.fb_kindness !== undefined && ed.kindness === undefined) e.kindness = ed.fb_kindness;
     if (ed.fb_growth !== undefined && ed.growth === undefined) e.growth = ed.fb_growth;
+    // [PERF] fb_ 접두 필드가 있을 때만 hr_fb_ 쓰기 (없으면 IO 생략)
+    let hasFb = false;
     const fbData = {};
-    Object.keys(ed).forEach(k => {
-      if (k.startsWith('fb_')) fbData[k.slice(3)] = ed[k];
-    });
-    if (Object.keys(fbData).length > 0) {
+    for(const k in ed) {
+      if (k.charCodeAt(0)===102 && k.startsWith('fb_')) {
+        fbData[k.slice(3)] = ed[k];
+        hasFb = true;
+      }
+    }
+    if (hasFb) {
       try {
         const stored = JSON.parse(localStorage.getItem('hr_fb_'+e.id)||'{}');
         Object.assign(stored, fbData);
@@ -4790,7 +5965,6 @@ function applyEditsToEmps(edits) {
 }
 async function loadAllEdits() {
   try {
-    console.log('[FB] loadAllEdits 시작...');
     const snap = await getDocs(collection(_db, COL_EDITS));
     const edits = {};
     snap.forEach(d => { edits[d.id] = d.data(); });
@@ -4807,7 +5981,6 @@ async function loadAllEdits() {
     });
     window.__fbEdits = merged;
     try { localStorage.setItem('__fbEditsCache', JSON.stringify(merged)); } catch(e) {}
-    console.log('[FB] loadAllEdits 완료 -', Object.keys(merged).length, '명');
     applyEditsToEmps(merged);
   } catch(e) { console.warn('loadAllEdits:', e); }
 }
@@ -4851,7 +6024,6 @@ function startRealtimeListeners() {
             status:        data.status        || 'active',
           };
           EMPS.push(newEmp);
-          console.log('[FB] 신규 직원 동기화:', id, newEmp.name);
         }
         const emp = EMPS.find(e => e.id === id);
         if (emp) {
@@ -4967,7 +6139,6 @@ async function runEmbedFastSync(reason) {
     }
     window.ppRender?.();
   } catch(e) {
-    console.warn('[FB] embed fast sync error:', reason, e);
   } finally {
     _embedFastSyncBusy = false;
   }
@@ -5042,6 +6213,11 @@ updateLoginUserInfo(user);
       });
       applyEditsToEmps(window.__fbEdits);
     }
+    getDeletedEmpIds().forEach(function(id){
+      if (!window.__fbEdits[id]) window.__fbEdits[id] = {};
+      window.__fbEdits[id].status = 'deleted';
+    });
+    applyEditsToEmps(window.__fbEdits || {});
   } catch(e) {}
   /* [FIX 3] Firebase 초기화 전 스케줄 캐시 복원 */
   try {
@@ -5118,7 +6294,6 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     localStorage.setItem('store_list_v2', JSON.stringify(data.list));
     if (window.__fbReady && typeof renderSidebar === 'function') {
       renderSidebar();
-      console.log('[FB] 매장 목록 동기화:', data.list.length, '개');
     }
   } catch(e) {}
 });
@@ -5134,7 +6309,6 @@ onSnapshot(doc(_db, COL_CRITERIA, 'data'), (snap) => {
         if (f) Object.assign(f.grades, si.grades);
       });
     }
-    console.log('[FB] 기준표 동기화 완료');
   } catch(e) {}
 });
 window.__storeEvalUnsub = null;
@@ -5166,7 +6340,6 @@ window.fbSubscribeStoreEval = function(storeId) {
       if (typeof loadStoreData === 'function' && typeof applyStateToUI === 'function') {
         loadStoreData(storeId);
         applyStateToUI();
-        console.log('[FB] 스토어 평가 실시간 반영:', storeId);
       }
     }
   });
@@ -5203,8 +6376,10 @@ async function invLoad() {
       if (!invCandidates[mid]) invCandidates[mid] = [];
       invCandidates[mid].push({ id: d.id, ...data });
     });
+    invSaveLocal();
   } catch(e) {
-    console.warn('[INV] Firebase 로드 실패, 로컬 전용 모드:', e);
+    invLoadLocal();
+    return;
   }
   invRender();
 }
@@ -5496,9 +6671,10 @@ function escH(str) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 window.invInit = function() {
-  invLoadLocal();
   if (window._db) {
     invLoad();
+  } else {
+    invLoadLocal();
   }
 };
 function invBodyResize() {
@@ -5516,6 +6692,40 @@ function invBodyResize() {
 window.invBodyResize = invBodyResize;
 window.addEventListener('resize', invBodyResize);
 window.invRender = invRender;
+
+/* ── 파트타이머 Firebase 실시간 공유 ── */
+const COL_PT = 'partTimers';
+let _fbPTTimer = null;
+
+window.fbSetPT = async function(data) {
+  clearTimeout(_fbPTTimer);
+  _fbPTTimer = setTimeout(async () => {
+    try {
+      await setDoc(doc(_db, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: serverTimestamp() });
+    } catch(e) { console.warn('[FB] 파트타이머 저장 오류:', e.code, e.message); }
+  }, 500);
+};
+
+// PT onSnapshot 리스너
+(function startPTListener() {
+  try {
+    onSnapshot(doc(_db, COL_PT, 'ptData'), snap => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      if (!d || !d.data) return;
+      try {
+        const remote = JSON.parse(d.data);
+        // 로컬과 다를 때만 업데이트
+        const local = localStorage.getItem('hrPT_v1') || '{}';
+        if (JSON.stringify(remote) !== local) {
+          localStorage.setItem('hrPT_v1', JSON.stringify(remote));
+          if (window.lvRender) window.lvRender();
+        }
+      } catch(e) {}
+    });
+  } catch(e) { console.warn('[FB] PT 리스너 오류:', e); }
+})();
+
 </script>
 <!-- ══════════════════════════════════════════
      인비테이션 뷰
