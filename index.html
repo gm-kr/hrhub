@@ -246,6 +246,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-title-tab{border:none;background:transparent;padding:4px 0;font-family:inherit;font-size:15px;font-weight:700;color:#1a1d23;cursor:pointer;}
 .lv-title-tab:hover{color:#5b6cf8;}
 .lv-title-tab.active{color:#5b6cf8;}
+.lv-mode-toggle{display:flex;border:1.5px solid #dde1e9;border-radius:9px;overflow:hidden;flex-shrink:0;}
+.lv-mode-btn{padding:6px 16px;border:none;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#7a8299;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.lv-mode-btn:hover{background:#f5f7ff;color:#3a4053;}
+.lv-mode-btn.active{background:#eef0fe;color:#5b6cf8;}
+.lv-mode-btn+.lv-mode-btn{border-left:1.5px solid #dde1e9;}
 .lv-stat-pill{padding: 3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#f0f2f5; color:#5a6170;}
 .lv-sep { flex:1; }
 .lv-search-wrap { position:relative; }
@@ -375,6 +380,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-hc-cur { }
 .lv-hc-slash { color:#ccc; font-weight:400; }
 .lv-hc-base { color:#9aa0b3; font-weight:500; }
+.lv-hc-base-edit { cursor:pointer; border-radius:3px; padding:0 2px; transition:all .12s; }
+.lv-hc-base-edit:hover { background:#eef0fe; color:#5b6cf8; }
+.lv-hc-base-input { width:32px; border:1px solid #5b6cf8; border-radius:4px; padding:0 3px; font-size:11px; font-weight:700; text-align:center; outline:none; color:#3a4053; }
 .lv-hc-tag{font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; flex-shrink:0;}
 .lv-hc-tag.ok   { background:#e8f8f1; color:#2daa72; }
 .lv-hc-tag.over { background:#eef0fe; color:#5b6cf8; }
@@ -582,8 +590,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .pt-section { border-top: 1px dashed #e0e4ee; margin-top: 6px; padding-top: 6px; }
 .pt-header { display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
 .pt-label { font-size:10px; font-weight:700; color:#7b8fb7; letter-spacing:.3px; }
-.pt-base-badge { font-size:10px; color:#5b6cf8; font-weight:700; background:#eef0ff; border-radius:10px; padding:1px 7px; cursor:pointer; border:1px solid transparent; transition:border-color .15s; }
-.pt-base-badge:hover { border-color:#5b6cf8; }
+.pt-base-badge { font-size:10px; color:#5b6cf8; font-weight:700; background:#eef0ff; border-radius:10px; padding:2px 8px; cursor:pointer; border:1px solid #c5cbf9; transition:all .15s; display:inline-flex; align-items:center; gap:3px; }
+.pt-base-badge::after { content:'✎'; font-size:9px; opacity:.5; }
+.pt-base-badge:hover { border-color:#5b6cf8; background:#e0e5ff; box-shadow:0 0 0 2px rgba(91,108,248,.12); }
 .pt-base-input { font-size:11px; width:40px; border:1px solid #5b6cf8; border-radius:6px; padding:1px 5px; text-align:center; outline:none; }
 .pt-groups { display:flex; flex-direction:column; gap:6px; }
 .pt-group { background:#fafbff; border:1px solid #e7ebf7; border-radius:8px; padding:6px; }
@@ -2351,6 +2360,10 @@ function cleanupStoreReferences(){
 // [PERF] loadStoreList 마이크로태스크 캐싱 - 한 렌더 사이클 내 여러번 호출 시 재계산 방지
 let __lslCache = null;
 function __lslInvalidate(){ __lslCache = null; }
+const DELETED_STORES_KEY='lvDeletedStores';
+function getDeletedStores(){try{return JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]');}catch{return[];}}
+function addDeletedStore(id){const d=getDeletedStores();if(!d.includes(id)){d.push(id);localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));}}
+function removeDeletedStore(id){const d=getDeletedStores().filter(x=>x!==id);localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));}
 function loadStoreList() {
   if(__lslCache) return __lslCache;
   cleanupStoreReferences();
@@ -2373,6 +2386,8 @@ function loadStoreList() {
   } catch(e) {
     result = getBaselineStoreList();
   }
+  const _deleted = getDeletedStores();
+  if(_deleted.length) result = result.filter(s => !_deleted.includes(s.id));
   __lslCache = result;
   // 다음 마이크로태스크에 캐시 해제
   Promise.resolve().then(__lslInvalidate);
@@ -2484,6 +2499,7 @@ function confirmDeleteStore() {
   if (!confirm(`"🏬 ${s.displayName||s.name}" 매장을 삭제하시겠습니까?
 해당 매장에 배치된 직원은 미배정 처리됩니다.`)) return;
   const newList = list.filter(x => x.id !== targetId);
+  addDeletedStore(targetId);
   saveStoreList(newList);
   EMPS.forEach(emp=>{
     if(emp.current_store===targetId){
@@ -2569,6 +2585,7 @@ function confirmAddStore() {
   const newKey = canonicalStoreKey({id, name});
   if (list.find(s => canonicalStoreKey(s) === newKey)) { alert('이미 등록된 매장입니다.'); warn.textContent = '이미 등록된 매장입니다.'; warn.style.display='block'; return; }
   list.push({id, region, channel, name, displayName, brand, vendor, branch});
+  removeDeletedStore(id);
   saveStoreList(list);
   saveData();
   closeStoreEditModal();
@@ -2576,15 +2593,18 @@ function confirmAddStore() {
   window.lvRender?.(); window.lvRenderSB?.();
   selectStore(id);
 }
+let _renameTargetId = null; // document click 리스너가 _ctxTargetId를 초기화하므로 별도 변수 사용
 function openRenameStore() {
+  const targetId = _ctxTargetId;
   closeCtxMenu();
-  if (!_ctxTargetId) return;
+  if (!targetId) return;
   const list = loadStoreList();
-  const s = list.find(x => x.id === _ctxTargetId);
-  if (!s) return;
+  const s = list.find(x => x.id === targetId);
+  if (!s) { alert('매장을 찾을 수 없습니다: ' + targetId); return; }
+  _renameTargetId = targetId; // 모달이 열려있는 동안 ID 보존
   document.getElementById('rename-region').value  = s.region;
   document.getElementById('rename-channel').value = s.channel;
-  document.getElementById('rename-name').value    = s.displayName||s.branch||s.name;
+  document.getElementById('rename-name').value    = s.displayName||s.vendor||s.branch||s.name;
   document.getElementById('storeRenameOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('rename-name').focus(), 100);
@@ -2594,34 +2614,22 @@ function closeRenameModal() {
   document.body.style.overflow = '';
 }
 function confirmRename() {
+  const oldId = _renameTargetId; // _ctxTargetId는 document click 리스너에 의해 이미 null
   const list    = loadStoreList();
-  const oldId   = _ctxTargetId;
   const region  = document.getElementById('rename-region').value.trim();
   const channel = document.getElementById('rename-channel').value.trim();
   const name    = document.getElementById('rename-name').value.trim();
-  if (!name) return;
-  const newId = makeStoreId(region, channel, name);
-  const idx   = list.findIndex(s => s.id === oldId);
+  if (!name || !oldId) return;
+  const idx = list.findIndex(s => s.id === oldId);
   if (idx === -1) return;
-  if (newId !== oldId) {
-    QUARTERS.forEach(q => {
-      ITEMS.forEach(it => {
-        const g  = localStorage.getItem(lsKey(oldId, q, it.id));
-        const cm = localStorage.getItem(lsKey(oldId, q, `comment_${it.id}`));
-        if (g)  localStorage.setItem(lsKey(newId, q, it.id), g);
-        if (cm) localStorage.setItem(lsKey(newId, q, `comment_${it.id}`), cm);
-      });
-      const ov  = localStorage.getItem(lsKey(oldId, q, 'overall'));
-      if (ov) localStorage.setItem(lsKey(newId, q, 'overall'), ov);
-    });
-  }
-  list[idx] = {id: newId, region, channel, name:newId, displayName:name};
+  const s = list[idx];
+  list[idx] = {...s, region, channel, displayName: name};
   saveStoreList(list);
   saveData();
-  if (currentStoreId === oldId) { currentStoreId = null; }
+  _renameTargetId = null;
   closeRenameModal();
   renderSidebar();
-  if (currentStoreId === null) selectStore(newId);
+  window.lvRender?.(); window.lvRenderSB?.();
 }
 function openMoveChannel() { openRenameStore(); }
 let _orderActiveChannel = null;
@@ -2647,10 +2655,11 @@ function openOrderModal(initialChannel) {
   document.body.style.overflow = 'hidden';
 }
 function openOrderModalForChannel() {
+  const targetId = _ctxTargetId; // closeCtxMenu()가 _ctxTargetId를 null로 초기화하므로 먼저 저장
   closeCtxMenu();
-  if (!_ctxTargetId) return;
+  if (!targetId) return;
   const list = loadStoreList();
-  const s = list.find(x => x.id === _ctxTargetId);
+  const s = list.find(x => x.id === targetId);
   if (s) openOrderModal(s.channel);
 }
 function closeOrderModal() {
@@ -2802,11 +2811,13 @@ window.openMoveChannel = openMoveChannel;
     </div>
   <div id="layoutv">
     <div class="lv-toolbar">
-      <button class="lv-title-tab" id="lv-actual-tab" onclick="lvSetMode('actual')" title="실제 적용된 현재 배치 보기">📋 배치현황</button>
+      <div class="lv-mode-toggle">
+        <button class="lv-mode-btn active" id="lv-actual-tab" onclick="lvSetMode('actual')">📋 배치현황</button>
+        <button class="lv-mode-btn" id="lv-mode-draft" onclick="lvSetMode('draft')">🧪 운영팀 테스트</button>
+      </div>
       <div class="lv-sep"></div>
       <div class="lv-actions">
         <button class="lv-btn" id="lv-pt-toggle-btn" onclick="lvTogglePT()" title="파트타이머 표시/숨김">파트타이머 제외</button>
-        <button class="lv-btn" id="lv-mode-draft" onclick="lvSetMode('draft')">운영팀 테스트</button>
         <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
         <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
       </div>
@@ -4073,9 +4084,28 @@ function saveFieldEdit(field, val){
     document.getElementById('pdtags').innerHTML=ctag(curEmp.channel)+` <span class="tag tgg">${curEmp.brand}</span><span class="tag tgg">${curEmp.tenure||''}</span>`;
   }
   if(field==='current_store'){
+    const newCh = guessChannel(val) || curEmp.channel || '';
+    if(newCh && newCh !== curEmp.channel){
+      curEmp.channel = newCh;
+      // 채널 표시 즉시 업데이트
+      const chEl = document.getElementById('pch');
+      if(chEl) chEl.innerHTML = ctag(newCh);
+      const chInp = document.getElementById('pch-sel');
+      if(chInp) chInp.value = newCh;
+      // 채널도 함께 저장
+      if(!window.__fbEdits) window.__fbEdits = {};
+      if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
+      window.__fbEdits[curEmp.id]['channel'] = newCh;
+      window.fbSetEdit && window.fbSetEdit(curEmp.id, 'channel', newCh);
+      try{
+        const _hrFb = JSON.parse(localStorage.getItem('hr_fb_'+curEmp.id)||'{}');
+        _hrFb['channel'] = newCh;
+        localStorage.setItem('hr_fb_'+curEmp.id, JSON.stringify(_hrFb));
+      }catch(_){}
+    }
     try{
       const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
-      actual[curEmp.id]={current_store:val,channel:guessChannel(val)||curEmp.channel||''};
+      actual[curEmp.id]={current_store:val,channel:newCh};
       localStorage.setItem('layoutActualData',JSON.stringify(actual));
     }catch(_){}
   }
@@ -4758,6 +4788,30 @@ function showCtxMenu(e, empId){
 function hideCtxMenu(){const m=$('lv-ctx-menu');if(m)m.classList.remove('open');}
 window.hideCtxMenu=hideCtxMenu;
 const SB_BASE_KEY='lvSbBaseOverrides';
+const STORE_BASE_KEY='lvStoreBaseOverrides';
+function getStoreBaseOverrides(){try{const r=localStorage.getItem(STORE_BASE_KEY);return r?JSON.parse(r):{};}catch{return {};}}
+function saveStoreBaseOverrides(map){localStorage.setItem(STORE_BASE_KEY,JSON.stringify(map||{}));}
+function getStoreBase(storeKey){
+  const ov=getStoreBaseOverrides();
+  if(ov[storeKey]!==undefined) return ov[storeKey];
+  return (window.SB_DATA&&window.SB_DATA.stores&&window.SB_DATA.stores[storeKey])||0;
+}
+window.lvEditStoreBase=function(storeKey,el){
+  const cur=getStoreBase(storeKey);
+  el.outerHTML=`<input class="lv-hc-base-input" type="number" min="0" value="${cur}"
+    onblur="lvSaveStoreBase('${storeKey}',this.value)"
+    onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape'){this.blur();}"
+    autofocus>`;
+};
+window.lvSaveStoreBase=function(storeKey,val){
+  const n=parseInt(val);
+  if(isNaN(n)||n<0){lvRender();return;}
+  const map=getStoreBaseOverrides();
+  map[storeKey]=n;
+  saveStoreBaseOverrides(map);
+  lvToast('💾 기준인원 저장됨');
+  lvRender();
+};
 function sbNum(v, d=0){
   const n=Number(v);
   return Number.isFinite(n)?n:d;
@@ -5117,8 +5171,7 @@ window.lvTogglePT = function() {
 };
 
 function buildHcBar(storeKey, counted, total){
-  const sb=window.SB_DATA&&window.SB_DATA.stores; if(!sb) return '';
-  const base=sb[storeKey]; if(base===undefined||base===0) return '';
+  const base=getStoreBase(storeKey); if(!base) return '';
   const over=counted>base, under=counted<base;
   const barColor=over?'#6c6ef7':under?'#e84040':'#2daa72';
   const tagCls=over?'over':under?'low':'ok';
@@ -5130,7 +5183,7 @@ function buildHcBar(storeKey, counted, total){
     <div class="lv-hc-bar-bg"><div class="lv-hc-bar-fill" style="width:${Math.min(Math.round(counted/base*100),100)}%;background:${barColor}"></div></div>
     <div class="lv-hc-nums">
       <span style="color:${barColor};font-size:12px;font-weight:700">${counted}</span>
-      <span class="lv-hc-slash">/</span><span class="lv-hc-base">${base}</span>${pendingHtml}
+      <span class="lv-hc-slash">/</span><span class="lv-hc-base lv-hc-base-edit" onclick="lvEditStoreBase('${storeKey}',this)" title="클릭하여 기준인원 수정">${base}</span>${pendingHtml}
     </div>
     <span class="lv-hc-tag ${tagCls}">${over?'초과':under?'부족':'적정'} ${(diff>0?'+':'')+diff}</span>
   </div></div>`;
