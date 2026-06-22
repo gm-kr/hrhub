@@ -3501,14 +3501,27 @@ function saveCell(el){
   const emp=EMPS.find(e=>e.id===id);
   if(!emp)return;
   const oldVal=emp[field];
+  // [SYNC FIX] current_store 변경시 이전 매장을 _prev_store에 보존 (이동예정 표시용)
+  if(field==='current_store' && oldVal && oldVal !== val){
+    emp._prev_store = oldVal;
+    if(!window.__fbEdits[id]) window.__fbEdits[id]={};
+    window.__fbEdits[id]._prev_store = oldVal;
+    if(window.fbSetEdit) window.fbSetEdit(id, '_prev_store', oldVal);
+  }
   emp[field]=val;
   if(field==='current_store'){
     const newCh=guessChannel(val);
     if(newCh){ emp.channel=newCh; }
+    // [SYNC FIX] actual + draft 양쪽 모두 업데이트해야 배치현황 어느 모드에서도 반영됨
     try{
       const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
       actual[id]={current_store:val,channel:newCh||emp.channel||''};
       localStorage.setItem('layoutActualData',JSON.stringify(actual));
+    }catch(_){}
+    try{
+      const draft=JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
+      draft[id]={current_store:val,channel:newCh||emp.channel||''};
+      localStorage.setItem('layoutDraftData',JSON.stringify(draft));
     }catch(_){}
     refresh();
   }
@@ -4084,6 +4097,8 @@ function filterStoreList(val){
 }
 function saveFieldEdit(field, val){
   if(!curEmp) return;
+  // [BUG FIX] 덮어쓰기 전에 이전 값 보존 (current_store의 _prev_store 추적용)
+  const _oldFieldVal = curEmp[field];
   curEmp[field]=val;
   const viewMap={
     'hire_date':'phire','current_store':'pstore','language':'plang',
@@ -4103,6 +4118,15 @@ function saveFieldEdit(field, val){
   }
   if(field==='current_store'){
     const newCh = guessChannel(val) || curEmp.channel || '';
+    // [BUG FIX] curEmp.current_store는 이미 val로 덮어쓰여진 상태 → _oldFieldVal 사용
+    const _prevStore = _oldFieldVal || '';
+    if(_prevStore && _prevStore !== val){
+      curEmp._prev_store = _prevStore;
+      if(!window.__fbEdits) window.__fbEdits = {};
+      if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
+      window.__fbEdits[curEmp.id]._prev_store = _prevStore;
+      window.fbSetEdit && window.fbSetEdit(curEmp.id, '_prev_store', _prevStore);
+    }
     if(newCh && newCh !== curEmp.channel){
       curEmp.channel = newCh;
       // 채널 표시 즉시 업데이트
@@ -4121,10 +4145,17 @@ function saveFieldEdit(field, val){
         localStorage.setItem('hr_fb_'+curEmp.id, JSON.stringify(_hrFb));
       }catch(_){}
     }
+    // [SYNC FIX] actual + draft 양쪽 layoutData를 모두 업데이트해야
+    //           배치현황의 어느 모드(실제/초안)에서도 즉시 반영됨
     try{
       const actual=JSON.parse(localStorage.getItem('layoutActualData')||'{}');
       actual[curEmp.id]={current_store:val,channel:newCh};
       localStorage.setItem('layoutActualData',JSON.stringify(actual));
+    }catch(_){}
+    try{
+      const draft=JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
+      draft[curEmp.id]={current_store:val,channel:newCh};
+      localStorage.setItem('layoutDraftData',JSON.stringify(draft));
     }catch(_){}
   }
   if(field==='hire_date'){
@@ -6964,4 +6995,19 @@ window.fbSetPT = async function(data) {
       <label class="inv-modal-label">브랜드</label>
       <input class="inv-modal-input" id="invCandBrand" type="text" placeholder="예) GM, ATS, NUF..." />
     </div>
-    <div clas
+    <div class="inv-modal-field">
+      <label class="inv-modal-label">거주지</label>
+      <input class="inv-modal-input" id="invCandResidence" type="text" placeholder="예) 강남구 역삼동(서울)" />
+    </div>
+    <div class="inv-modal-field">
+      <label class="inv-modal-label">메모</label>
+      <textarea class="inv-modal-input" id="invCandMemo" placeholder="추가 메모..." rows="2"></textarea>
+    </div>
+    <div class="inv-modal-footer">
+      <button class="inv-modal-btn cancel" onclick="invCloseCandModal()">취소</button>
+      <button class="inv-modal-btn confirm" onclick="invSaveCandidate()">저장</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
