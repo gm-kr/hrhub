@@ -5366,14 +5366,17 @@ function buildCard(storeKey,emps,secKey,accent){
   });
   const storeCounted=emps.filter(isStoreCounted);
   const pending=emps.filter(e=>!isStoreCounted(e));
-  const byPos={MG:[],BM:[],SF:[],IN:[]};
-  emps.forEach(e=>byPos[lvPosKey(e.position)].push(e));
+  // [SORT] 재직중(active) 직원과 그 외(지원근무/이동예정/입사예정/복직예정/휴직 등) 분리
+  const activeEmps_card = emps.filter(e=>getEmpStatus(e)==='active');
+  const otherEmps_card  = emps.filter(e=>getEmpStatus(e)!=='active');
+  const byPos={MG:[],BM:[],SF:[],IN:[]};        // 재직중 직원만 직책별로 분류
+  const byPosOther={MG:[],BM:[],SF:[],IN:[]};   // 비-재직 직원도 동일 직책별 분류(아래쪽에 배치)
+  activeEmps_card.forEach(e=>byPos[lvPosKey(e.position)].push(e));
+  otherEmps_card.forEach(e=>byPosOther[lvPosKey(e.position)].push(e));
   const nm=lvStoreName(storeKey), rg=lvRegion(storeKey), ic=storeInit(nm), ibg=accent+'22';
   let chips='';
-  POS_ORDER.forEach(pk=>{
-    if(!byPos[pk].length) return;
-    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row">`;
-    byPos[pk].forEach(emp=>{
+  // 헬퍼: 한 명의 직원을 칩 HTML로 렌더링
+  const renderChip = (emp) => {
       const st=getEmpStatus(emp);
       const scfg=STATUS_CFG[st]||STATUS_CFG.active;
       const memo=getEmpMemo(emp);
@@ -5396,11 +5399,27 @@ function buildCard(storeKey,emps,secKey,accent){
       const _prevForTitle=(st==='transfer'&&typeof getEmpPrevStore==='function')?getEmpPrevStore(emp):'';
       const _transferTitle=_prevForTitle?(' | 출발: '+lvStoreName(_prevForTitle)):'';
       const title=`${emp.name} | ${emp.position} | ${scfg.label}${_transferTitle}${memo?' | 📝 '+memo:''}`;
-      chips+=`<div class="lv-chip${chipCls}" draggable="true" data-id="${emp.id}" title="${title}"
+      return `<div class="lv-chip${chipCls}" draggable="true" data-id="${emp.id}" title="${title}"
         >${av}<span class="lv-chip-name">${emp.name}</span>${badge}${memoIcon}</div>`;
-    });
+  };
+  // 1단계: 재직중(active) 직원을 직책별로 위쪽에 렌더링
+  POS_ORDER.forEach(pk=>{
+    if(!byPos[pk].length) return;
+    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row">`;
+    byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
     chips+='</div>';
   });
+  // 2단계: 지원근무/이동예정 등 비-재직 직원을 카드 하단에 별도 영역으로 렌더링
+  const hasOther = POS_ORDER.some(pk=>byPosOther[pk].length>0);
+  if(hasOther){
+    chips+=`<div class="lv-pos-label" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;color:#9aa0b3;font-size:9px">기타 (지원·이동·예정 등)</div>`;
+    POS_ORDER.forEach(pk=>{
+      if(!byPosOther[pk].length) return;
+      chips+=`<div class="lv-pos-row">`;
+      byPosOther[pk].forEach(emp=>{ chips += renderChip(emp); });
+      chips+='</div>';
+    });
+  }
   const hcBar=buildHcBar(storeKey,storeCounted.length,emps.length);
   const pendingBadge=pending.length>0?`<span class="lv-pending-badge">+${pending.length}예정</span>`:'';
   card.innerHTML=`
