@@ -2840,7 +2840,7 @@ window.openMoveChannel = openMoveChannel;
       <div class="lv-pp-resizer" id="lv-pp-resizer" title="드래그해서 폭 조절"></div>
       <div class="lv-pp" id="lv-pp">
         <div class="lv-pp-head">
-          <span class="lv-pp-head-title">📋 투입예정 리스트</span>
+          <span class="lv-pp-head-title">📋 투입·이동 예정 리스트</span>
         </div>
         <div class="lv-pp-body">
           <div class="lv-pp-sec">
@@ -2882,6 +2882,24 @@ window.openMoveChannel = openMoveChannel;
               <tbody id="lv-pp-returning-body"></tbody>
             </table>
             <div id="lv-pp-returning-empty" class="lv-pp-empty">복직예정 없음</div>
+          </div>
+          <div class="lv-pp-sec" style="margin-top:16px">
+            <div class="lv-pp-sec-head">
+              <span class="lv-pp-sec-title">
+                <span class="lv-pp-sec-dot" style="background:#e07b12"></span>
+                이동예정
+              </span>
+              <span style="font-size:10px;color:#9aa0b3;font-weight:500">우클릭→이동예정으로 지정</span>
+            </div>
+            <table class="lv-pp-tbl">
+              <thead><tr>
+                <th style="width:72px">이름</th>
+                <th>이동 경로</th>
+                <th style="width:18px"></th>
+              </tr></thead>
+              <tbody id="lv-pp-transfer-body"></tbody>
+            </table>
+            <div id="lv-pp-transfer-empty" class="lv-pp-empty">이동예정 없음</div>
           </div>
         </div>
       </div>
@@ -4607,6 +4625,14 @@ function ppRowHtml(type, row){
       </td>
     </tr>`;
 }
+// [TRANSFER] 직원에서 이전 매장 가져오기 (__fbEdits 폴백 포함)
+function getEmpPrevStore(emp){
+  if(!emp) return '';
+  if(emp._prev_store) return emp._prev_store;
+  const ed=window.__fbEdits||{};
+  return (ed[emp.id]&&ed[emp.id]._prev_store)||'';
+}
+window.getEmpPrevStore=getEmpPrevStore;
 function ppRender(){
   const data=ppLoad();
   ['joining','returning'].forEach(type=>{
@@ -4617,7 +4643,40 @@ function ppRender(){
     tbody.innerHTML=rows.map(r=>ppRowHtml(type,r)).join('');
     empty.style.display=rows.length?'none':'block';
   });
+  // [TRANSFER] 이동예정 자동 렌더링 (status==='transfer'인 직원만)
+  const tBody=$('lv-pp-transfer-body');
+  const tEmpty=$('lv-pp-transfer-empty');
+  if(tBody && tEmpty){
+    const transferEmps=EMPS.filter(e=>{
+      if(isDeletedEmpId(e.id)) return false;
+      return getEmpStatus(e)==='transfer';
+    });
+    tBody.innerHTML=transferEmps.map(e=>{
+      const from=getEmpPrevStore(e);
+      const to=e.current_store||'';
+      const fromName=from?lvStoreName(from):'<span style="color:#aab0be">미기록</span>';
+      const toName=to?lvStoreName(to):'<span style="color:#aab0be">미지정</span>';
+      const ac=aColor(e.name);
+      const av=e.has_photo&&e.photo_b64
+        ?`<img src="${e.photo_b64}" alt="${e.name}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px">`
+        :`<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${ac};color:#fff;font-size:9px;font-weight:700;text-align:center;line-height:20px;vertical-align:middle;margin-right:4px">${e.name.slice(-1)}</span>`;
+      return `<tr>
+        <td style="font-size:12px;font-weight:600">${av}${e.name}</td>
+        <td style="font-size:11px;line-height:1.4">
+          <span style="color:#7a8299">${fromName}</span>
+          <span style="color:#e07b12;margin:0 4px">→</span>
+          <span style="color:#37352f;font-weight:600">${toName}</span>
+        </td>
+        <td><button class="lv-pp-del-btn" onclick="ppClearTransfer('${e.id}')" title="이동예정 해제">✕</button></td>
+      </tr>`;
+    }).join('');
+    tEmpty.style.display=transferEmps.length?'none':'block';
+  }
 }
+// [TRANSFER] 이동예정 해제 (status를 active로 복귀)
+window.ppClearTransfer=function(empId){
+  if(typeof lvSetStatus==='function') lvSetStatus(empId, 'active');
+};
 function lvPPAdd(type){
   const data=ppLoad();
   if(!data[type]) data[type]=[];
@@ -5266,6 +5325,16 @@ function buildCard(storeKey,emps,secKey,accent){
       if(!lvDragId) return;
       const emp=EMPS.find(x=>x.id===lvDragId);
       if(!emp||lvEmpStore(emp)===storeKey) return;
+      // [TRANSFER] 이동 직전 매장을 _prev_store로 기록 (이동예정 표시용)
+      const _prevStore = lvEmpStore(emp) || emp.current_store || '';
+      if(_prevStore && _prevStore !== storeKey){
+        emp._prev_store = _prevStore;
+        if(!window.__fbEdits) window.__fbEdits={};
+        if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
+        window.__fbEdits[emp.id]._prev_store = _prevStore;
+        if(window.fbSetEdit) window.fbSetEdit(emp.id, '_prev_store', _prevStore);
+        try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      }
       if(lvMode==='draft'){
         lvSaveDraftMove(emp.id,storeKey);
       }else{
@@ -5313,9 +5382,20 @@ function buildCard(storeKey,emps,secKey,accent){
         ?`<div class="lv-avatar"><img src="${emp.photo_b64}" alt="${emp.name}"></div>`
         :`<div class="lv-avatar" style="background:${ac}">${emp.name.slice(-1)}</div>`;
       const chipCls=(st!=='active'?` lv-chip-${st}`:'')+(memo?' has-memo':'');
-      const badge=scfg.badge?`<span class="lv-status-badge" style="background:${scfg.chipColor}22;color:${scfg.chipColor}">${scfg.badge}</span>`:'';
+      // [TRANSFER] 이동예정 칩에는 출발 매장 정보 같이 표시
+      let badge;
+      if(st==='transfer'){
+        const _prev=(typeof getEmpPrevStore==='function')?getEmpPrevStore(emp):'';
+        const _fromName=_prev?lvStoreName(_prev):'';
+        const _badgeText=_fromName?(_fromName+' →'):scfg.badge;
+        badge=`<span class="lv-status-badge" style="background:${scfg.chipColor}22;color:${scfg.chipColor}" title="${_fromName?'출발: '+_fromName:''}">${_badgeText}</span>`;
+      } else {
+        badge=scfg.badge?`<span class="lv-status-badge" style="background:${scfg.chipColor}22;color:${scfg.chipColor}">${scfg.badge}</span>`:'';
+      }
       const memoIcon=memo?`<span class="lv-memo-icon" title="${memo.replace(/"/g,'"')}">📝</span>`:'';
-      const title=`${emp.name} | ${emp.position} | ${scfg.label}${memo?' | 📝 '+memo:''}`;
+      const _prevForTitle=(st==='transfer'&&typeof getEmpPrevStore==='function')?getEmpPrevStore(emp):'';
+      const _transferTitle=_prevForTitle?(' | 출발: '+lvStoreName(_prevForTitle)):'';
+      const title=`${emp.name} | ${emp.position} | ${scfg.label}${_transferTitle}${memo?' | 📝 '+memo:''}`;
       chips+=`<div class="lv-chip${chipCls}" draggable="true" data-id="${emp.id}" title="${title}"
         >${av}<span class="lv-chip-name">${emp.name}</span>${badge}${memoIcon}</div>`;
     });
@@ -6844,25 +6924,4 @@ window.fbSetPT = async function(data) {
       <label class="inv-modal-label">브랜드</label>
       <input class="inv-modal-input" id="invCandBrand" type="text" placeholder="예) GM, ATS, NUF..." />
     </div>
-    <div class="inv-modal-field">
-      <label class="inv-modal-label">진행 상태</label>
-      <select class="inv-modal-select" id="invCandStatus">
-        <option value="waiting">답변 대기중</option>
-        <option value="explain">채용설명회</option>
-        <option value="interview">면접</option>
-        <option value="rejected">거절</option>
-            <option value="hired">채용완료</option>
-      </select>
-    </div>
-    <div class="inv-modal-field">
-      <label class="inv-modal-label">메모 (특이사항)</label>
-      <textarea class="inv-modal-input inv-modal-textarea" id="invCandMemo" placeholder="특이사항, 메모를 자유롭게 입력하세요..." rows="3"></textarea>
-    </div>
-    <div class="inv-modal-footer">
-      <button class="inv-modal-btn cancel" onclick="invCloseCandModal()">취소</button>
-      <button class="inv-modal-btn confirm" onclick="invSaveCandidate()">저장</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
+    <div clas
