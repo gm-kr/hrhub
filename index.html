@@ -5409,14 +5409,35 @@ function buildCard(storeKey,emps,secKey,accent){
     byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
     chips+='</div>';
   });
-  // 2단계: 지원근무/이동예정 등 비-재직 직원을 카드 하단에 별도 영역으로 렌더링
-  const hasOther = POS_ORDER.some(pk=>byPosOther[pk].length>0);
-  if(hasOther){
+  // 2단계: 비-재직 직원을 카드 하단에 상태(status)별로 묶어서 렌더링
+  // 표시 순서: 이동예정 → 지원근무 → 입사예정 → 복직예정 → 휴직중 → 퇴사예정 (그 외는 마지막)
+  const STATUS_BOTTOM_ORDER = ['transfer','support','joining','returning','leave','leaving'];
+  if(otherEmps_card.length){
+    const byStatus = {};
+    otherEmps_card.forEach(e=>{
+      const s = getEmpStatus(e) || 'active';
+      if(!byStatus[s]) byStatus[s] = [];
+      byStatus[s].push(e);
+    });
+    // 직책 순(MG→BM→SF→IN)으로 각 상태 그룹 내 정렬
+    Object.keys(byStatus).forEach(s=>{
+      byStatus[s].sort((a,b)=>POS_ORDER.indexOf(lvPosKey(a.position))-POS_ORDER.indexOf(lvPosKey(b.position)));
+    });
     chips+=`<div class="lv-pos-label" style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb;color:#9aa0b3;font-size:9px">기타 (지원·이동·예정 등)</div>`;
-    POS_ORDER.forEach(pk=>{
-      if(!byPosOther[pk].length) return;
+    // 정의된 순서대로 + 그 외 상태 마지막에 추가
+    const orderedStatuses = [
+      ...STATUS_BOTTOM_ORDER.filter(s=>byStatus[s]),
+      ...Object.keys(byStatus).filter(s=>!STATUS_BOTTOM_ORDER.includes(s))
+    ];
+    orderedStatuses.forEach(s=>{
+      const list = byStatus[s];
+      if(!list || !list.length) return;
+      const scfg = STATUS_CFG[s] || STATUS_CFG.active;
+      chips+=`<div class="lv-pos-label" style="color:${scfg.chipColor||'#7a8299'};font-size:9.5px;margin-top:4px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${scfg.dot};margin-right:4px;vertical-align:middle"></span>${scfg.label||s}
+      </div>`;
       chips+=`<div class="lv-pos-row">`;
-      byPosOther[pk].forEach(emp=>{ chips += renderChip(emp); });
+      list.forEach(emp=>{ chips += renderChip(emp); });
       chips+='</div>';
     });
   }
