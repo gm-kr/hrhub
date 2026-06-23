@@ -5456,22 +5456,36 @@ window.lvTogglePT = function() {
 
 function buildHcBar(storeKey, counted, total, pendingBreakdown){
   const base=getStoreBase(storeKey); if(!base) return '';
-  const over=counted>base, under=counted<base;
-  const barColor=over?'#6c6ef7':under?'#e84040':'#2daa72';
-  const tagCls=over?'over':under?'low':'ok';
-  const diff=counted-base;
-  const pending=total-counted;
-  // [CLARITY] 현인원바의 +예정에도 breakdown tooltip 표시
-  const ttl = pendingBreakdown ? Object.entries(pendingBreakdown).map(([s,c])=>`${(STATUS_CFG[s]&&STATUS_CFG[s].label)||s} ${c}명`).join(' · ') : '현인원에 미포함';
-  const pendingHtml=pending>0?`<span style="font-size:9px;color:#5b6cf8;margin-left:3px;font-weight:700" title="${ttl}">+${pending}예정</span>`:'';
+  // 보충 인원: 지원근무 + 입사예정 + 복직예정
+  const boost = pendingBreakdown
+    ? (pendingBreakdown.support||0)+(pendingBreakdown.joining||0)+(pendingBreakdown.returning||0)
+    : 0;
+  const effective = counted + boost;
+  const diff = effective - base;
+  // 상태: 보충까지 합쳐서 기준 충족 여부로 판단 (단순화)
+  let barColor, tagCls, tagText;
+  if(effective > base){ barColor='#6c6ef7'; tagCls='over'; tagText='+'+diff; }
+  else if(effective === base){ barColor='#2daa72'; tagCls='ok'; tagText='✓'; }
+  else { barColor='#e84040'; tagCls='low'; tagText=diff; }
+  // 바 폭: 실효(effective) 기준으로 채우고, 보충은 옅은 톤으로 구분
+  const countedPct = Math.min(Math.round(counted/base*100), 100);
+  const effPct     = Math.min(Math.round(effective/base*100), 100);
+  const boostPct   = Math.max(0, effPct - countedPct);
+  const numText = boost>0 ? `${counted}+${boost}` : `${counted}`;
+  const ttlParts = pendingBreakdown
+    ? Object.entries(pendingBreakdown).map(([s,c])=>`${(STATUS_CFG[s]&&STATUS_CFG[s].label)||s} ${c}`).join(' · ')
+    : '';
   return `<div class="lv-hc-bar-wrap"><div class="lv-hc-row">
     <span class="lv-hc-label" style="white-space:nowrap;width:auto;min-width:52px">현인원/기준</span>
-    <div class="lv-hc-bar-bg"><div class="lv-hc-bar-fill" style="width:${Math.min(Math.round(counted/base*100),100)}%;background:${barColor}"></div></div>
-    <div class="lv-hc-nums">
-      <span style="color:${barColor};font-size:12px;font-weight:700">${counted}</span>
-      <span class="lv-hc-slash">/</span><span class="lv-hc-base lv-hc-base-edit" onclick="lvEditStoreBase('${storeKey}',this)" title="클릭하여 기준인원 수정">${base}</span>${pendingHtml}
+    <div class="lv-hc-bar-bg" style="display:flex;overflow:hidden">
+      <div class="lv-hc-bar-fill" style="width:${countedPct}%;background:${barColor}"></div>
+      ${boostPct>0?`<div class="lv-hc-bar-fill" style="width:${boostPct}%;background:${barColor}55"></div>`:''}
     </div>
-    <span class="lv-hc-tag ${tagCls}">${over?'초과':under?'부족':'적정'} ${(diff>0?'+':'')+diff}</span>
+    <div class="lv-hc-nums">
+      <span style="color:${barColor};font-size:12px;font-weight:700" title="${ttlParts||''}">${numText}</span>
+      <span class="lv-hc-slash">/</span><span class="lv-hc-base lv-hc-base-edit" onclick="lvEditStoreBase('${storeKey}',this)" title="클릭하여 기준인원 수정">${base}</span>
+    </div>
+    <span class="lv-hc-tag ${tagCls}">${tagText}</span>
   </div></div>`;
 }
 function lvRender(){
