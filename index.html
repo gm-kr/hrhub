@@ -6332,6 +6332,8 @@ function knExportChanges(){
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
+                                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig = {
   apiKey:            "AIzaSyCd-Uhjg4D9cpddxGj4YmvnpDyYHr10xOU",
   authDomain:        "gm-hr-hub.firebaseapp.com",
@@ -6343,6 +6345,142 @@ const firebaseConfig = {
 const _app  = initializeApp(firebaseConfig);
 const _db   = getFirestore(_app);
 window._db = _db;
+
+// ═══════════════════════════════════════════════════════════
+// [AUTH GATE] 구글 로그인 + 이메일 화이트리스트
+// ═══════════════════════════════════════════════════════════
+// 이 리스트에 있는 이메일만 진입 허용. 추가하려면 한 줄씩 ',' 로 구분.
+const ALLOWED_EMAILS = [
+  'moon9392@gmail.com',
+  'topyoungjoon@gmail.com',
+];
+const ALLOWED_EMAIL_SET = new Set(ALLOWED_EMAILS.map(e => e.toLowerCase().trim()));
+// 도메인 전체 허용하고 싶으면 아래 배열에 도메인 추가 (예: 'gentlemonster.com')
+const ALLOWED_DOMAINS = [];
+function isEmailAllowed(email){
+  if(!email) return false;
+  const e = email.toLowerCase().trim();
+  if(ALLOWED_EMAIL_SET.has(e)) return true;
+  const at = e.indexOf('@');
+  if(at < 0) return false;
+  const domain = e.slice(at+1);
+  return ALLOWED_DOMAINS.includes(domain);
+}
+const _auth = getAuth(_app);
+const _googleProvider = new GoogleAuthProvider();
+_googleProvider.setCustomParameters({ prompt: 'select_account' });
+// 30일 자동 로그인 유지(브라우저 로컬 저장)
+setPersistence(_auth, browserLocalPersistence).catch(()=>{});
+function _setAuthStatus(msg, kind){
+  const el = document.getElementById('auth-status');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.className = 'auth-status' + (kind ? ' ' + kind : '');
+}
+function _showAuthGate(show){
+  const gate = document.getElementById('auth-gate');
+  if(gate) gate.classList.toggle('hidden', !show);
+  const mini = document.getElementById('auth-logout-mini');
+  if(mini) mini.classList.toggle('show', !show);
+}
+function _renderRejectedUser(user){
+  const block = document.getElementById('auth-user-block');
+  const btn   = document.getElementById('auth-google-btn');
+  if(!block) return;
+  const initial = (user.displayName||user.email||'?').slice(0,1).toUpperCase();
+  const photo = user.photoURL ? `<img src="${user.photoURL}" alt="">` : initial;
+  block.innerHTML = `
+    <div class="auth-user-row">
+      <div class="auth-user-avatar">${photo}</div>
+      <div class="auth-user-info">
+        <div class="auth-user-name">${user.displayName||'이름 없음'}</div>
+        <div class="auth-user-email">${user.email||''}</div>
+      </div>
+      <button class="auth-logout-btn" onclick="window.__authLogout&&window.__authLogout()">로그아웃</button>
+    </div>
+  `;
+  block.style.display = 'block';
+  if(btn) btn.style.display = 'none';
+}
+function _resetGateUI(){
+  const block = document.getElementById('auth-user-block');
+  const btn   = document.getElementById('auth-google-btn');
+  if(block){ block.style.display = 'none'; block.innerHTML = ''; }
+  if(btn){ btn.style.display = ''; btn.disabled = false; }
+  _setAuthStatus('');
+}
+window.__authLogout = async function(){
+  try { await signOut(_auth); } catch(_){}
+  _resetGateUI();
+  _showAuthGate(true);
+};
+let _authInFlight = false;
+async function _doGoogleLogin(){
+  if(_authInFlight) return; // 이미 진행 중이면 중복 호출 무시
+  _authInFlight = true;
+  const btn = document.getElementById('auth-google-btn');
+  if(btn) btn.disabled = true;
+  _setAuthStatus('로그인 진행 중...', '');
+  try {
+    await signInWithPopup(_auth, _googleProvider);
+    // onAuthStateChanged 가 후속 처리(허용여부 판단)
+  } catch(err) {
+    const code = (err && err.code) || '';
+    // cancelled-popup-request 는 사용자가 새 팝업을 열어서 이전 팝업이 취소된 정상 케이스
+    // → 에러 메시지를 표시하지 않고 조용히 무시
+    if(code === 'auth/cancelled-popup-request'){
+      _authInFlight = false;
+      return;
+    }
+    console.error('[AUTH] signInWithPopup error:', err);
+    let msg = err && err.message ? err.message : '알 수 없는 오류';
+    if(code === 'auth/popup-blocked') msg = '팝업이 차단되었습니다. 브라우저 팝업 차단을 해제해주세요.';
+    else if(code === 'auth/popup-closed-by-user') msg = '로그인 창이 닫혔습니다. 다시 시도해주세요.';
+    else if(code === 'auth/operation-not-allowed') msg = 'Firebase에서 Google 로그인이 활성화되지 않았습니다. 콘솔에서 활성화해주세요.';
+    else if(code === 'auth/unauthorized-domain') msg = '이 도메인은 Firebase Authorized domains에 등록되어있지 않습니다.';
+    _setAuthStatus('로그인 실패: ' + msg, 'error');
+    if(btn) btn.disabled = false;
+  } finally {
+    _authInFlight = false;
+  }
+}
+window.__authLogin = _doGoogleLogin;
+// 버튼 핸들러를 즉시 부착 (DOMContentLoaded 의존성 제거)
+function _attachAuthBtn(){
+  const btn = document.getElementById('auth-google-btn');
+  if(btn && !btn.__authBound){
+    btn.__authBound = true;
+    btn.addEventListener('click', _doGoogleLogin);
+  }
+}
+_attachAuthBtn();
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', _attachAuthBtn);
+}
+// 인증 상태 감지: 로그인되어 있고 화이트리스트 통과면 게이트 숨김
+onAuthStateChanged(_auth, (user)=>{
+  if(!user){
+    _resetGateUI();
+    _showAuthGate(true);
+    return;
+  }
+  if(!isEmailAllowed(user.email)){
+    // 로그인했지만 허용 이메일이 아님 → 안내 화면
+    _renderRejectedUser(user);
+    _setAuthStatus(`'${user.email}' 계정은 접근 권한이 없습니다.\n관리자에게 등록을 요청해주세요.`, 'error');
+    _showAuthGate(true);
+    return;
+  }
+  // 허용된 사용자
+  window.__fbUser = {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName||user.email,
+    photoURL: user.photoURL||''
+  };
+  try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
+  _showAuthGate(false);
+});
 const COL_EDITS    = 'hrEdits';
 const COL_SCHEDULE = 'scheduled';
 const COL_ORDER    = 'storeOrder';
@@ -6633,14 +6771,8 @@ window.fbSetSchedule = async function(data) {
     window.__fbSchedule = data;
   } catch(e) { console.error('fbSetSchedule:', e); }
 };
-const user = {
-  uid: 'guest-local',
-  email: 'guest@local.dev',
-  displayName: 'Guest Mode',
-  photoURL: ''
-};
-window.__fbUser = user;
-updateLoginUserInfo(user);
+// [AUTH GATE] guest-local 자동 로그인 제거 - 이제 실제 구글 인증을 통해서만 진입 가능
+// window.__fbUser는 onAuthStateChanged 콜백에서 화이트리스트 통과 시에만 채워짐
   try {
     const cached = localStorage.getItem('__fbEditsCache');
     if (cached) {
@@ -6783,7 +6915,6 @@ window.fbSubscribeStoreEval = function(storeId) {
     }
   });
 };
-});
 </script>
 <script>
 const COL_INV_MANAGERS   = 'inv_managers';
@@ -7244,5 +7375,72 @@ window.fbSetPT = async function(data) {
     </div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════
+     로그인 게이트 (Firebase Google Auth + 이메일 화이트리스트)
+════════════════════════════════════════════ -->
+<style>
+#auth-gate {
+  position: fixed; inset: 0; z-index: 999999;
+  background: linear-gradient(135deg, #f7f6f3 0%, #eef0fe 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+#auth-gate.hidden { display: none !important; }
+.auth-card {
+  background: #fff; border-radius: 18px; padding: 40px 36px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.12), 0 6px 16px rgba(0,0,0,.06);
+  width: 360px; max-width: 92vw; text-align: center;
+}
+.auth-logo { font-size: 36px; margin-bottom: 12px; }
+.auth-title { font-size: 18px; font-weight: 700; color: #1a1d23; margin-bottom: 6px; }
+.auth-subtitle { font-size: 13px; color: #7a8299; margin-bottom: 24px; line-height: 1.5; }
+.auth-google-btn {
+  width: 100%; height: 44px; border: 1px solid #dadce0; border-radius: 22px;
+  background: #fff; color: #3c4043; font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  cursor: pointer; transition: all .15s;
+  font-family: inherit;
+}
+.auth-google-btn:hover { background: #f8f9fa; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.auth-google-btn:disabled { opacity: .6; cursor: not-allowed; }
+.auth-google-icon { width: 18px; height: 18px; }
+.auth-status { font-size: 12px; color: #5b6cf8; margin-top: 14px; min-height: 16px; }
+.auth-status.error { color: #e84040; }
+.auth-status.warn { color: #d39e1f; }
+.auth-foot { font-size: 11px; color: #aab0be; margin-top: 18px; }
+.auth-user-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f8f9fb; border-radius: 10px; margin-bottom: 14px; }
+.auth-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #5b6cf8; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.auth-user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.auth-user-info { flex: 1; text-align: left; min-width: 0; }
+.auth-user-name { font-size: 13px; font-weight: 600; color: #1a1d23; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.auth-user-email { font-size: 11px; color: #7a8299; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.auth-logout-btn { background: none; border: none; color: #7a8299; font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+.auth-logout-btn:hover { background: #eef0fe; color: #5b6cf8; }
+#auth-logout-mini { position: fixed; top: 8px; right: 12px; z-index: 9999; font-size: 11px; color: #aab0be; background: rgba(255,255,255,.8); border: 1px solid #eaecf2; border-radius: 12px; padding: 4px 10px; cursor: pointer; display: none; }
+#auth-logout-mini:hover { color: #e84040; border-color: #e84040; }
+#auth-logout-mini.show { display: inline-block; }
+</style>
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-logo">🔐</div>
+    <div class="auth-title">GM HR Hub</div>
+    <div class="auth-subtitle">접근이 허용된 구글 계정만<br/>로그인할 수 있어요.</div>
+    <div id="auth-user-block" style="display:none"></div>
+    <button id="auth-google-btn" class="auth-google-btn">
+      <svg class="auth-google-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+      </svg>
+      구글 계정으로 로그인
+    </button>
+    <div id="auth-status" class="auth-status"></div>
+    <div class="auth-foot">© Gentle Monster · HR Hub</div>
+  </div>
+</div>
+<button id="auth-logout-mini" onclick="window.__authLogout&&window.__authLogout()">로그아웃</button>
+
 </body>
 </html>
