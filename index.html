@@ -4264,6 +4264,9 @@ function filterChannelByBrand(brand){
   populateStoreSelect((cSel && cSel.value) || '', brand);
 }
 window.filterChannelByBrand = filterChannelByBrand;
+// 신규입사자 모달이 IIFE 바깥에서 호출하므로 헬퍼들도 window로 노출
+window.getAllStoresWithBrand = getAllStoresWithBrand;
+window._matchChannel = _matchChannel;
 function filterStoreList(val){
   if(!curEmp) return;
   // [SMART] 매장 선택시 채널을 자동으로 추정해서 채널 select에 반영
@@ -5869,7 +5872,8 @@ let _aePhoto = null;
 // [SMART] 신규입사자 모달 캐스케이드 - 브랜드 변경시 채널 + 매장 재구성
 window.aeFilterChannelByBrand = function(brand){
   brand = (brand||'').toUpperCase();
-  const stores = (typeof getAllStoresWithBrand==='function') ? getAllStoresWithBrand() : [];
+  const getStores = window.getAllStoresWithBrand || (typeof getAllStoresWithBrand==='function' ? getAllStoresWithBrand : null);
+  const stores = getStores ? getStores() : [];
   // 해당 브랜드에 존재하는 채널만 수집
   const chSet = new Set();
   stores.forEach(s=>{
@@ -5898,7 +5902,8 @@ window.aeFilterStoreByChannel = function(channel){
   const brandEl = document.getElementById('ae-brand');
   const brand = brandEl ? (brandEl.value||'').toUpperCase() : '';
   channel = (channel||'').toUpperCase();
-  const stores = (typeof getAllStoresWithBrand==='function') ? getAllStoresWithBrand() : [];
+  const getStores = window.getAllStoresWithBrand || (typeof getAllStoresWithBrand==='function' ? getAllStoresWithBrand : null);
+  const stores = getStores ? getStores() : [];
   const _match = (sc, f) => {
     if(!f) return true;
     sc = (sc||'').toUpperCase();
