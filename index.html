@@ -3127,52 +3127,61 @@ function _lvHasUnsavedDraft(){
   } catch(_){ return false; }
 }
 window._lvHasUnsavedDraft = _lvHasUnsavedDraft;
-function switchMain(tab){
-  // [DRAFT GUARD] 운영팀 테스트 모드에서 미저장 변경분이 있는데 다른 탭으로 이동하려는 경우 확인
-  if(window.__currentTab === 'layout' && tab !== 'layout' && typeof lvMode !== 'undefined' && lvMode === 'draft' && _lvHasUnsavedDraft()){
-    // 3가지 선택: 전체 적용 후 이동 / 버리고 이동 / 취소
-    const choice = window.prompt(
-      '운영팀 테스트에 저장하지 않은 변경사항이 있습니다.\n\n' +
-      '  1 = 전체 적용 후 이동 (정직원 배치 실제 변경)\n' +
-      '  2 = 변경 버리고 이동 (테스트 초기화)\n' +
-      '  취소 = 이 페이지에 계속 머무름',
-      '1'
-    );
-    if(choice === null){
-      // 사용자가 취소 → 탭 변경 막음 (현재 탭 상태 복원)
+// [DRAFT LEAVE MODAL] 3버튼 모달을 띄우고 사용자 선택을 Promise로 반환
+function _lvShowLeaveModal(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById('lv-leave-modal');
+    if(!modal){ resolve('cancel'); return; }
+    const close = (choice)=>{
+      modal.classList.remove('show');
+      window.__lvLeaveResolve = null;
+      resolve(choice);
+    };
+    window.__lvLeaveResolve = close;
+    modal.classList.add('show');
+  });
+}
+// 적용/버리기 처리 헬퍼
+function _lvApplyDraft(){
+  try {
+    const draft = (typeof lvEnsureDraftData==='function') ? lvEnsureDraftData() : (JSON.parse(localStorage.getItem('layoutDraftData')||'{}'));
+    localStorage.setItem('layoutActualData', JSON.stringify(draft));
+    if(typeof EMPS !== 'undefined'){
+      EMPS.forEach(emp=>{
+        const row = draft[emp.id]; if(!row) return;
+        emp.current_store = row.current_store || '';
+        emp.channel       = row.channel || (typeof guessChannel==='function' ? guessChannel(row.current_store||''):'') || '';
+        if(typeof lvSaveToHrEdits==='function') lvSaveToHrEdits(emp);
+      });
+    }
+    localStorage.setItem('layoutMode','actual');
+    if(typeof lvSetMode==='function') lvSetMode('actual');
+    if(typeof lvToast==='function') lvToast('💾 전체 적용 후 이동');
+  } catch(e){}
+}
+function _lvDiscardDraft(){
+  try {
+    const actualRaw = localStorage.getItem('layoutActualData') || '{}';
+    localStorage.setItem('layoutDraftData', actualRaw);
+    if(typeof lvToast==='function') lvToast('🗑 테스트 변경 버림');
+  } catch(e){}
+}
+async function switchMain(tab){
+  // [DRAFT GUARD] 운영팀 테스트 모드 + 미저장 변경분 있음 + 다른 탭으로 이동 시 모달 표시
+  const _curTab = (document.querySelector('.tab.on[data-tab]')||{}).dataset?.tab;
+  const _lvModeNow = localStorage.getItem('layoutMode') || 'draft';
+  if(_curTab === 'layout' && tab !== 'layout' && _lvModeNow === 'draft'
+     && typeof _lvHasUnsavedDraft === 'function' && _lvHasUnsavedDraft()){
+    const choice = await _lvShowLeaveModal();
+    if(choice === 'cancel'){
+      // 머무름 - 현재 탭(layout) 상태 유지
       document.querySelectorAll('.tab[data-tab]').forEach(el=>{
         el.classList.toggle('on', el.dataset.tab==='layout');
       });
       return;
     }
-    if(choice.trim() === '1'){
-      // 전체 적용 (lvApplyDraftToActual는 자체 confirm을 띄우므로 일단 자동 적용 로직 실행)
-      try {
-        const draft = (typeof lvEnsureDraftData==='function') ? lvEnsureDraftData() : (JSON.parse(localStorage.getItem('layoutDraftData')||'{}'));
-        localStorage.setItem('layoutActualData', JSON.stringify(draft));
-        if(typeof EMPS !== 'undefined'){
-          EMPS.forEach(emp=>{
-            const row = draft[emp.id]; if(!row) return;
-            emp.current_store = row.current_store || '';
-            emp.channel       = row.channel || (typeof guessChannel==='function' ? guessChannel(row.current_store||''):'') || '';
-            if(typeof lvSaveToHrEdits==='function') lvSaveToHrEdits(emp);
-          });
-        }
-        if(typeof lvMode !== 'undefined') lvMode='actual';
-        if(typeof lvSetMode==='function') lvSetMode('actual');
-        if(typeof lvToast==='function') lvToast('💾 전체 적용 후 이동');
-      } catch(e){}
-    } else if(choice.trim() === '2'){
-      // 버리고 이동: draft를 actual로 덮어쓰기 (변경 파기)
-      try {
-        const actualRaw = localStorage.getItem('layoutActualData') || '{}';
-        localStorage.setItem('layoutDraftData', actualRaw);
-        if(typeof lvToast==='function') lvToast('🗑 테스트 변경 버림');
-      } catch(e){}
-    } else {
-      // 알 수 없는 입력 → 취소처럼 처리
-      return;
-    }
+    if(choice === 'apply')   _lvApplyDraft();
+    if(choice === 'discard') _lvDiscardDraft();
   }
   window.__currentTab = tab;
   // [SYNC FIX] 같은 탭 중복 클릭 방지 최적화는 제거 - 연동 안정성 우선
@@ -7655,6 +7664,49 @@ window.fbSetPT = async function(data) {
   </div>
 </div>
 <button id="auth-logout-mini" onclick="window.__authLogout&&window.__authLogout()">로그아웃</button>
+
+
+<!-- 운영팀 테스트 이탈 확인 모달 -->
+<style>
+#lv-leave-modal {
+  position: fixed; inset: 0; z-index: 999998;
+  background: rgba(15,18,30,.45);
+  display: none; align-items: center; justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+#lv-leave-modal.show { display: flex; }
+#lv-leave-modal .lvlm-card {
+  background: #fff; border-radius: 14px; padding: 26px 26px 20px;
+  width: 380px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+#lv-leave-modal .lvlm-title { font-size: 16px; font-weight: 700; color: #1a1d23; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+#lv-leave-modal .lvlm-desc { font-size: 13px; color: #5b6378; margin: 0 0 18px; line-height: 1.55; }
+#lv-leave-modal .lvlm-btns { display: flex; flex-direction: column; gap: 6px; }
+#lv-leave-modal .lvlm-btn {
+  height: 38px; border-radius: 8px; border: 1px solid #eaecf2;
+  background: #fff; color: #1a1d23; font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: all .12s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+#lv-leave-modal .lvlm-btn:hover { background: #f6f7fb; border-color: #c8ccf0; }
+#lv-leave-modal .lvlm-btn.primary { background: #5b6cf8; color: #fff; border-color: #5b6cf8; }
+#lv-leave-modal .lvlm-btn.primary:hover { background: #4a5be7; }
+#lv-leave-modal .lvlm-btn.danger { color: #e84040; border-color: #fce0e0; }
+#lv-leave-modal .lvlm-btn.danger:hover { background: #fff0f0; border-color: #e84040; }
+#lv-leave-modal .lvlm-btn.muted { color: #7a8299; }
+</style>
+<div id="lv-leave-modal" onclick="if(event.target===this)window.__lvLeaveResolve&&window.__lvLeaveResolve('cancel')">
+  <div class="lvlm-card">
+    <div class="lvlm-title">🧪 운영팀 테스트 변경사항</div>
+    <p class="lvlm-desc">저장하지 않은 테스트 배치 변경분이 있습니다. 이동하기 전에 어떻게 처리할까요?</p>
+    <div class="lvlm-btns">
+      <button class="lvlm-btn primary" onclick="window.__lvLeaveResolve&&window.__lvLeaveResolve('apply')">💾 전체 적용 후 이동</button>
+      <button class="lvlm-btn danger"  onclick="window.__lvLeaveResolve&&window.__lvLeaveResolve('discard')">🗑 변경 버리고 이동</button>
+      <button class="lvlm-btn muted"   onclick="window.__lvLeaveResolve&&window.__lvLeaveResolve('cancel')">취소</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
