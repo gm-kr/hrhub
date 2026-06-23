@@ -286,8 +286,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-card.drag-over{border-color:#5b6cf8 !important; box-shadow:0 0 0 3px rgba(91,108,248,.18) !important; background:#f5f7ff !important;}
 .lv-card-head{display:flex; align-items:center; padding:11px 14px; gap:10px; border-bottom:1px solid #f2f4f8;}
 .lv-store-icon{width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;}
-.lv-store-name { flex:1; font-size:12.5px; font-weight:700; color:#2a2f42; line-height:1.3; }
-.lv-store-region { font-size:10px; color:#aab0be; font-weight:400; }
+.lv-store-name { flex:1; min-width:0; font-size:12.5px; font-weight:700; color:#2a2f42; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:keep-all; }
+.lv-store-region { font-size:10px; color:#aab0be; font-weight:400; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lv-cnt-badge{min-width:24px; height:24px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;}
 .lv-body { padding:10px; min-height:50px; }
 .lv-pos-label{font-size:9.5px; font-weight:600; color:#aab0be; letter-spacing:.5px; text-transform:uppercase; padding-left:2px; margin:6px 0 3px;}
@@ -5713,9 +5713,9 @@ function buildCard(storeKey,emps,secKey,accent){
     <div class="lv-card-head" draggable="true" data-store="${storeKey}" data-sec="${secKey}" title="드래그하여 순서 변경">
       <div class="lv-drag-handle">⠿</div>
       <div class="lv-store-icon" style="background:${ibg};color:${accent}">${ic}</div>
-      <div style="flex:1;min-width:0">
-        <div class="lv-store-name">${nm}</div>
-        ${rg?`<div class="lv-store-region">${rg}</div>`:''}
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div class="lv-store-name" title="${nm}">${nm}</div>
+        ${rg?`<div class="lv-store-region" title="${rg}">${rg}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:4px">
         <div class="lv-cnt-badge" style="background:${ibg};color:${accent}">${storeCounted.length}</div>
