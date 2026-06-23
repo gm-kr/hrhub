@@ -2934,31 +2934,29 @@ window.openMoveChannel = openMoveChannel;
         <span class="pv pedit-field" id="phire-edit" style="display:none"><input class="pedit-input" id="phire-inp" onblur="saveFieldEdit('hire_date',this.value)"></span>
       </div>
       <div class="prow"><span class="pk">⏱ 근무 기간</span><span class="pv" id="pten"></span></div>
-      <div class="prow"><span class="pk">🏪 현 근무 매장</span>
-        <span class="pv" id="pstore" style="font-size:12px"></span>
-        <span class="pv pedit-field" id="pstore-edit" style="display:none">
-          <input class="pedit-input" id="pstore-inp" list="pstore-list" autocomplete="off"
-            placeholder="매장 코드 입력 또는 선택..."
-            onblur="saveFieldEdit('current_store',this.value)"
-            oninput="filterStoreList(this.value)">
-          <datalist id="pstore-list"></datalist>
+      <div class="prow"><span class="pk">🏷 브랜드</span>
+        <span class="pv" id="pbrand"></span>
+        <span class="pv pedit-field" id="pbrand-edit" style="display:none">
+          <select class="pedit-sel" id="pbrand-sel" onchange="filterChannelByBrand(this.value);saveFieldEdit('brand',this.value)">
+            <option value="GM">GM</option><option value="ATS">ATS</option><option value="NUF">NUF</option>
+          </select>
         </span>
       </div>
       <div class="prow"><span class="pk">📡 채널</span>
         <span class="pv" id="pch"></span>
         <span class="pv pedit-field" id="pch-edit" style="display:none">
-          <select class="pedit-sel" id="pch-sel" onchange="saveFieldEdit('channel',this.value)">
+          <select class="pedit-sel" id="pch-sel" onchange="filterStoreByChannel(this.value);saveFieldEdit('channel',this.value)">
             <option value="HAUS">HAUS</option><option value="FS">FS</option>
             <option value="DS">DS</option><option value="DFS">DFS</option>
             <option value="MALL">MALL</option><option value="PU">PU</option>
           </select>
         </span>
       </div>
-      <div class="prow"><span class="pk">🏷 브랜드</span>
-        <span class="pv" id="pbrand"></span>
-        <span class="pv pedit-field" id="pbrand-edit" style="display:none">
-          <select class="pedit-sel" id="pbrand-sel" onchange="saveFieldEdit('brand',this.value)">
-            <option value="GM">GM</option><option value="ATS">ATS</option><option value="NUF">NUF</option>
+      <div class="prow"><span class="pk">🏪 현 근무 매장</span>
+        <span class="pv" id="pstore" style="font-size:12px"></span>
+        <span class="pv pedit-field" id="pstore-edit" style="display:none">
+          <select class="pedit-sel" id="pstore-inp" onchange="filterStoreList(this.value);saveFieldEdit('current_store',this.value)">
+            <option value="">매장 선택...</option>
           </select>
         </span>
       </div>
@@ -3070,9 +3068,22 @@ window.openMoveChannel = openMoveChannel;
 <div class="mover" id="hmodal">
   <div class="mbox">
     <div class="mt">매장 이력 추가</div>
-    <div class="fg"><label class="fl">매장 코드 / 이름</label><input class="fi" id="his" placeholder="예: GM_서울_DS_현대_본점"></div>
+    <div class="fg"><label class="fl">매장</label>
+      <select class="fi" id="his">
+        <option value="">매장 선택...</option>
+      </select>
+    </div>
     <div class="fg"><label class="fl">근무 기간 (선택)</label><input class="fi" id="hip" placeholder="예: 2022.03 – 2023.09"></div>
-    <div class="fg"><label class="fl">직책 (선택)</label><input class="fi" id="hir" placeholder="예: 매니저"></div>
+    <div class="fg"><label class="fl">직책 (선택)</label>
+      <select class="fi" id="hir">
+        <option value="">선택 안함</option>
+        <option value="매니저">매니저</option>
+        <option value="부매니저">부매니저</option>
+        <option value="팀원">팀원</option>
+        <option value="인턴">인턴</option>
+        <option value="HAUS 매니저">HAUS 매니저</option>
+      </select>
+    </div>
     <div class="mbtns">
       <button class="btn" onclick="closeAddH()">취소</button>
       <button class="btn btnp" onclick="confirmAddH()">추가</button>
@@ -3818,7 +3829,33 @@ function renderHist(emp){
   }).join('')+'</div>';
 }
 function delH(i){if(!curEmp)return;const h=gHist(curEmp);h.splice(i,1);setH(curEmp.id,h);renderHist(curEmp)}
-function openAddH(){document.getElementById('his').value='';document.getElementById('hip').value='';document.getElementById('hir').value='';document.getElementById('hmodal').classList.add('on')}
+function openAddH(){
+  // [SMART DROPDOWN] 매장 이력 추가 모달의 매장 select를 전체 매장 목록으로 채우기
+  const hisSel = document.getElementById('his');
+  if(hisSel){
+    let stores = [];
+    try { if(typeof loadStoreList==='function') stores = loadStoreList(); } catch(_){}
+    if(!stores.length){
+      const set = new Set(EMPS.map(e=>e.current_store).filter(Boolean));
+      stores = [...set].map(id=>({id, channel:'', region:'', name:id}));
+    }
+    // 정렬: 채널 → 권역 → 이름
+    stores.sort((a,b)=>{
+      const ach=(a.channel||'기타'), bch=(b.channel||'기타');
+      if(ach !== bch) return ach.localeCompare(bch,'ko');
+      const ar=(a.region||''), br=(b.region||'');
+      if(ar !== br) return ar.localeCompare(br,'ko');
+      return ((a.name||a.id)+'').localeCompare(((b.name||b.id)+''),'ko');
+    });
+    let html = '<option value="">매장 선택...</option>';
+    stores.forEach(s=>{ html += `<option value="${s.id}">${s.id}</option>`; });
+    hisSel.innerHTML = html;
+  }
+  const hisEl = document.getElementById('his'); if(hisEl) hisEl.value = '';
+  const hipEl = document.getElementById('hip'); if(hipEl) hipEl.value = '';
+  const hirEl = document.getElementById('hir'); if(hirEl) hirEl.value = '';
+  document.getElementById('hmodal').classList.add('on');
+}
 function closeAddH(){document.getElementById('hmodal').classList.remove('on')}
 function confirmAddH(){
   if(!curEmp)return;
@@ -4077,22 +4114,163 @@ function setPEditMode(on){
     };
     Object.entries(inp_map).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
     Object.entries(sel_map).forEach(([id,val])=>{ const el=document.getElementById(id); if(el) el.value=val; });
-    const dl=document.getElementById('pstore-list');
-    if(dl && typeof getAllStores==='function'){
-      const stores=getAllStores();
-      dl.innerHTML=stores.map(s=>`<option value="${s}">`).join('');
-    } else if(dl){
-      const storeSet=new Set(EMPS.map(e=>e.current_store).filter(Boolean));
-      dl.innerHTML=[...storeSet].sort().map(s=>`<option value="${s}">`).join('');
+    // [CASCADE FILTER] 브랜드 → 채널 → 매장 순서로 위에서부터 필터링 초기화
+    //   1) 브랜드 select는 그대로 (위 sel_map에서 이미 설정됨)
+    //   2) 채널 select를 해당 브랜드에서 가능한 채널만 표시되도록 재구성
+    //   3) 매장 select를 (브랜드 + 채널) 조합에 맞는 매장만 표시
+    if(typeof populateChannelSelect === 'function'){
+      populateChannelSelect(curEmp.brand || '');
+    }
+    if(typeof populateStoreSelect === 'function'){
+      populateStoreSelect(curEmp.channel || '', curEmp.brand || '');
     }
   }
 }
+// [SMART DROPDOWN] 전체 매장 데이터 가져오기 (브랜드 정보 포함)
+function getAllStoresWithBrand(){
+  let stores = [];
+  try {
+    if(typeof loadStoreList === 'function') stores = loadStoreList();
+  } catch(_){}
+  if(!stores.length){
+    const set = new Set(EMPS.map(e=>e.current_store).filter(Boolean));
+    stores = [...set].map(id=>({id, channel: (typeof guessChannel==='function'?guessChannel(id):'')||'기타', region:'', name:id}));
+  }
+  // brand가 정의되지 않은 매장은 parseStoreName으로 보완
+  return stores.map(s=>{
+    let brand = s.brand;
+    if(!brand && typeof parseStoreName==='function'){
+      brand = (parseStoreName(s.id).brand||'').toUpperCase();
+    }
+    // 직원 데이터에서 current_store를 사용하는 직원의 brand로 보완
+    if(!brand){
+      const emp = EMPS.find(e=>e.current_store===s.id);
+      if(emp) brand = (emp.brand||'').toUpperCase();
+    }
+    return Object.assign({}, s, {brand: (brand||'GM').toUpperCase()});
+  });
+}
+// 채널 매칭(대소문자/공백/HAUS↔하우스 노웨어 동등)
+function _matchChannel(storeCh, filter){
+  if(!filter) return true;
+  const sc = (storeCh||'').toUpperCase();
+  const f  = (filter||'').toUpperCase();
+  if(sc === f) return true;
+  if((f==='HAUS' || f==='하우스 노웨어') && (sc==='HAUS' || sc==='하우스 노웨어' || sc.includes('하우스'))) return true;
+  return false;
+}
+// [SMART DROPDOWN] 매장 select - 브랜드와 채널로 필터링, 단순 텍스트 옵션만 표시
+function populateStoreSelect(channelFilter, brandFilter){
+  const sel = document.getElementById('pstore-inp');
+  if(!sel) return;
+  // brand가 명시되지 않으면 현재 select 또는 curEmp에서 가져옴
+  if(brandFilter === undefined){
+    const bSel = document.getElementById('pbrand-sel');
+    brandFilter = (bSel && bSel.value) || (typeof curEmp !== 'undefined' && curEmp && curEmp.brand) || '';
+  }
+  if(channelFilter === undefined){
+    const cSel = document.getElementById('pch-sel');
+    channelFilter = (cSel && cSel.value) || (typeof curEmp !== 'undefined' && curEmp && curEmp.channel) || '';
+  }
+  brandFilter = (brandFilter||'').toUpperCase();
+  const stores = getAllStoresWithBrand();
+  // 브랜드 + 채널 필터 적용
+  const filtered = stores.filter(s=>{
+    if(brandFilter && s.brand !== brandFilter) return false;
+    if(channelFilter && !_matchChannel(s.channel, channelFilter)) return false;
+    return true;
+  });
+  // 정렬: 권역 → 이름
+  filtered.sort((a,b)=>{
+    const ar=(a.region||''), br=(b.region||'');
+    if(ar !== br) return ar.localeCompare(br,'ko');
+    return ((a.name||a.id)+'').localeCompare(((b.name||b.id)+''),'ko');
+  });
+  let html = '<option value="">매장 선택...</option>';
+  // [FIX] 육아휴직 옵션 제거 - 매장이 아니므로 채널 dropdown에 노출시키지 않음
+  // 단순 텍스트만 (그룹/이모지 없이) - 사용자 요청
+  filtered.forEach(s=>{
+    html += `<option value="${s.id}">${s.id}</option>`;
+  });
+  if(filtered.length === 0 && (brandFilter || channelFilter)){
+    const label = [brandFilter, channelFilter].filter(Boolean).join(' / ');
+    html += `<option value="" disabled>${label} 조합에 매장 없음</option>`;
+  }
+  sel.innerHTML = html;
+  // 현재 emp의 매장을 selected
+  if(typeof curEmp !== 'undefined' && curEmp){
+    const cur = curEmp.current_store || '';
+    if(cur && sel.querySelector(`option[value="${CSS.escape(cur)}"]`)){
+      sel.value = cur;
+    } else {
+      sel.value = '';
+    }
+  }
+}
+window.populateStoreSelect = populateStoreSelect;
+// [SMART DROPDOWN] 채널 변경시 매장 select 재구성
+function filterStoreByChannel(channel){
+  populateStoreSelect(channel, undefined);
+}
+window.filterStoreByChannel = filterStoreByChannel;
+// [SMART DROPDOWN] 채널 select - 브랜드에 따라 사용 가능한 채널만 표시
+function populateChannelSelect(brandFilter){
+  const sel = document.getElementById('pch-sel');
+  if(!sel) return;
+  if(brandFilter === undefined){
+    const bSel = document.getElementById('pbrand-sel');
+    brandFilter = (bSel && bSel.value) || (typeof curEmp !== 'undefined' && curEmp && curEmp.brand) || '';
+  }
+  brandFilter = (brandFilter||'').toUpperCase();
+  const stores = getAllStoresWithBrand();
+  // 해당 브랜드에 존재하는 채널만 수집
+  const channelSet = new Set();
+  stores.forEach(s=>{
+    if(!brandFilter || s.brand === brandFilter){
+      let ch = (s.channel||'').toUpperCase();
+      // 하우스 노웨어 → HAUS로 통일 표시
+      if(s.channel && s.channel.includes('하우스')) ch = 'HAUS';
+      if(ch) channelSet.add(ch);
+    }
+  });
+  // 표시 순서
+  const channelOrder = ['HAUS','FS','MALL','PU','DS','DFS'];
+  const used = channelOrder.filter(c=>channelSet.has(c));
+  const others = [...channelSet].filter(c=>!channelOrder.includes(c));
+  const allChannels = [...used, ...others];
+  let html = '';
+  allChannels.forEach(ch=>{
+    html += `<option value="${ch}">${ch}</option>`;
+  });
+  if(allChannels.length === 0){
+    html = `<option value="" disabled>${brandFilter || '해당'} 브랜드 매장 없음</option>`;
+  }
+  sel.innerHTML = html;
+  // 현재 emp의 채널을 selected
+  if(typeof curEmp !== 'undefined' && curEmp){
+    const cur = (curEmp.channel||'').toUpperCase();
+    const norm = (cur === '하우스 노웨어') ? 'HAUS' : cur;
+    if(norm && sel.querySelector(`option[value="${CSS.escape(norm)}"]`)){
+      sel.value = norm;
+    }
+  }
+}
+window.populateChannelSelect = populateChannelSelect;
+// [SMART DROPDOWN] 브랜드 변경시 채널 + 매장 select 재구성 (위에서부터 캐스케이드)
+function filterChannelByBrand(brand){
+  populateChannelSelect(brand);
+  // 채널이 새로 선택되었을 수 있으므로 매장도 즉시 갱신
+  const cSel = document.getElementById('pch-sel');
+  populateStoreSelect((cSel && cSel.value) || '', brand);
+}
+window.filterChannelByBrand = filterChannelByBrand;
 function filterStoreList(val){
   if(!curEmp) return;
-  const ch = guessChannel(val);
+  // [SMART] 매장 선택시 채널을 자동으로 추정해서 채널 select에 반영
+  const ch = (typeof guessChannel==='function') ? guessChannel(val) : null;
   if(ch){
     const sel=document.getElementById('pch-sel');
-    if(sel) sel.value=ch;
+    if(sel) sel.value = ch;
   }
 }
 function saveFieldEdit(field, val){
@@ -4476,22 +4654,38 @@ function lvResetDraft(){
   lvRender(); lvRenderSB();
 }
 function lvApplyDraftToActual(){
-  if(!confirm('현재 테스트 배치 상태를 전체 직원 배치에 적용하시겠습니까? 적용 후 실제 직원 소속 매장이 변경됩니다.')) return;
-  const draft=lvEnsureDraftData();
-  lvWriteLayout(LV_ACTUAL_KEY,draft);
+  // [PT EXCLUSION] 파트타이머(PT)는 정직원 EMPS와 별도의 저장소(hrPT_v1)에서 관리되며
+  //   layoutDraftData/layoutActualData에는 포함되지 않음. 따라서 전체 적용은 정직원만 대상이지만,
+  //   안전을 위해 적용 직전 PT 데이터 스냅샷을 떠두고 적용 후 그대로 복원해서 절대 건드리지 않도록 함.
+  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.')) return;
+  // PT 데이터 스냅샷 (적용 작업이 PT 저장소를 건드리지 않도록 안전망)
+  let _ptSnapshot = null;
+  try { _ptSnapshot = localStorage.getItem('hrPT_v1'); } catch(_){}
+  // 정직원만 처리
+  const draft = lvEnsureDraftData();
+  lvWriteLayout(LV_ACTUAL_KEY, draft);
+  let applied = 0;
   EMPS.forEach(emp=>{
-    const row=draft[emp.id];
+    const row = draft[emp.id];
     if(!row) return;
-    emp.current_store=row.current_store||'';
-    emp.channel=row.channel||guessChannel(row.current_store||'')||'';
+    // EMPS는 정직원만 포함하므로 자동으로 PT 제외됨 (PT는 hrPT_v1의 names 배열로만 존재)
+    emp.current_store = row.current_store || '';
+    emp.channel = row.channel || guessChannel(row.current_store || '') || '';
     lvSaveToHrEdits(emp);
+    applied++;
   });
-  try{ if(typeof persistEditsCache==='function') persistEditsCache(); }catch(e){}
+  // PT 데이터 복원 (적용 중 어떤 코드가 실수로 변경했어도 원래 상태 유지)
+  try {
+    if(_ptSnapshot !== null && localStorage.getItem('hrPT_v1') !== _ptSnapshot){
+      localStorage.setItem('hrPT_v1', _ptSnapshot);
+    }
+  } catch(_){}
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e){}
   if(typeof refresh==='function') refresh();
   lvMode='actual';
   lvSetMode('actual');
   showSaved();
-  lvToast('💾 테스트 배치를 전체 직원 배치에 적용했습니다.');
+  lvToast(`💾 정직원 ${applied}명 배치 적용 완료 (파트타이머 제외)`);
 }
 function getStoreOrder(sec){try{return JSON.parse(localStorage.getItem('lvOrder_'+sec)||'null');}catch{return null;}}
 function setStoreOrder(sec,keys){localStorage.setItem('lvOrder_'+sec,JSON.stringify(keys));}
@@ -5260,14 +5454,16 @@ window.lvTogglePT = function() {
   if(typeof window.lvRender==='function') window.lvRender();
 };
 
-function buildHcBar(storeKey, counted, total){
+function buildHcBar(storeKey, counted, total, pendingBreakdown){
   const base=getStoreBase(storeKey); if(!base) return '';
   const over=counted>base, under=counted<base;
   const barColor=over?'#6c6ef7':under?'#e84040':'#2daa72';
   const tagCls=over?'over':under?'low':'ok';
   const diff=counted-base;
   const pending=total-counted;
-  const pendingHtml=pending>0?`<span style="font-size:9px;color:#5b6cf8;margin-left:3px;font-weight:700">+${pending}예정</span>`:'';
+  // [CLARITY] 현인원바의 +예정에도 breakdown tooltip 표시
+  const ttl = pendingBreakdown ? Object.entries(pendingBreakdown).map(([s,c])=>`${(STATUS_CFG[s]&&STATUS_CFG[s].label)||s} ${c}명`).join(' · ') : '현인원에 미포함';
+  const pendingHtml=pending>0?`<span style="font-size:9px;color:#5b6cf8;margin-left:3px;font-weight:700" title="${ttl}">+${pending}예정</span>`:'';
   return `<div class="lv-hc-bar-wrap"><div class="lv-hc-row">
     <span class="lv-hc-label" style="white-space:nowrap;width:auto;min-width:52px">현인원/기준</span>
     <div class="lv-hc-bar-bg"><div class="lv-hc-bar-fill" style="width:${Math.min(Math.round(counted/base*100),100)}%;background:${barColor}"></div></div>
@@ -5472,8 +5668,33 @@ function buildCard(storeKey,emps,secKey,accent){
       chips+='</div>';
     });
   }
-  const hcBar=buildHcBar(storeKey,storeCounted.length,emps.length);
-  const pendingBadge=pending.length>0?`<span class="lv-pending-badge">+${pending.length}예정</span>`:'';
+  // breakdown 데이터 미리 계산 (buildHcBar와 pendingBadge 둘 다 사용)
+  const _pBreakdown = {};
+  pending.forEach(e => { const s = getEmpStatus(e); _pBreakdown[s] = (_pBreakdown[s]||0)+1; });
+  const hcBar=buildHcBar(storeKey,storeCounted.length,emps.length,_pBreakdown);
+  // [CLARITY] +예정 뱃지를 상태별로 분리 표시 (지원/입사/복직/휴직/퇴사) - 이중계산 오해 방지
+  let pendingBadge = '';
+  if(pending.length > 0){
+    const cntByStatus = {};
+    pending.forEach(e => {
+      const s = getEmpStatus(e);
+      cntByStatus[s] = (cntByStatus[s] || 0) + 1;
+    });
+    const tooltipLines = Object.entries(cntByStatus).map(([s,c]) => `${(STATUS_CFG[s]&&STATUS_CFG[s].label)||s} ${c}명`).join(' · ');
+    // 표시 순서: 지원 → 입사 → 복직 → 휴직 → 퇴사 → 그 외
+    const order = ['support','joining','returning','leave','leaving'];
+    const sortedEntries = [
+      ...order.filter(s=>cntByStatus[s]).map(s=>[s, cntByStatus[s]]),
+      ...Object.entries(cntByStatus).filter(([s])=>!order.includes(s))
+    ];
+    const labelShort = {support:'지원',joining:'입사',returning:'복직',leave:'휴직',leaving:'퇴사'};
+    const badgeColor = {support:'#0d9488',joining:'#2daa72',returning:'#5b6cf8',leave:'#a87900',leaving:'#e84040'};
+    pendingBadge = sortedEntries.map(([s,c])=>{
+      const color = badgeColor[s] || '#5b6cf8';
+      const lbl = labelShort[s] || ((STATUS_CFG[s]&&STATUS_CFG[s].label)||s);
+      return `<span class="lv-pending-badge" style="background:${color}1a;color:${color}" title="${tooltipLines}">+${c}${lbl}</span>`;
+    }).join('');
+  }
   card.innerHTML=`
     <div class="lv-card-head" draggable="true" data-store="${storeKey}" data-sec="${secKey}" title="드래그하여 순서 변경">
       <div class="lv-drag-handle">⠿</div>
