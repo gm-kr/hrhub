@@ -3108,7 +3108,73 @@ function setH(id,a){const h=getH();h[id]=a;localStorage.setItem('hrH',JSON.strin
 function getM(){try{return JSON.parse(localStorage.getItem('hrM')||'{}')}catch{return{}}}
 function setM(id,t){const m=getM();m[id]=t;localStorage.setItem('hrM',JSON.stringify(m))}
 function gHist(e){const h=getH();return h[e.id]||e.store_history||[]}
+// [DRAFT DIRTY CHECK] 현재 layoutDraftData가 layoutActualData와 다른지 확인 (테스트 변경분 존재 여부)
+function _lvHasUnsavedDraft(){
+  try {
+    const draftRaw = localStorage.getItem('layoutDraftData') || '{}';
+    const actualRaw = localStorage.getItem('layoutActualData') || '{}';
+    const draft = JSON.parse(draftRaw);
+    const actual = JSON.parse(actualRaw);
+    // 동일 직원 id 합집합에서 current_store 비교
+    const ids = new Set([...Object.keys(draft), ...Object.keys(actual)]);
+    for(const id of ids){
+      const d = draft[id]  || {};
+      const a = actual[id] || {};
+      if((d.current_store||'') !== (a.current_store||'')) return true;
+      if((d.channel||'')       !== (a.channel||''))       return true;
+    }
+    return false;
+  } catch(_){ return false; }
+}
+window._lvHasUnsavedDraft = _lvHasUnsavedDraft;
 function switchMain(tab){
+  // [DRAFT GUARD] 운영팀 테스트 모드에서 미저장 변경분이 있는데 다른 탭으로 이동하려는 경우 확인
+  if(window.__currentTab === 'layout' && tab !== 'layout' && typeof lvMode !== 'undefined' && lvMode === 'draft' && _lvHasUnsavedDraft()){
+    // 3가지 선택: 전체 적용 후 이동 / 버리고 이동 / 취소
+    const choice = window.prompt(
+      '운영팀 테스트에 저장하지 않은 변경사항이 있습니다.\n\n' +
+      '  1 = 전체 적용 후 이동 (정직원 배치 실제 변경)\n' +
+      '  2 = 변경 버리고 이동 (테스트 초기화)\n' +
+      '  취소 = 이 페이지에 계속 머무름',
+      '1'
+    );
+    if(choice === null){
+      // 사용자가 취소 → 탭 변경 막음 (현재 탭 상태 복원)
+      document.querySelectorAll('.tab[data-tab]').forEach(el=>{
+        el.classList.toggle('on', el.dataset.tab==='layout');
+      });
+      return;
+    }
+    if(choice.trim() === '1'){
+      // 전체 적용 (lvApplyDraftToActual는 자체 confirm을 띄우므로 일단 자동 적용 로직 실행)
+      try {
+        const draft = (typeof lvEnsureDraftData==='function') ? lvEnsureDraftData() : (JSON.parse(localStorage.getItem('layoutDraftData')||'{}'));
+        localStorage.setItem('layoutActualData', JSON.stringify(draft));
+        if(typeof EMPS !== 'undefined'){
+          EMPS.forEach(emp=>{
+            const row = draft[emp.id]; if(!row) return;
+            emp.current_store = row.current_store || '';
+            emp.channel       = row.channel || (typeof guessChannel==='function' ? guessChannel(row.current_store||''):'') || '';
+            if(typeof lvSaveToHrEdits==='function') lvSaveToHrEdits(emp);
+          });
+        }
+        if(typeof lvMode !== 'undefined') lvMode='actual';
+        if(typeof lvSetMode==='function') lvSetMode('actual');
+        if(typeof lvToast==='function') lvToast('💾 전체 적용 후 이동');
+      } catch(e){}
+    } else if(choice.trim() === '2'){
+      // 버리고 이동: draft를 actual로 덮어쓰기 (변경 파기)
+      try {
+        const actualRaw = localStorage.getItem('layoutActualData') || '{}';
+        localStorage.setItem('layoutDraftData', actualRaw);
+        if(typeof lvToast==='function') lvToast('🗑 테스트 변경 버림');
+      } catch(e){}
+    } else {
+      // 알 수 없는 입력 → 취소처럼 처리
+      return;
+    }
+  }
+  window.__currentTab = tab;
   // [SYNC FIX] 같은 탭 중복 클릭 방지 최적화는 제거 - 연동 안정성 우선
   document.querySelectorAll('.tab[data-tab]').forEach(el=>{
     el.classList.toggle('on', el.dataset.tab===tab);
@@ -4467,6 +4533,39 @@ window.addEventListener('DOMContentLoaded',()=>{
             if (ed[f] !== undefined) e[f] = ed[f];
           });
         });
+        /* [BUG FIX] 캐시에 _isNewEmp 플래그가 있는 신규 직원을 EMPS에 추가 (Firebase 동기화 전이라도 영구 표시) */
+        Object.keys(_parsed).forEach(id => {
+          const ed = _parsed[id];
+          if (!ed || !ed._isNewEmp) return;
+          if (EMPS.find(e => e.id === id)) return; // 이미 있으면 skip
+          EMPS.push({
+            id,
+            name:          ed.name          || '',
+            brand:         ed.brand         || 'GM',
+            position:      ed.position      || '직원',
+            channel:       ed.channel       || '',
+            channel_exp:   ed.channel       || '',
+            current_store: ed.current_store || '',
+            hire_date:     ed.hire_date     || '',
+            tenure:        ed.tenure        || '신입',
+            language:      ed.language      || '',
+            residence:     ed.residence     || '',
+            store_history: [],
+            status:        ed.status        || 'active',
+            has_photo:     false,
+            photo_b64:     ''
+          });
+        });
+        /* 신규 직원 사진 복원: localStorage.hrP에서 가져오기 */
+        try {
+          const hrP = JSON.parse(localStorage.getItem('hrP')||'{}');
+          EMPS.forEach(e => {
+            if (hrP[e.id] && !e.photo_b64) {
+              e.has_photo = true;
+              e.photo_b64 = hrP[e.id];
+            }
+          });
+        } catch(_){}
       }
     }
   } catch(_e) {}
@@ -5617,6 +5716,27 @@ function buildCard(storeKey,emps,secKey,accent){
   const byPosOther={MG:[],BM:[],SF:[],IN:[]};   // 비-재직 직원도 동일 직책별 분류(아래쪽에 배치)
   activeEmps_card.forEach(e=>byPos[lvPosKey(e.position)].push(e));
   otherEmps_card.forEach(e=>byPosOther[lvPosKey(e.position)].push(e));
+  // [SORT] 팀원(SF)·인턴(IN) 그룹은 입사일 빠른 순(근속 오래된 사람부터) 정렬
+  // 매니저(MG)·부매니저(BM)는 사용자 요청에 따라 기존 순서 유지
+  const _hireMs = (e)=>{
+    const s = (e && e.hire_date) ? String(e.hire_date) : '';
+    if(!s) return Infinity;
+    // 'YYYY-MM-DD' 또는 'YYYY-M-D' 형식
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return new Date(+m[1], +m[2]-1, +m[3]).getTime();
+    // 'YYYY년 M월 D일' 형식
+    m = s.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+    if(m) return new Date(+m[1], +m[2]-1, +m[3]).getTime();
+    // 'YYYY' 만 있는 경우
+    m = s.match(/(\d{4})/);
+    if(m) return new Date(+m[1], 0, 1).getTime();
+    return Infinity;
+  };
+  const _sortByHire = (a,b)=> _hireMs(a) - _hireMs(b);
+  ['SF','IN'].forEach(pk=>{
+    byPos[pk].sort(_sortByHire);
+    byPosOther[pk].sort(_sortByHire);
+  });
   const nm=lvStoreName(storeKey), rg=lvRegion(storeKey), ic=storeInit(nm), ibg=accent+'22';
   let chips='';
   // 헬퍼: 한 명의 직원을 칩 HTML로 렌더링
