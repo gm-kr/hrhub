@@ -5866,24 +5866,75 @@ window.getAllStores=getAllStores;
 window.lvStoreName=lvStoreName;
 })();
 let _aePhoto = null;
+// [SMART] 신규입사자 모달 캐스케이드 - 브랜드 변경시 채널 + 매장 재구성
+window.aeFilterChannelByBrand = function(brand){
+  brand = (brand||'').toUpperCase();
+  const stores = (typeof getAllStoresWithBrand==='function') ? getAllStoresWithBrand() : [];
+  // 해당 브랜드에 존재하는 채널만 수집
+  const chSet = new Set();
+  stores.forEach(s=>{
+    if(!brand || s.brand === brand){
+      let ch = (s.channel||'').toUpperCase();
+      if(s.channel && s.channel.includes('하우스')) ch = 'HAUS';
+      if(ch) chSet.add(ch);
+    }
+  });
+  const order = ['HAUS','FS','MALL','PU','DS','DFS'];
+  const used = order.filter(c=>chSet.has(c));
+  const others = [...chSet].filter(c=>!order.includes(c));
+  const all = [...used, ...others];
+  const sel = document.getElementById('ae-channel');
+  if(sel){
+    sel.innerHTML = all.length
+      ? all.map(c=>`<option value="${c}">${c}</option>`).join('')
+      : '<option value="" disabled>해당 브랜드 매장 없음</option>';
+  }
+  // 채널 바뀌었으니 매장도 갱신
+  window.aeFilterStoreByChannel(sel ? sel.value : '');
+};
+window.aeFilterStoreByChannel = function(channel){
+  const sel = document.getElementById('ae-store');
+  if(!sel) return;
+  const brandEl = document.getElementById('ae-brand');
+  const brand = brandEl ? (brandEl.value||'').toUpperCase() : '';
+  channel = (channel||'').toUpperCase();
+  const stores = (typeof getAllStoresWithBrand==='function') ? getAllStoresWithBrand() : [];
+  const _match = (sc, f) => {
+    if(!f) return true;
+    sc = (sc||'').toUpperCase();
+    if(sc === f) return true;
+    if((f==='HAUS'||f==='하우스 노웨어') && (sc==='HAUS' || sc.includes('하우스'))) return true;
+    return false;
+  };
+  const filtered = stores.filter(s=>{
+    if(brand && s.brand !== brand) return false;
+    if(channel && !_match(s.channel, channel)) return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    const ar=(a.region||''), br=(b.region||'');
+    if(ar !== br) return ar.localeCompare(br,'ko');
+    return ((a.name||a.id)+'').localeCompare(((b.name||b.id)+''),'ko');
+  });
+  let html = '<option value="">미배정</option>';
+  filtered.forEach(s=>{ html += `<option value="${s.id}">${s.id}</option>`; });
+  sel.innerHTML = html;
+};
 window.openAddEmp = function(){
-  // EMPLOYEE STORE SELECT
-  ['ae-name','ae-position','ae-hire','ae-residence','ae-language'].forEach(id=>{
+  // 입력 초기화
+  ['ae-name','ae-hire','ae-residence','ae-language'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const bd=document.getElementById('ae-brand'); if(bd) bd.value='GM';
-  const ch=document.getElementById('ae-channel'); if(ch) ch.value='HAUS';
+  const psel=document.getElementById('ae-position'); if(psel) psel.value='팀원';
   _aePhoto=null;
   const wrap=document.getElementById('ae-photo-wrap');
   if(wrap){ wrap.innerHTML='<span id="ae-photo-icon">\u{1F4F7}</span>'; }
   const inp=document.getElementById('ae-photo-input'); if(inp) inp.value='';
   const m=document.getElementById('add-emp-modal');
   if(m) m.classList.add('open');
-  const storeSel=document.getElementById('ae-store');
-  if(storeSel){
-    const stores=loadStoreList();
-    storeSel.innerHTML='<option value="">미배정</option>'+stores.map(s=>`<option value="${s.id}">${s.id}</option>`).join('');
-  }
+  // [SMART] 브랜드 → 채널 → 매장 캐스케이드 초기화 (현재 브랜드=GM 기준으로 채널/매장 채움)
+  window.aeFilterChannelByBrand('GM');
   setTimeout(()=>{ const n=document.getElementById('ae-name'); if(n) n.focus(); },80);
 };
 window.closeAddEmp = function(){
@@ -5908,7 +5959,12 @@ window.doAddEmp = function(){
   let channel=document.getElementById('ae-channel').value;
   const store=(document.getElementById('ae-store').value||'').trim();
   if(store) channel=guessChannel(store)||parseStoreName(store).channel||channel;
-  const hire=(document.getElementById('ae-hire').value||'').trim();
+  // 입사일은 date input(YYYY-MM-DD) → '2025년 1월 1일' 형식으로 변환해 저장 (기존 데이터 호환)
+  let hire = (document.getElementById('ae-hire').value||'').trim();
+  if(hire && /^\d{4}-\d{2}-\d{2}$/.test(hire)){
+    const [yr, mo, dy] = hire.split('-').map(Number);
+    hire = `${yr}년 ${mo}월 ${dy}일`;
+  }
   const residence=(document.getElementById('ae-residence').value||'').trim();
   const language=(document.getElementById('ae-language').value||'').trim();
   const maxNum=EMPS.reduce((m,e)=>{
@@ -6158,7 +6214,7 @@ window.SB_DATA = SB_DATA;
       </div>
       <div class="ae-field">
         <label>브랜드 <span style="color:#e84040">*</span></label>
-        <select id="ae-brand">
+        <select id="ae-brand" onchange="aeFilterChannelByBrand(this.value)">
           <option value="GM">GM</option>
           <option value="ATS">ATS</option>
           <option value="NUF">NUF</option>
@@ -6166,19 +6222,17 @@ window.SB_DATA = SB_DATA;
       </div>
       <div class="ae-field">
         <label>직책</label>
-        <input id="ae-position" placeholder="매니저">
+        <select id="ae-position">
+          <option value="매니저">매니저</option>
+          <option value="부매니저">부매니저</option>
+          <option value="팀원" selected>팀원</option>
+          <option value="인턴">인턴</option>
+          <option value="HAUS 매니저">HAUS 매니저</option>
+        </select>
       </div>
       <div class="ae-field">
         <label>채널</label>
-        <select id="ae-channel">
-          <option value="HAUS">HAUS</option>
-          <option value="FS">FS</option>
-          <option value="DS">DS</option>
-          <option value="DFS">DFS</option>
-          <option value="MALL">MALL</option>
-          <option value="ATS">ATS</option>
-          <option value="NUF">NUF</option>
-        </select>
+        <select id="ae-channel" onchange="aeFilterStoreByChannel(this.value)"></select>
       </div>
       <div class="ae-field ae-full">
         <label>현재 매장</label>
@@ -6186,7 +6240,7 @@ window.SB_DATA = SB_DATA;
       </div>
       <div class="ae-field">
         <label>입사일</label>
-        <input id="ae-hire" placeholder="2025년 1월 1일">
+        <input id="ae-hire" type="date">
       </div>
       <div class="ae-field">
         <label>거주지</label>
@@ -6357,6 +6411,39 @@ const ALLOWED_EMAILS = [
 const ALLOWED_EMAIL_SET = new Set(ALLOWED_EMAILS.map(e => e.toLowerCase().trim()));
 // 도메인 전체 허용하고 싶으면 아래 배열에 도메인 추가 (예: 'gentlemonster.com')
 const ALLOWED_DOMAINS = [];
+
+// ─── 로컬 개발환경 우회 ───────────────────────────────────────────
+// file:// 또는 localhost/127.0.0.1 에서 열면 인증 게이트를 자동으로 비활성화.
+// → 로컬에서 파일 더블클릭으로 바로 코딩 확인 가능. 깃허브 페이지에서만 실제 로그인 강제.
+// URL에 ?nogate=1 을 붙여도 동일하게 우회됨 (예: file:///.../index.html?nogate=1)
+const IS_LOCAL_DEV = (
+  location.protocol === 'file:' ||
+  location.hostname === 'localhost' ||
+  location.hostname === '127.0.0.1' ||
+  /^192\.168\./.test(location.hostname) ||
+  new URLSearchParams(location.search).get('nogate') === '1'
+);
+if(IS_LOCAL_DEV){
+  // 게이트 숨김 + 우측 상단에 작은 [DEV] 표시 추가
+  const _hideGate = () => {
+    const gate = document.getElementById('auth-gate');
+    if(gate) gate.classList.add('hidden');
+    if(!document.getElementById('dev-mode-tag')){
+      const tag = document.createElement('div');
+      tag.id = 'dev-mode-tag';
+      tag.textContent = 'DEV';
+      tag.style.cssText = 'position:fixed;top:8px;right:12px;z-index:9999;font-size:10px;font-weight:700;color:#fff;background:#e07b12;border-radius:4px;padding:2px 6px;letter-spacing:.5px;';
+      document.body && document.body.appendChild(tag);
+    }
+  };
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _hideGate);
+  } else {
+    _hideGate();
+  }
+  // 가짜 사용자 정보로 앱 진입(개발용)
+  window.__fbUser = { uid:'local-dev', email:'dev@local', displayName:'개발자 모드', photoURL:'' };
+}
 function isEmailAllowed(email){
   if(!email) return false;
   const e = email.toLowerCase().trim();
@@ -6459,6 +6546,8 @@ if(document.readyState === 'loading'){
 }
 // 인증 상태 감지: 로그인되어 있고 화이트리스트 통과면 게이트 숨김
 onAuthStateChanged(_auth, (user)=>{
+  // 로컬 개발 모드에선 인증 결과 무시
+  if(IS_LOCAL_DEV) return;
   if(!user){
     _resetGateUI();
     _showAuthGate(true);
