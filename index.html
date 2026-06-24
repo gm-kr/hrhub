@@ -7860,8 +7860,18 @@ window.fbSetStoreEval = function(storeId, q, field, value) {
       delete _fbEvalBuf[storeId];
       await setDoc(doc(_db, COL_STORE_EVAL, storeId), batch, { merge: true });
     } catch(e) { console.warn('[FB] storeEval 저장 오류:', e.code, e.message); }
-  }, 300);
+  }, 100);
 };
+// [BUG FIX] 페이지 닫기 직전 보류 중인 storeEval 저장 강제 실행
+window.addEventListener('beforeunload', () => {
+  try {
+    Object.keys(_fbEvalBuf).forEach(storeId => {
+      const batch = { ..._fbEvalBuf[storeId], _updatedAt: serverTimestamp() };
+      // sendBeacon 없이는 동기 보장 어려움. 그래도 setDoc 트리거 시도
+      setDoc(doc(_db, COL_STORE_EVAL, storeId), batch, { merge: true });
+    });
+  } catch(_){}
+});
 window.fbSetStoreList = async function(list) {
   try {
     await setDoc(doc(_db, COL_STORELIST, 'data'), { list, _updatedAt: serverTimestamp() });
@@ -7921,17 +7931,20 @@ onSnapshot(doc(_db, COL_PRAISE, 'data'), (snap) => {
   } catch(e) { console.error('praise snap:', e); }
 });
 
-// [SHARE] 인비테이션 통합 저장
+// [SHARE] 인비테이션 통합 저장 (Firebase ES module 스코프 → localStorage 통해 안전 동기화)
 let _fbInvTimer = null;
 window.fbSetInvitation = function(){
   clearTimeout(_fbInvTimer);
   _fbInvTimer = setTimeout(async () => {
     try {
-      const managers = (typeof invManagers !== 'undefined') ? invManagers : [];
-      const candidates = (typeof invCandidates !== 'undefined') ? invCandidates : {};
+      // ES module은 classic script의 let 변수 접근 불가 → localStorage에서 직접 읽음
+      const managersJson  = localStorage.getItem('inv_managers')   || '[]';
+      const candidatesJson= localStorage.getItem('inv_candidates') || '{}';
+      // 빈 객체/빈 배열로 Firebase 덮어쓰지 않도록 가드 (initial load 전 호출 방지)
+      if(managersJson === '[]' && candidatesJson === '{}') return;
       await setDoc(doc(_db, COL_INVITATION, 'data'), {
-        managers: JSON.stringify(managers),
-        candidates: JSON.stringify(candidates),
+        managers: managersJson,
+        candidates: candidatesJson,
         _updatedAt: serverTimestamp(),
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
@@ -7942,24 +7955,25 @@ onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
+    let changed = false;
     if(typeof data.managers === 'string'){
       const arr = JSON.parse(data.managers);
       if(Array.isArray(arr)){
-        if(typeof invManagers !== 'undefined') invManagers.splice(0, invManagers.length, ...arr);
         localStorage.setItem('inv_managers', JSON.stringify(arr));
+        changed = true;
       }
     }
     if(typeof data.candidates === 'string'){
       const obj = JSON.parse(data.candidates);
       if(obj && typeof obj === 'object'){
-        if(typeof invCandidates !== 'undefined'){
-          Object.keys(invCandidates).forEach(k => delete invCandidates[k]);
-          Object.assign(invCandidates, obj);
-        }
         localStorage.setItem('inv_candidates', JSON.stringify(obj));
+        changed = true;
       }
     }
-    if(typeof invRender === 'function') { try { invRender(); } catch(_){} }
+    // classic script에 알려서 in-memory invManagers/invCandidates 갱신
+    if(changed && typeof window.invReloadFromLocal === 'function'){
+      try { window.invReloadFromLocal(); } catch(_){}
+    }
   } catch(e) { console.error('invitation snap:', e); }
 });
 
@@ -8009,6 +8023,37 @@ onSnapshot(doc(_db, COL_CRITERIA, 'data'), (snap) => {
   } catch(e) {}
 });
 window.__storeEvalUnsub = null;
+// [SHARE] 페이지 로드시 모든 매장 평가 데이터를 Firebase에서 한 번에 가져와 localStorage에 채움
+// → 다른 사용자가 작성한 평가도 즉시 사이드바 등급/점수에 반영되고, 새로고침 후에도 유지
+(async function _preloadAllStoreEvals(){
+  try {
+    if(!_db) return;
+    const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap = await getDocs(collection(_db, COL_STORE_EVAL));
+    snap.forEach(d => {
+      const storeId = d.id;
+      const data = d.data() || {};
+      Object.keys(data).forEach(key => {
+        if (key === '_updatedAt') return;
+        const parts = key.match(/^(q[1-4])_(.+)$/);
+        if (!parts) return;
+        const [, q, field] = parts;
+        const lsKeyStr = `eval_${storeId}_${q}_${field}`;
+        if (data[key] === null || data[key] === '') {
+          localStorage.removeItem(lsKeyStr);
+        } else {
+          localStorage.setItem(lsKeyStr, data[key]);
+        }
+      });
+      try { if(typeof updateSidebarBadge === 'function') updateSidebarBadge(storeId); } catch(_){}
+    });
+    // 현재 열린 매장이 있으면 UI 새로고침
+    if(typeof currentStoreId !== 'undefined' && currentStoreId && typeof loadStoreData==='function' && typeof applyStateToUI==='function'){
+      loadStoreData(currentStoreId);
+      applyStateToUI();
+    }
+  } catch(e) { console.warn('[FB] storeEval preload 실패:', e); }
+})();
 window.fbSubscribeStoreEval = function(storeId) {
   if (window.__storeEvalUnsub) {
     window.__storeEvalUnsub();
@@ -8093,9 +8138,24 @@ function invSaveLocal() {
     localStorage.setItem('inv_managers', JSON.stringify(invManagers));
     localStorage.setItem('inv_candidates', JSON.stringify(invCandidates));
   } catch(e) {}
-  // [SHARE] Firebase에도 저장
+  // [SHARE] Firebase에도 저장 (debounced)
   try { if(window.fbSetInvitation) window.fbSetInvitation(); } catch(_){}
 }
+// [SHARE] Firebase에서 받은 데이터를 localStorage에 쓴 뒤, in-memory 변수에 반영
+window.invReloadFromLocal = function(){
+  try {
+    const mg = JSON.parse(localStorage.getItem('inv_managers')   || '[]');
+    const cd = JSON.parse(localStorage.getItem('inv_candidates') || '{}');
+    if(Array.isArray(mg)){
+      invManagers.splice(0, invManagers.length, ...mg);
+    }
+    if(cd && typeof cd === 'object' && !Array.isArray(cd)){
+      Object.keys(invCandidates).forEach(k => delete invCandidates[k]);
+      Object.assign(invCandidates, cd);
+    }
+    if(typeof invRender === 'function') invRender();
+  } catch(e) { console.warn('[INV] reload from local failed', e); }
+};
 function invRender() {
   const body = document.getElementById('inv-body');
   if (!body) return;
