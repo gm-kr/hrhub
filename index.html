@@ -273,7 +273,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-tab.on { color:#5b6cf8; border-bottom-color:#5b6cf8; font-weight:600; }
 .lv-tab-cnt{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:9px; font-size:10px; font-weight:700; margin-left:5px; background:#f0f2f5; color:#7a8299;}
 .lv-tab.on .lv-tab-cnt { background:#eef0fe; color:#5b6cf8; }
-.lv-scroll { flex:1; overflow-y:auto; padding:20px; }
+.lv-scroll { flex:1; overflow-y:auto; padding:6px 8px; }
 .lv-scroll::-webkit-scrollbar { width:5px; }
 .lv-scroll::-webkit-scrollbar-thumb { background:#d4d8e4; border-radius:3px; }
 .lv-sec-header{display:flex; align-items:center; gap:10px; margin-bottom:14px; margin-top:4px;}
@@ -281,6 +281,52 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-sec-title { font-size:14px; font-weight:700; color:#1a1d23; }
 .lv-sec-meta { font-size:12px; color:#9aa0b3; }
 .lv-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; margin-bottom:28px;}
+/* [MGR ONLY] 매니저 현황 — 2단 레이아웃 + 자유 샌드박스 */
+.lv-mgr-pageblock{margin-bottom:6px;}
+.lv-mgr-pageblock-title{font-size:13px;font-weight:700;color:#1a1d23;padding:2px 0 6px;display:flex;align-items:center;gap:6px;}
+.lv-mgr-pageblock-sub{font-size:10px;color:#7a8299;font-weight:500;margin-left:4px;}
+/* 상단 overview: 2단 그리드 안에 섹션들이 들어감 */
+.lv-mgr-grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:6px;}
+.lv-mgr-section{background:#fff;border:1px solid #eaecf2;border-radius:8px;overflow:hidden;break-inside:avoid;}
+.lv-mgr-sec-header{font-size:12px;font-weight:700;color:#1a1d23;background:#fafbff;padding:7px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #eaecf2;line-height:1.4;word-break:keep-all;}
+.lv-mgr-sec-meta{font-size:10px;color:#7a8299;font-weight:500;margin-left:auto;}
+.lv-mgr-table{display:flex;flex-direction:column;}
+.lv-mgr-row{display:flex;align-items:center;gap:6px;padding:6px 12px;border-bottom:1px solid #f4f5f9;font-size:11.5px;min-height:34px;line-height:1.4;word-break:keep-all;overflow-wrap:break-word;}
+.lv-mgr-row:last-child{border-bottom:none;}
+.lv-mgr-row:hover{background:#fafbff;}
+.lv-mgr-row-name{font-size:11.5px;font-weight:700;color:#2a2f42;flex-shrink:0;width:155px;display:flex;align-items:center;gap:4px;line-height:1.35;padding:0;word-break:keep-all;overflow-wrap:break-word;}
+.lv-mgr-row-region{font-size:9.5px;color:#aab0be;font-weight:500;}
+.lv-mgr-row-chips{display:flex;flex-wrap:wrap;gap:3px;flex:0 1 auto;min-width:0;align-items:center;}
+.lv-mgr-row-empty{font-size:10.5px;color:#c0c4d0;font-style:italic;white-space:nowrap;}
+.lv-mgr-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:11px;background:#f1f3f9;font-size:11px;font-weight:600;color:#2a2f42;border:1px solid transparent;line-height:1.5;word-break:keep-all;white-space:nowrap;}
+.lv-mgr-chip.role-MG{background:#fff0f0;color:#c91414;border-color:#fee0e0;}
+.lv-mgr-chip.role-BM{background:#fef8e7;color:#9a6a00;border-color:#fce8a0;}
+.lv-mgr-chip.role-HAUS{background:#fee2e2;color:#a91414;border-color:#fcb5b5;}
+.lv-mgr-chip-role{font-size:9px;opacity:.7;font-weight:500;margin-left:2px;}
+
+/* 샌드박스 영역: 드래그 자유, 매장 행도 드래그 가능 */
+.lv-mgr-sandbox{margin-top:2px;background:#fffaf2;border:1px dashed #f4d2a6;border-radius:8px;padding:5px;}
+.lv-mgr-sandbox .lv-mgr-row{background:#fff;border:1px solid #f2f4f8;border-radius:6px;margin-bottom:4px;cursor:grab;}
+.lv-mgr-sandbox .lv-mgr-row.drag-over{background:#fff4e6;outline:2px dashed #e07b12;outline-offset:-3px;}
+.lv-mgr-sandbox .lv-mgr-row.row-dragging{opacity:.4;}
+.lv-mgr-sandbox .lv-mgr-row-name{cursor:grab;}
+.lv-mgr-sandbox .lv-mgr-chip{cursor:grab;}
+.lv-mgr-sandbox-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.lv-mgr-imp-split{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:start;}
+.lv-mgr-imp-col{background:#fff;border:1px solid #eaecf2;border-radius:8px;overflow:hidden;}
+.lv-mgr-imp-col-title{padding:6px 12px;font-size:12px;font-weight:700;color:#5b6378;background:#fafbff;border-bottom:1px solid #eaecf2;line-height:1.4;}
+.lv-mgr-imp-col-title.test{color:#e07b12;background:#fffaf2;}
+.lv-mgr-imp-col-right .lv-mgr-sandbox{margin-top:0;border:none;border-radius:0;padding:4px 6px;background:transparent;}
+/* 슬롯 행 - 매장 라벨과 매니저 칩이 독립적으로 드래그됨 */
+.lv-mgr-slot-row{display:flex;align-items:center;gap:6px;padding:5px 10px;border-bottom:1px solid #f4f5f9;font-size:11.5px;background:#fff;border-radius:6px;margin-bottom:2px;min-height:34px;}
+.lv-mgr-slot-row:hover{background:#fafbff;}
+.lv-mgr-slot-row.drop-store{outline:2px dashed #5b6cf8;outline-offset:-3px;}
+.lv-mgr-slot-row.drop-mgr{outline:2px dashed #e07b12;outline-offset:-3px;background:#fff8eb;}
+.lv-mgr-slot-store{flex-shrink:0;width:165px;display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#2a2f42;padding:4px 8px;border-radius:6px;background:#f1f3f9;cursor:grab;border:1px solid transparent;line-height:1.35;word-break:keep-all;overflow-wrap:break-word;}
+.lv-mgr-slot-store:hover{border-color:#5b6cf8;background:#eef0fe;}
+.lv-mgr-slot-store.dragging{opacity:.4;}
+.lv-mgr-slot-mgrs{display:flex;flex-wrap:wrap;gap:3px;flex:0 1 auto;min-width:0;align-items:center;}
+
 .lv-card{background:#fff; border-radius:12px; border:1.5px solid #eaecf2; overflow:hidden; transition:all .2s; box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .lv-card:hover{border-color:#c8ccf0; box-shadow:0 4px 16px rgba(91,108,248,.10); transform:translateY(-1px);}
 .lv-card.drag-over{border-color:#5b6cf8 !important; box-shadow:0 0 0 3px rgba(91,108,248,.18) !important; background:#f5f7ff !important;}
@@ -2818,7 +2864,9 @@ window.openMoveChannel = openMoveChannel;
       </div>
       <div class="lv-sep"></div>
       <div class="lv-actions">
+        <button class="lv-btn" id="lv-mgr-toggle-btn" onclick="lvToggleMgrOnly()" title="매니저/부매니저/HAUS 매니저만 표시">👔 매니저 현황</button>
         <button class="lv-btn" id="lv-pt-toggle-btn" onclick="lvTogglePT()" title="파트타이머 표시/숨김">파트타이머 제외</button>
+        <button class="lv-btn" onclick="lvPTOpenStoreBulk()" title="여러 명 파트타이머 일괄 등록">＋ PT 일괄 등록</button>
         <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
         <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
       </div>
@@ -3244,7 +3292,14 @@ function switchMain(tab){
   if(lv){
     if(tab==='layout'){
       lv.classList.add('on');
-      // [CLEANUP] 중복 lvInit 호출 제거 - setTimeout 안에서만 한 번 실행
+      // [RESET] 배치현황 진입시 매니저 현황 토글을 OFF로 리셋 (사용자 요청)
+      try {
+        if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
+          __mgrOnly = false;
+          if(typeof lvSyncMgrButton==='function') lvSyncMgrButton();
+          if(typeof _lvSyncMgrButtonsVisibility==='function') _lvSyncMgrButtonsVisibility();
+        }
+      } catch(_){}
       setTimeout(()=>{
         if(window.__fbEdits && Object.keys(window.__fbEdits).length > 0){
           if(typeof applyEditsToEmps === 'function') applyEditsToEmps(window.__fbEdits);
@@ -5793,6 +5848,34 @@ window.lvTogglePT = function() {
   });
   if(typeof window.lvRender==='function') window.lvRender();
 };
+// [MGR ONLY] 매니저/부매니저/HAUS 매니저만 표시 토글
+let __mgrOnly = false; // 매니저 현황은 항상 꺼진 상태로 시작 - 사용자가 명시적으로 토글해야 ON
+function lvSyncMgrButton(){
+  const btn = document.getElementById('lv-mgr-toggle-btn');
+  if(!btn) return;
+  btn.textContent = __mgrOnly ? '👥 전체 직원 보기' : '👔 매니저 현황';
+  btn.classList.toggle('active', __mgrOnly);
+  btn.title = __mgrOnly ? '매니저/부매니저/HAUS만 보기 모드 해제' : '매니저/부매니저/HAUS 매니저만 표시';
+}
+function _lvSyncMgrButtonsVisibility(){
+  // 매니저 현황 모드에선 전체 적용 / 테스트 초기화 버튼 숨김 (해당 모드에선 즉시 저장이라 불필요)
+  const apply = document.getElementById('lv-apply-btn');
+  const reset = document.getElementById('lv-reset-draft-btn');
+  const hide = !!__mgrOnly;
+  if(apply) apply.style.display = hide ? 'none' : '';
+  if(reset) reset.style.display = hide ? 'none' : '';
+}
+window.lvToggleMgrOnly = function(){
+  __mgrOnly = !__mgrOnly;
+  // 의도적으로 localStorage 저장 안 함 → 다른 탭 갔다 돌아오면 다시 OFF로 시작
+  lvSyncMgrButton();
+  _lvSyncMgrButtonsVisibility();
+  if(typeof window.lvRender==='function') window.lvRender();
+};
+// 페이지 로드시 초기 상태 동기화
+setTimeout(()=>{ if(typeof _lvSyncMgrButtonsVisibility==='function') _lvSyncMgrButtonsVisibility(); }, 200);
+// 페이지 로드시 버튼 상태 동기화
+setTimeout(()=>{ if(typeof lvSyncMgrButton==='function') lvSyncMgrButton(); }, 100);
 
 function buildHcBar(storeKey, counted, total, pendingBreakdown){
   const base=getStoreBase(storeKey); if(!base) return '';
@@ -5866,30 +5949,471 @@ function lvRender(){
   lvRenderSB();
   ppRender();
   const scroll=$('lv-scroll'); if(!scroll) return;
-  // [PERF] DocumentFragment로 DOM 일괄 처리(리플로우 최소화)
   const frag = document.createDocumentFragment();
   const active=lvCurTab==='ALL'?['FSMALL','DS','DFS','ATS','NUF','ETC']:[lvCurTab];
-  active.forEach(secKey=>{
-    const cfg=SEC_CFG[secKey];
-    const stores=secs[secKey]||{};
-    const allKeys=Object.keys(stores);
-    if(!allKeys.length) return;
-    const keys=sortedStoreKeys(secKey,allKeys);
-    const cnt=keys.reduce((s,k)=>s+stores[k].filter(isStoreCounted).length,0);
-    const header = document.createElement('div');
-    header.className='lv-sec-header';
-    header.innerHTML = `<div class="lv-sec-dot" style="background:${cfg.dot}"></div>
-       <span class="lv-sec-title">${cfg.icon} ${cfg.label}</span>
-       <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명</span>`;
-    frag.appendChild(header);
-    const grid=document.createElement('div');
-    grid.className='lv-grid'; grid.dataset.sec=secKey;
-    keys.forEach(k=>grid.appendChild(buildCard(k,stores[k],secKey,cfg.accent)));
-    frag.appendChild(grid);
-  });
+  // ─── 매니저 현황 모드 ───
+  //   - 배치현황 모드(actual): 상단 overview만 (읽기 전용)
+  //   - 운영팀 테스트 모드(draft): 상단 overview (편집 가능) + 하단 중요 매장 샌드박스 (매니저+매장 자유 드래그)
+  if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
+    const isEditMode = (lvMode === 'draft');
+    const readOnly = !isEditMode;
+    // 매니저 현황에서 표시할 섹션 필터링
+    // - 육아휴직(ETC)은 항상 제외 (매니저 검토 무관)
+    // - 운영팀 테스트 모드에선 ATS/NUF도 제외 (운영팀 정직원 검토에 집중)
+    // - 배치현황 모드에선 ATS/NUF는 메인 그리드에서 빼서 별도 하단 블록으로 표시
+    const mainSecs = active.filter(s => {
+      if(s === 'ETC') return false;
+      if(isEditMode && (s === 'ATS' || s === 'NUF')) return false;
+      if(!isEditMode && (s === 'ATS' || s === 'NUF')) return false; // 배치현황도 메인에서 빼고 아래에서 따로
+      return true;
+    });
+    const tailSecs = isEditMode ? [] : active.filter(s => s === 'ATS' || s === 'NUF');
+
+    // ① 상단 overview: 모든 매장 매니저/부매니저
+    const overviewBlock = document.createElement('div');
+    overviewBlock.className='lv-mgr-pageblock';
+    const title = isEditMode ? '🧪 매니저 현황 (운영팀 테스트 · 편집 가능)' : '📋 매니저 현황 (배치현황 · 읽기 전용)';
+    const subtitle = isEditMode ? '매니저 칩을 다른 매장으로 드래그하면 즉시 반영됩니다' : '운영팀 테스트 모드에서 편집할 수 있어요';
+    overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">${title}<span class="lv-mgr-pageblock-sub">${subtitle}</span></div>`;
+    const grid2 = document.createElement('div');
+    grid2.className='lv-mgr-grid2';
+    overviewBlock.appendChild(grid2);
+    const _buildSecCard = (secKey) => {
+      const cfg=SEC_CFG[secKey];
+      const stores=secs[secKey]||{};
+      const allKeys=Object.keys(stores);
+      if(!allKeys.length) return null;
+      let keys=sortedStoreKeys(secKey,allKeys);
+      if(typeof IMPORTANT_STORE_IDS !== 'undefined'){
+        const impSet = new Set(IMPORTANT_STORE_IDS);
+        const imp = keys.filter(k=>impSet.has(k));
+        const others = keys.filter(k=>!impSet.has(k));
+        keys = [...imp, ...others];
+      }
+      const mgrCount = keys.reduce((sum, k) => sum + (stores[k]||[]).filter(e=>{
+        const pk = lvPosKey(e.position);
+        return (pk==='MG' || pk==='BM') && getEmpStatus(e) === 'active';
+      }).length, 0);
+      const sec = document.createElement('div');
+      sec.className='lv-mgr-section';
+      sec.innerHTML = `<div class="lv-mgr-sec-header"><div class="lv-sec-dot" style="background:${cfg.dot}"></div><span>${cfg.icon} ${cfg.label}</span><span class="lv-mgr-sec-meta">${keys.length}개 · 매니저 ${mgrCount}</span></div>`;
+      const table = document.createElement('div');
+      table.className='lv-mgr-table';
+      keys.forEach(k => table.appendChild(buildMgrRow(k, stores[k], secKey, cfg.accent, readOnly, false)));
+      sec.appendChild(table);
+      return sec;
+    };
+    mainSecs.forEach(secKey => { const card = _buildSecCard(secKey); if(card) grid2.appendChild(card); });
+    frag.appendChild(overviewBlock);
+
+    // ①-2 배치현황 모드: ATS/NUF는 별도 하단 블록으로 (작게)
+    if(tailSecs.length){
+      const tailBlock = document.createElement('div');
+      tailBlock.className = 'lv-mgr-pageblock';
+      tailBlock.innerHTML = `<div class="lv-mgr-pageblock-title" style="font-size:11.5px;color:#7a8299">🔻 기타 브랜드 (ATS · NUF)</div>`;
+      const tailGrid = document.createElement('div');
+      tailGrid.className = 'lv-mgr-grid2';
+      tailBlock.appendChild(tailGrid);
+      tailSecs.forEach(secKey => { const card = _buildSecCard(secKey); if(card) tailGrid.appendChild(card); });
+      frag.appendChild(tailBlock);
+    }
+
+    // ② 하단: 운영팀 테스트 + 매니저 현황일 때만 중요 매장 영역
+    //   - 좌측: 현재 배치 (읽기 전용, 참고용)
+    //   - 우측: 자유 재배치 영역 (슬롯 모델 - 매장 드래그시 매니저는 슬롯에 고정)
+    if(isEditMode && typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.length){
+      const sandboxBlock = document.createElement('div');
+      sandboxBlock.className='lv-mgr-pageblock';
+      sandboxBlock.innerHTML = `<div class="lv-mgr-pageblock-title">⭐ 중요 매장 — 자유 재배치 영역<span class="lv-mgr-pageblock-sub">좌측 참고하며 우측에서 자유롭게 드래그</span></div>`;
+      // 모든 섹션의 매장→emps 매핑
+      const allStoresMap = {};
+      const allSecMap = {};
+      active.forEach(secKey=>{
+        const stores=secs[secKey]||{};
+        Object.keys(stores).forEach(k=>{ allStoresMap[k] = stores[k]; allSecMap[k] = secKey; });
+      });
+      // 2단 그리드 컨테이너
+      const split = document.createElement('div');
+      split.className = 'lv-mgr-imp-split';
+      // ⓐ 좌측 (참고 - 읽기 전용)
+      const leftCol = document.createElement('div');
+      leftCol.className = 'lv-mgr-imp-col';
+      leftCol.innerHTML = `<div class="lv-mgr-imp-col-title">📋 현재 배치 (참고)</div>`;
+      const leftTable = document.createElement('div');
+      leftTable.className = 'lv-mgr-table';
+      // 좌측은 IMPORTANT_STORE_IDS 원본 순서 + emp.current_store 기준
+      IMPORTANT_STORE_IDS.forEach(storeId=>{
+        const emps = allStoresMap[storeId] || [];
+        const secKey = allSecMap[storeId] || 'FSMALL';
+        const cfg = SEC_CFG[secKey] || SEC_CFG.FSMALL;
+        leftTable.appendChild(buildMgrRow(storeId, emps, secKey, cfg.accent, /*readonly*/ true, /*sandbox*/ false));
+      });
+      leftCol.appendChild(leftTable);
+      split.appendChild(leftCol);
+      // ⓑ 우측 (자유 재배치 - 슬롯 모델)
+      const rightCol = document.createElement('div');
+      rightCol.className = 'lv-mgr-imp-col lv-mgr-imp-col-right';
+      rightCol.innerHTML = `<div class="lv-mgr-imp-col-title test">🧪 자유 재배치 (즉시 저장)</div>`;
+      const rightContainer = document.createElement('div');
+      rightContainer.className = 'lv-mgr-sandbox';
+      rightContainer.appendChild(buildImpSlotsTable(allStoresMap, allSecMap));
+      rightCol.appendChild(rightContainer);
+      split.appendChild(rightCol);
+      sandboxBlock.appendChild(split);
+      frag.appendChild(sandboxBlock);
+    }
+  } else {
+    // 일반(매니저 모드 아님): 기존 카드 그리드 뷰
+    active.forEach(secKey=>{
+      const cfg=SEC_CFG[secKey];
+      const stores=secs[secKey]||{};
+      const allKeys=Object.keys(stores);
+      if(!allKeys.length) return;
+      const keys=sortedStoreKeys(secKey,allKeys);
+      const header = document.createElement('div');
+      header.className='lv-sec-header';
+      const cnt=keys.reduce((s,k)=>s+stores[k].filter(isStoreCounted).length,0);
+      header.innerHTML = `<div class="lv-sec-dot" style="background:${cfg.dot}"></div>
+         <span class="lv-sec-title">${cfg.icon} ${cfg.label}</span>
+         <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명</span>`;
+      frag.appendChild(header);
+      const grid=document.createElement('div');
+      grid.className='lv-grid'; grid.dataset.sec=secKey;
+      keys.forEach(k=>grid.appendChild(buildCard(k,stores[k],secKey,cfg.accent)));
+      frag.appendChild(grid);
+    });
+  }
   scroll.innerHTML='';
   scroll.appendChild(frag);
   if(lvQ) lvSearch(lvQ);
+}
+// [IMPORTANT SLOTS] 슬롯 기반 데이터 모델: 매장 라벨과 매니저가 독립적으로 슬롯에 배치
+// 슬롯 = {storeId, managerIds: []}
+function _getImpSlots(){
+  try { const s = JSON.parse(localStorage.getItem('lvMgrImpSlots')||'null'); if(Array.isArray(s) && s.length) return s; } catch(_){}
+  return null;
+}
+function _initImpSlots(){
+  // EMPS의 현재 배치 기준으로 초기 슬롯 구성
+  return IMPORTANT_STORE_IDS.map(storeId => ({
+    storeId,
+    managerIds: EMPS.filter(e => {
+      const pk = (typeof lvPosKey==='function') ? lvPosKey(e.position) : '';
+      return e.current_store === storeId && (pk==='MG' || pk==='BM') && (typeof getEmpStatus==='function' ? getEmpStatus(e)==='active' : true);
+    }).map(e => e.id)
+  }));
+}
+function _saveImpSlots(slots){
+  try { localStorage.setItem('lvMgrImpSlots', JSON.stringify(slots)); } catch(_){}
+  // 슬롯의 매니저들 emp.current_store를 슬롯의 storeId로 동기화 (drift 방지)
+  slots.forEach(slot => {
+    (slot.managerIds||[]).forEach(empId => {
+      const emp = EMPS.find(e=>e.id===empId);
+      if(!emp) return;
+      if(emp.current_store !== slot.storeId){
+        emp.current_store = slot.storeId;
+        emp.channel = (typeof guessChannel==='function' ? guessChannel(slot.storeId) : '') || emp.channel || '';
+        if(typeof lvSaveToHrEdits==='function') lvSaveToHrEdits(emp);
+        try {
+          const actual = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+          actual[empId] = {current_store: emp.current_store, channel: emp.channel};
+          localStorage.setItem('layoutActualData', JSON.stringify(actual));
+          const draft = JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
+          draft[empId] = {current_store: emp.current_store, channel: emp.channel};
+          localStorage.setItem('layoutDraftData', JSON.stringify(draft));
+        } catch(_){}
+      }
+    });
+  });
+}
+// 슬롯 테이블 빌더
+function buildImpSlotsTable(allStoresMap, allSecMap){
+  let slots = _getImpSlots();
+  if(!slots){ slots = _initImpSlots(); _saveImpSlots(slots); }
+  // IMPORTANT_STORE_IDS에 새로 추가된 매장이 있으면 슬롯에 추가
+  IMPORTANT_STORE_IDS.forEach(id => {
+    if(!slots.find(s => s.storeId === id)) slots.push({storeId: id, managerIds: []});
+  });
+  // 슬롯에서 IMPORTANT_STORE_IDS 외 매장은 제거
+  slots = slots.filter(s => IMPORTANT_STORE_IDS.includes(s.storeId));
+  const wrap = document.createElement('div');
+  slots.forEach((slot, slotIdx) => {
+    const row = document.createElement('div');
+    row.className = 'lv-mgr-slot-row';
+    row.dataset.slotIdx = slotIdx;
+    // 매장 라벨 (드래그 가능)
+    const storeLabel = document.createElement('div');
+    storeLabel.className = 'lv-mgr-slot-store';
+    storeLabel.draggable = true;
+    storeLabel.dataset.slotIdx = slotIdx;
+    const nm = (typeof lvStoreName==='function') ? lvStoreName(slot.storeId) : slot.storeId;
+    storeLabel.innerHTML = `<span style="color:#e07b12;font-size:10px">⭐</span><span>${nm}</span>`;
+    storeLabel.addEventListener('dragstart', e => {
+      lvDragType = 'impstore';
+      lvDragId = String(slotIdx);
+      storeLabel.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'impstore:'+slotIdx);
+      e.stopPropagation();
+    });
+    storeLabel.addEventListener('dragend', () => {
+      storeLabel.classList.remove('dragging');
+      if(lvDragType === 'impstore'){ lvDragType = null; lvDragId = null; }
+    });
+    row.appendChild(storeLabel);
+    // 매니저 칩들
+    const mgrsBox = document.createElement('div');
+    mgrsBox.className = 'lv-mgr-slot-mgrs';
+    (slot.managerIds||[]).forEach(empId => {
+      const emp = EMPS.find(e => e.id === empId);
+      if(!emp) return;
+      const pk = lvPosKey(emp.position);
+      const isHaus = (emp.position||'').includes('HAUS');
+      const roleCls = isHaus ? 'role-HAUS' : ('role-' + pk);
+      const roleLbl = isHaus ? 'HAUS매' : (pk === 'MG' ? '매' : '부매');
+      const chip = document.createElement('div');
+      chip.className = 'lv-mgr-chip ' + roleCls;
+      chip.draggable = true;
+      chip.dataset.id = emp.id;
+      chip.dataset.slotIdx = slotIdx;
+      chip.title = `${emp.name} · ${emp.position||''}`;
+      chip.innerHTML = `<span>${emp.name||''}</span><span class="lv-mgr-chip-role">${roleLbl}</span>`;
+      chip.addEventListener('dragstart', e => {
+        lvDragType = 'impmgr';
+        lvDragId = emp.id + '|' + slotIdx;
+        chip.style.opacity = '0.4';
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'impmgr:'+chip.dataset.id);
+        e.stopPropagation();
+      });
+      chip.addEventListener('dragend', () => {
+        chip.style.opacity = '';
+        if(lvDragType === 'impmgr'){ lvDragType = null; lvDragId = null; }
+      });
+      chip.addEventListener('click', e => {
+        e.stopPropagation();
+        if(typeof openP === 'function') openP(emp);
+      });
+      mgrsBox.appendChild(chip);
+    });
+    row.appendChild(mgrsBox);
+    // 행 드롭 핸들러
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if(lvDragType === 'impstore' && lvDragId !== String(slotIdx)) row.classList.add('drop-store');
+      else if(lvDragType === 'impmgr') row.classList.add('drop-mgr');
+    });
+    row.addEventListener('dragleave', e => {
+      if(!row.contains(e.relatedTarget)) row.classList.remove('drop-store','drop-mgr');
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drop-store','drop-mgr');
+      let curSlots = _getImpSlots() || _initImpSlots();
+      // 일관성: IMPORTANT_STORE_IDS와 동기화
+      IMPORTANT_STORE_IDS.forEach(id => { if(!curSlots.find(s=>s.storeId===id)) curSlots.push({storeId:id, managerIds:[]}); });
+      curSlots = curSlots.filter(s => IMPORTANT_STORE_IDS.includes(s.storeId));
+      if(lvDragType === 'impstore'){
+        // 매장 라벨 드래그: 두 슬롯의 storeId만 SWAP (매니저는 그대로)
+        const fromIdx = parseInt(lvDragId, 10);
+        const toIdx = slotIdx;
+        if(!isNaN(fromIdx) && fromIdx !== toIdx && curSlots[fromIdx] && curSlots[toIdx]){
+          const tmpStore = curSlots[fromIdx].storeId;
+          curSlots[fromIdx].storeId = curSlots[toIdx].storeId;
+          curSlots[toIdx].storeId = tmpStore;
+          _saveImpSlots(curSlots);
+          if(typeof lvToast==='function') lvToast('🔄 매장 순서 변경 (매니저는 슬롯 유지)');
+          if(typeof lvRender==='function') lvRender();
+        }
+      } else if(lvDragType === 'impmgr'){
+        // 매니저 칩 드래그: 한 슬롯의 managerIds에서 다른 슬롯으로 이동
+        const [empId, fromIdxStr] = (lvDragId||'').split('|');
+        const fromIdx = parseInt(fromIdxStr, 10);
+        const toIdx = slotIdx;
+        if(empId && !isNaN(fromIdx) && fromIdx !== toIdx && curSlots[fromIdx] && curSlots[toIdx]){
+          curSlots[fromIdx].managerIds = (curSlots[fromIdx].managerIds||[]).filter(id => id !== empId);
+          if(!curSlots[toIdx].managerIds) curSlots[toIdx].managerIds = [];
+          if(!curSlots[toIdx].managerIds.includes(empId)) curSlots[toIdx].managerIds.push(empId);
+          _saveImpSlots(curSlots);
+          const emp = EMPS.find(e=>e.id===empId);
+          if(typeof lvToast==='function') lvToast('💾 ' + (emp?emp.name:'') + ' → ' + ((typeof lvStoreName==='function') ? lvStoreName(curSlots[toIdx].storeId) : ''));
+          if(typeof lvRender==='function') lvRender();
+        }
+      }
+    });
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+window.buildImpSlotsTable = buildImpSlotsTable;
+// [IMPORTANT STORES] 중요 매장 ID 리스트 - 매니저 현황에서 ⭐ 표시
+const IMPORTANT_STORE_IDS = [
+  'GM_서울_하우스 노웨어_서울',
+  'GM_서울_하우스 노웨어_도산',
+  'GM_인천_DFS_신라_인천공항T2',
+  'GM_인천_DFS_현대_인천공항T1',
+  'GM_서울_MALL_롯데_월드몰',
+  'GM_서울_DFS_신세계_명동',
+  'GM_서울_DFS_롯데_명동',
+  'GM_서울_DS_현대_여의도',
+  'GM_서울_DS_롯데_명동',
+  'GM_서울_FS_홍대',
+  'GM_서울_FS_신사',
+  'GM_서울_DS_신세계_명동',
+  'GM_경기_MALL_신세계스타필드_하남',
+];
+window.IMPORTANT_STORE_IDS = IMPORTANT_STORE_IDS;
+// [MGR ONLY] 매니저 현황 행 빌더 - 매장명 + 매니저/부매니저 칩 한 줄
+function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
+  const row = document.createElement('div');
+  row.className = 'lv-mgr-row';
+  row.dataset.store = storeKey;
+  row.dataset.sec = secKey;
+  if(sandbox) row.draggable = true;
+  // 드래그앤드롭 (readonly가 아닐 때만)
+  if(!readonly){
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if(lvDragType==='chip' || (sandbox && lvDragType==='mgrrow' && lvDragId!==storeKey)) row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', e => { if(!row.contains(e.relatedTarget)) row.classList.remove('drag-over'); });
+  }
+  row.addEventListener('drop', e => {
+    e.preventDefault(); row.classList.remove('drag-over');
+    if(readonly) return;
+    // 매장 행 드래그(샌드박스에서 순서 변경)
+    if(sandbox && lvDragType==='mgrrow' && lvDragId && lvDragId !== storeKey){
+      const sectionTable = row.closest('.lv-mgr-table');
+      if(sectionTable){
+        const rows = [...sectionTable.querySelectorAll('.lv-mgr-row')];
+        const fromIdx = rows.findIndex(r=>r.dataset.store===lvDragId);
+        const toIdx = rows.findIndex(r=>r.dataset.store===storeKey);
+        if(fromIdx>=0 && toIdx>=0){
+          const order = rows.map(r=>r.dataset.store);
+          const [moved] = order.splice(fromIdx,1);
+          order.splice(toIdx,0,moved);
+          // 중요 매장 샌드박스인지 일반 섹션 샌드박스인지 구분
+          const secId = sectionTable.dataset.sec || secKey;
+          const storeKey_ls = (secId === 'IMPORTANT') ? 'lvMgrImpStoreOrder' : ('lvMgrSandboxOrder_'+secId);
+          try { localStorage.setItem(storeKey_ls, JSON.stringify(order)); } catch(_){}
+          lvRender();
+        }
+      }
+      return;
+    }
+    // 매니저 칩 드롭 - 즉시 EMPS 업데이트 (actual+draft 동시)
+    if(lvDragType !== 'chip' || !lvDragId) return;
+    const emp = EMPS.find(x => x.id === lvDragId);
+    if(!emp || lvEmpStore(emp) === storeKey) return;
+    const _prevStore = lvEmpStore(emp) || emp.current_store || '';
+    if(_prevStore && _prevStore !== storeKey){
+      emp._prev_store = _prevStore;
+      if(!window.__fbEdits) window.__fbEdits={};
+      if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
+      window.__fbEdits[emp.id]._prev_store = _prevStore;
+      if(window.fbSetEdit) window.fbSetEdit(emp.id, '_prev_store', _prevStore);
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+    }
+    // 매니저 모드: 즉시 actual+draft 양쪽 저장 (전체 적용 불필요)
+    // 일반 모드(전체 직원): 기존 흐름 유지 - draft 모드면 draft에만, actual 모드면 actual에만
+    if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
+      emp.current_store = storeKey;
+      emp.channel = guessChannel(storeKey) || emp.channel || '';
+      lvSaveToHrEdits(emp);
+      try {
+        const actual = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+        actual[emp.id] = {current_store: emp.current_store, channel: emp.channel};
+        localStorage.setItem('layoutActualData', JSON.stringify(actual));
+        const draft = JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
+        draft[emp.id] = {current_store: emp.current_store, channel: emp.channel};
+        localStorage.setItem('layoutDraftData', JSON.stringify(draft));
+      } catch(_){}
+    } else if(lvMode==='draft'){
+      lvSaveDraftMove(emp.id, storeKey);
+    } else {
+      emp.current_store = storeKey;
+      emp.channel = guessChannel(storeKey);
+      lvSaveToHrEdits(emp);
+      const actual = lvEnsureActualData();
+      actual[emp.id] = {current_store: emp.current_store, channel: emp.channel};
+      lvWriteLayout(LV_ACTUAL_KEY, actual);
+    }
+    showSaved();
+    lvToast('💾 ' + emp.name + ' → ' + lvStoreName(storeKey));
+    lvRender();
+  });
+  // 매장 행 드래그(샌드박스 전용)
+  if(sandbox){
+    row.addEventListener('dragstart', e=>{
+      // 칩 드래그가 우선이면 매장 드래그 무시
+      if(e.target.closest('.lv-mgr-chip')) return;
+      lvDragType='mgrrow'; lvDragId=storeKey;
+      row.classList.add('row-dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain','mgrrow:'+storeKey);
+    });
+    row.addEventListener('dragend', ()=>{
+      row.classList.remove('row-dragging');
+      if(lvDragType==='mgrrow'){ lvDragType=null; lvDragId=null; }
+    });
+  }
+  // 매니저/부매니저만 필터링 (재직중)
+  const mgrs = emps.filter(e => {
+    const pk = lvPosKey(e.position);
+    return (pk==='MG' || pk==='BM') && getEmpStatus(e) === 'active';
+  }).sort((a,b)=>{
+    // 매니저 먼저, 부매니저 나중. HAUS 매니저는 매니저 안에서 위에
+    const ap = lvPosKey(a.position), bp = lvPosKey(b.position);
+    if(ap !== bp) return ap === 'MG' ? -1 : 1;
+    const aHaus = (a.position||'').includes('HAUS') ? 0 : 1;
+    const bHaus = (b.position||'').includes('HAUS') ? 0 : 1;
+    return aHaus - bHaus;
+  });
+  const nm = lvStoreName(storeKey);
+  const rg = lvRegion(storeKey);
+  const chipsHtml = mgrs.length
+    ? mgrs.map(emp => {
+        const pk = lvPosKey(emp.position);
+        const isHaus = (emp.position||'').includes('HAUS');
+        const roleCls = isHaus ? 'role-HAUS' : ('role-' + pk);
+        const roleLbl = isHaus ? 'HAUS매' : (pk === 'MG' ? '매' : '부매');
+        const dragAttr = readonly ? '' : ' draggable="true"';
+        return `<div class="lv-mgr-chip ${roleCls}"${dragAttr} data-id="${emp.id}" title="${emp.name} · ${emp.position||''}">
+          <span>${emp.name||''}</span>
+          <span class="lv-mgr-chip-role">${roleLbl}</span>
+        </div>`;
+      }).join('')
+    : '<span class="lv-mgr-row-empty">매니저 미배치</span>';
+  row.innerHTML = `
+    <div class="lv-mgr-row-name">
+      ${(typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.includes(storeKey)) ? '<span style="color:#e07b12;font-size:11px" title="중요 매장">⭐</span>' : ''}
+      <span>${nm}</span>
+      ${rg ? `<span class="lv-mgr-row-region">${rg}</span>` : ''}
+    </div>
+    <div class="lv-mgr-row-chips">${chipsHtml}</div>
+  `;
+  // 칩 드래그/클릭 핸들러 (readonly 아닐 때만 드래그)
+  row.querySelectorAll('.lv-mgr-chip').forEach(chip => {
+    if(!readonly){
+      chip.addEventListener('dragstart', e => {
+        lvDragType='chip'; lvDragId=chip.dataset.id;
+        chip.style.opacity='0.5';
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain','chip:'+chip.dataset.id);
+        e.stopPropagation();
+      });
+      chip.addEventListener('dragend', () => {
+        chip.style.opacity='';
+        if(lvDragType==='chip'){ lvDragType=null; lvDragId=null; }
+      });
+    }
+    chip.addEventListener('click', e => {
+      e.stopPropagation();
+      const emp = EMPS.find(x => x.id === chip.dataset.id);
+      if(emp) openP(emp);
+    });
+  });
+  return row;
 }
 function buildCard(storeKey,emps,secKey,accent){
   const card=document.createElement('div');
@@ -6005,7 +6529,9 @@ function buildCard(storeKey,emps,secKey,accent){
         >${av}<span class="lv-chip-name">${emp.name}</span>${badge}${memoIcon}</div>`;
   };
   // 1단계: 재직중(active) 직원을 직책별로 위쪽에 렌더링
-  POS_ORDER.forEach(pk=>{
+  // [MGR ONLY] __mgrOnly가 true면 매니저(MG) + 부매니저(BM)만 표시
+  const _activePosKeys = (typeof __mgrOnly !== 'undefined' && __mgrOnly) ? ['MG','BM'] : POS_ORDER;
+  _activePosKeys.forEach(pk=>{
     if(!byPos[pk].length) return;
     chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row">`;
     byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
@@ -6032,8 +6558,16 @@ function buildCard(storeKey,emps,secKey,accent){
       ...Object.keys(byStatus).filter(s=>!STATUS_BOTTOM_ORDER.includes(s))
     ];
     orderedStatuses.forEach(s=>{
-      const list = byStatus[s];
+      let list = byStatus[s];
       if(!list || !list.length) return;
+      // [MGR ONLY] 비-재직 영역도 매니저만 모드일 땐 필터링
+      if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
+        list = list.filter(e=>{
+          const pk = lvPosKey(e.position);
+          return pk === 'MG' || pk === 'BM';
+        });
+        if(!list.length) return;
+      }
       const scfg = STATUS_CFG[s] || STATUS_CFG.active;
       chips+=`<div class="lv-pos-label" style="color:${scfg.chipColor||'#7a8299'};font-size:9.5px;margin-top:4px">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${scfg.dot};margin-right:4px;vertical-align:middle"></span>${scfg.label||s}
@@ -6079,13 +6613,13 @@ function buildCard(storeKey,emps,secKey,accent){
         ${rg?`<div class="lv-store-region">${rg}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:4px">
-        <div class="lv-cnt-badge" style="background:${ibg};color:${accent}">${storeCounted.length}</div>
+        <div class="lv-cnt-badge" style="background:${ibg};color:${accent}">${(typeof __mgrOnly !== 'undefined' && __mgrOnly) ? ((byPos.MG||[]).length + (byPos.BM||[]).length) : storeCounted.length}</div>
         ${pendingBadge}
       </div>
     </div>
     ${hcBar}
     <div class="lv-body">${chips}</div>
-    ${(__ptVisible && lvMode !== 'draft') ? buildPTSection(storeKey) : ''}`;
+    ${(__ptVisible && lvMode !== 'draft' && !(typeof __mgrOnly !== 'undefined' && __mgrOnly)) ? buildPTSection(storeKey) : ''}`;
   const head=card.querySelector('.lv-card-head');
   head.addEventListener('dragstart',e=>{
     lvDragType='card'; lvDragId=storeKey; lvDragSec=secKey;
@@ -6771,6 +7305,12 @@ const ALLOWED_EMAILS = [
   'moon9392@gmail.com',
   'topyoungjoon@gmail.com',
   'e.kwonmin@gmail.com',
+  'chanho9460@gmail.com',
+  'charite0517@gmail.com',
+  'hyunwxx90@gmail.com',
+  'umerryme79@gmail.com',
+  'rlskadl1991@gmail.com',
+  'ikyong88@gmail.com',
 ];
 const ALLOWED_EMAIL_SET = new Set(ALLOWED_EMAILS.map(e => e.toLowerCase().trim()));
 // 도메인 전체 허용하고 싶으면 아래 배열에 도메인 추가 (예: 'gentlemonster.com')
@@ -7994,6 +8534,141 @@ window.lvPTConfirmBulk = function(){
   if(typeof lvToast==='function'){
     if(added > 0) lvToast(`💾 파트타이머 ${added}명 추가`);
     else lvToast('이름이 입력되지 않았습니다');
+  }
+};
+
+// [PT BULK STORE] 매장별로 동시에 여러 PT 일괄 등록 (홍대 2명 + 신사 1명 같이)
+function _ptbsBuildStoreOptions(){
+  let stores = [];
+  try { if(typeof loadStoreList==='function') stores = loadStoreList(); } catch(_){}
+  // 매장을 그룹 분류 - HAUS / FS / MALL / DS / DFS / ATS / NUF / 기타
+  const getGroup = (s) => {
+    const brand = ((s.brand||'GM')+'').toUpperCase();
+    if(brand === 'ATS') return 'ATS';
+    if(brand === 'NUF') return 'NUF';
+    const ch = ((s.channel||'')+'').toUpperCase();
+    if(ch === 'HAUS' || ch.includes('하우스')) return 'HAUS';
+    if(ch === 'FS')   return 'FS';
+    if(ch === 'MALL') return 'MALL';
+    if(ch === 'PU')   return 'FS'; // PU는 FS와 같이 묶음
+    if(ch === 'DS')   return 'DS';
+    if(ch === 'DFS')  return 'DFS';
+    return '기타';
+  };
+  const groupOrder = ['HAUS','FS','MALL','DS','DFS','ATS','NUF','기타'];
+  const groups = {};
+  groupOrder.forEach(g => groups[g] = []);
+  stores.forEach(s => {
+    const g = getGroup(s);
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(s);
+  });
+  // PU 성수 포켓 팝업도 FS 그룹에 추가 (없으면)
+  if(!groups.FS.find(s => s.id === 'PU 성수 포켓 팝업')){
+    groups.FS.push({id:'PU 성수 포켓 팝업'});
+  }
+  let html = '<option value="">매장 선택...</option>';
+  groupOrder.forEach(g => {
+    const list = (groups[g]||[]).slice().sort((a,b) => (a.id||'').localeCompare(b.id||'', 'ko'));
+    if(!list.length) return;
+    html += `<optgroup label="${g}">`;
+    list.forEach(s => {
+      // 정식 매장명 풀네임 그대로 (ID 형식: GM_서울_DS_갤러리아_압구정)
+      html += `<option value="${s.id}">${s.id}</option>`;
+    });
+    html += '</optgroup>';
+  });
+  return html;
+}
+function _ptbsBuildRow(){
+  const opts = _ptbsBuildStoreOptions();
+  return `<div class="ptbs-row" style="display:grid;grid-template-columns:1.4fr 0.8fr 2fr 28px;gap:6px;margin-bottom:6px;align-items:center">
+    <select class="ptbs-row-store" style="padding:6px 8px;border:1px solid #eaecf2;border-radius:6px;font-family:inherit;font-size:12px;outline:none">${opts}</select>
+    <select class="ptbs-row-group" style="padding:6px 8px;border:1px solid #eaecf2;border-radius:6px;font-family:inherit;font-size:12px;outline:none">
+      <option value="weekday">평일</option>
+      <option value="weekend">주말</option>
+      <option value="friSatSun">금토일</option>
+    </select>
+    <input class="ptbs-row-names" type="text" placeholder="이름 (쉼표/공백 구분)" style="padding:6px 8px;border:1px solid #eaecf2;border-radius:6px;font-family:inherit;font-size:12.5px;outline:none">
+    <button class="ptbs-row-del" onclick="this.closest('.ptbs-row').remove()" title="이 행 삭제" style="height:30px;border-radius:6px;border:1px solid #fce0e0;background:#fff;color:#e84040;font-size:14px;cursor:pointer">✕</button>
+  </div>`;
+}
+window.lvPTOpenStoreBulk = function(){
+  let m = document.getElementById('pt-bulk-store-modal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'pt-bulk-store-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:inherit;';
+    m.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:22px 24px;width:620px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+        <div style="font-size:15px;font-weight:700;color:#1a1d23;margin:0 0 4px">👥 파트타이머 일괄 등록</div>
+        <div style="font-size:11.5px;color:#7a8299;margin:0 0 12px;line-height:1.5">여러 매장에 동시에 입사하는 파트타이머를 한 번에 등록할 수 있어요. 행을 추가해서 매장별로 입력하세요.</div>
+        <div style="display:grid;grid-template-columns:1.4fr 0.8fr 2fr 28px;gap:6px;font-size:10.5px;font-weight:700;color:#7a8299;padding:0 2px 4px">
+          <div>매장 *</div><div>그룹</div><div>이름 (쉼표/공백 구분)</div><div></div>
+        </div>
+        <div id="ptbs-rows" style="overflow-y:auto;max-height:380px;padding:2px"></div>
+        <button onclick="lvPTAddRow()" style="margin-top:6px;height:32px;border-radius:6px;border:1px dashed #5b6cf8;background:#f5f7ff;color:#5b6cf8;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">＋ 행 추가</button>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button onclick="lvPTCloseStoreBulk()" style="flex:1;height:36px;border-radius:8px;border:1px solid #eaecf2;background:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">취소</button>
+          <button onclick="lvPTConfirmStoreBulk()" style="flex:1.6;height:36px;border-radius:8px;border:1px solid #5b6cf8;background:#5b6cf8;color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">＋ 전체 등록</button>
+        </div>
+      </div>
+    `;
+    m.addEventListener('click', e => { if(e.target === m) lvPTCloseStoreBulk(); });
+    document.body.appendChild(m);
+  }
+  // 행 영역 초기화: 빈 행 2개 시작
+  const rowsEl = document.getElementById('ptbs-rows');
+  if(rowsEl){
+    rowsEl.innerHTML = _ptbsBuildRow() + _ptbsBuildRow();
+  }
+  m.style.display = 'flex';
+};
+window.lvPTAddRow = function(){
+  const rowsEl = document.getElementById('ptbs-rows');
+  if(rowsEl){
+    rowsEl.insertAdjacentHTML('beforeend', _ptbsBuildRow());
+    // 새 행으로 스크롤
+    const newRow = rowsEl.lastElementChild;
+    if(newRow) newRow.scrollIntoView({block:'nearest'});
+  }
+};
+window.lvPTCloseStoreBulk = function(){
+  const m = document.getElementById('pt-bulk-store-modal'); if(m) m.style.display = 'none';
+};
+window.lvPTConfirmStoreBulk = function(){
+  const rows = document.querySelectorAll('#ptbs-rows .ptbs-row');
+  if(!rows.length){
+    if(typeof lvToast==='function') lvToast('등록할 행이 없습니다');
+    return;
+  }
+  let totalAdded = 0;
+  let storeCount = 0;
+  const summary = [];
+  const skipped = [];
+  rows.forEach(row => {
+    const storeKey = (row.querySelector('.ptbs-row-store')||{}).value || '';
+    const groupKey = (row.querySelector('.ptbs-row-group')||{}).value || 'weekday';
+    const text = (row.querySelector('.ptbs-row-names')||{}).value || '';
+    if(!storeKey || !text.trim()) {
+      if(storeKey && !text.trim()) skipped.push('이름 비어있음');
+      return;
+    }
+    const added = window.lvPTBulkAdd(storeKey, groupKey, text, '');
+    if(added > 0){
+      totalAdded += added;
+      storeCount++;
+      const sn = (typeof lvStoreName==='function') ? lvStoreName(storeKey) : storeKey;
+      summary.push(`${sn} ${added}명`);
+    }
+  });
+  if(totalAdded > 0){
+    lvPTCloseStoreBulk();
+    if(typeof lvToast==='function'){
+      lvToast(`💾 총 ${totalAdded}명 등록 (${storeCount}개 매장) · ${summary.slice(0,3).join(' · ')}${summary.length>3?' 외':''}`);
+    }
+  } else {
+    if(typeof lvToast==='function') lvToast('매장과 이름을 모두 입력해주세요');
   }
 };
 // 퇴사예정일 캘린더 모달
