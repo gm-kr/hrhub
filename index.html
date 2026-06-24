@@ -2420,11 +2420,13 @@ function loadStoreList() {
     if (raw) {
       const parsed = JSON.parse(raw);
       const deduped = mergeStoreLists(parsed, getBaselineStoreList());
-      // 변경된 경우에만 localStorage/Firebase 쓰기 (불필요한 IO 절감)
+      // [BUG FIX] dedupe 결과가 raw와 미세하게 달라도 Firebase에 writeback 하지 않음
+      //   - 기존: onSnapshot → renderSidebar → loadStoreList → fbSetStoreList → onSnapshot 무한 루프
+      //   - 결과: hover 반짝거림, 페이지 느림, 클릭 안 됨
+      // Firebase 저장은 saveStoreList(명시적 매장 추가/삭제/이름변경)에서만 호출됨
       const dedupedStr = JSON.stringify(deduped);
       if(dedupedStr !== raw){
-        localStorage.setItem('store_list_v2', dedupedStr);
-        window.fbSetStoreList && window.fbSetStoreList(deduped);
+        try { localStorage.setItem('store_list_v2', dedupedStr); } catch(_){}
       }
       result = deduped;
     } else {
@@ -7882,12 +7884,16 @@ window.fbSetCriteria = async function(criteriaArr) {
     await setDoc(doc(_db, COL_CRITERIA, 'data'), { criteria: criteriaArr, _updatedAt: serverTimestamp() });
   } catch(e) { console.warn('[FB] criteria 저장 오류:', e.code, e.message); }
 };
+let _lastStoreListJson = '';
 onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
   if (!snap.exists()) return;
   const data = snap.data();
   if (!data.list) return;
   try {
-    localStorage.setItem('store_list_v2', JSON.stringify(data.list));
+    const json = JSON.stringify(data.list);
+    if(json === _lastStoreListJson) return; // 같은 데이터면 무시 (재귀 방지)
+    _lastStoreListJson = json;
+    localStorage.setItem('store_list_v2', json);
     if (window.__fbReady && typeof renderSidebar === 'function') {
       renderSidebar();
     }
@@ -8030,6 +8036,7 @@ window.__storeEvalUnsub = null;
     if(!_db) return;
     const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     const snap = await getDocs(collection(_db, COL_STORE_EVAL));
+    const _affectedStores = [];
     snap.forEach(d => {
       const storeId = d.id;
       const data = d.data() || {};
@@ -8045,7 +8052,13 @@ window.__storeEvalUnsub = null;
           localStorage.setItem(lsKeyStr, data[key]);
         }
       });
-      try { if(typeof updateSidebarBadge === 'function') updateSidebarBadge(storeId); } catch(_){}
+      _affectedStores.push(storeId);
+    });
+    // 모든 데이터 로드 끝난 뒤 한 번에 사이드바 뱃지 갱신 (개별 호출 대신 batch)
+    requestAnimationFrame(()=>{
+      _affectedStores.forEach(storeId => {
+        try { if(typeof updateSidebarBadge === 'function') updateSidebarBadge(storeId); } catch(_){}
+      });
     });
     // 현재 열린 매장이 있으면 UI 새로고침
     if(typeof currentStoreId !== 'undefined' && currentStoreId && typeof loadStoreData==='function' && typeof applyStateToUI==='function'){
