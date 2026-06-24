@@ -3302,13 +3302,18 @@ function switchMain(tab){
   if(lv){
     if(tab==='layout'){
       lv.classList.add('on');
-      // [RESET] 배치현황 진입시 매니저 현황 토글을 OFF로 리셋 (사용자 요청)
+      // [RESET] 배치현황 진입시 매니저 현황 토글 OFF + lvMode를 actual로 강제 리셋
       try {
         if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
           __mgrOnly = false;
           if(typeof lvSyncMgrButton==='function') lvSyncMgrButton();
           if(typeof _lvSyncMgrButtonsVisibility==='function') _lvSyncMgrButtonsVisibility();
         }
+      } catch(_){}
+      // 운영팀 테스트로 끝났더라도 다음 진입시엔 배치현황으로 시작
+      try {
+        if(typeof window.lvSetMode === 'function') window.lvSetMode('actual');
+        localStorage.setItem('layoutMode','actual');
       } catch(_){}
       setTimeout(()=>{
         if(window.__fbEdits && Object.keys(window.__fbEdits).length > 0){
@@ -4846,7 +4851,7 @@ let lvCurTab='ALL', lvDragType=null, lvDragId=null, lvDragSec=null, lvQ='';
 let lvPPWidth = parseInt(localStorage.getItem('lvPPWidth')||'320',10);
 const LV_ACTUAL_KEY='layoutActualData';
 const LV_DRAFT_KEY='layoutDraftData';
-let lvMode=localStorage.getItem('layoutMode')||'actual'; // 기본은 배치현황(actual). 운영팀 테스트는 사용자가 명시적으로 들어가야 함.
+let lvMode = 'actual'; // 항상 배치현황으로 시작. 운영팀 테스트는 사용자가 명시적 클릭해야 진입
 function lvReadLayout(key){
   try{const data=JSON.parse(localStorage.getItem(key)||'{}');return data&&typeof data==='object'?data:{};}catch(e){return{};}
 }
