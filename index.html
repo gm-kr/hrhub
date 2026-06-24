@@ -3175,7 +3175,15 @@ function ctag(ch){const m={'HAUS':'chHAUS','FS':'chFS','DS':'chDS','MALL':'chMAL
 function getP(){try{return JSON.parse(localStorage.getItem('hrP')||'{}')}catch{return{}}}
 function setP(id,b){const p=getP();p[id]=b;localStorage.setItem('hrP',JSON.stringify(p))}
 function getH(){try{return JSON.parse(localStorage.getItem('hrH')||'{}')}catch{return{}}}
-function setH(id,a){const h=getH();h[id]=a;localStorage.setItem('hrH',JSON.stringify(h));window.fbSetEdit&&window.fbSetEdit(id,'fb_storeHistory',a);}
+function setH(id,a){
+  const h=getH();
+  h[id]=a;
+  localStorage.setItem('hrH',JSON.stringify(h));
+  // 기존 hrEdits로도 저장(직원별)
+  window.fbSetEdit&&window.fbSetEdit(id,'fb_storeHistory',a);
+  // [SHARE] 통합 storeHistory 컬렉션에도 저장
+  try { if(window.fbSetStoreHistory) window.fbSetStoreHistory(); } catch(_){}
+}
 function getM(){try{return JSON.parse(localStorage.getItem('hrM')||'{}')}catch{return{}}}
 function setM(id,t){const m=getM();m[id]=t;localStorage.setItem('hrM',JSON.stringify(m))}
 function gHist(e){const h=getH();return h[e.id]||e.store_history||[]}
@@ -4079,11 +4087,19 @@ function getPraiseRecordsRaw(){
   try{const a=JSON.parse(localStorage.getItem('praiseRecords')||'[]');return Array.isArray(a)?a:[];}catch(e){return[]}
 }
 let __praiseRecordsReady=false;
-function setPraiseRecords(a){localStorage.setItem('praiseRecords',JSON.stringify(a||[]));__praiseRecordsReady=true}
+function setPraiseRecords(a){
+  localStorage.setItem('praiseRecords',JSON.stringify(a||[]));
+  __praiseRecordsReady=true;
+  // [SHARE] Firebase에도 저장 (다른 계정에서도 즉시 공유)
+  try { if(window.fbSetPraise) window.fbSetPraise(); } catch(_){}
+}
 function getPraiseRewards(){
   try{const a=JSON.parse(localStorage.getItem('praiseRewards')||'[]');return Array.isArray(a)?a:[];}catch(e){return[]}
 }
-function setPraiseRewards(a){localStorage.setItem('praiseRewards',JSON.stringify(a||[]))}
+function setPraiseRewards(a){
+  localStorage.setItem('praiseRewards',JSON.stringify(a||[]));
+  try { if(window.fbSetPraise) window.fbSetPraise(); } catch(_){}
+}
 function normalizePraiseRecords(){
   const records=getPraiseRecordsRaw().map(r=>{
     const emp=EMPS.find(e=>e.id===(r.employeeId||r.empId||r.id));
@@ -7479,6 +7495,10 @@ const COL_SCHEDULE = 'scheduled';
 const COL_ORDER    = 'storeOrder';
 const COL_CRITERIA = 'criteria';
 const COL_STORELIST= 'storeList';
+// [SHARE] 칭찬·포상·인비테이션 공유 컬렉션 (모든 사용자 동기화)
+const COL_PRAISE     = 'praise';
+const COL_INVITATION = 'invitation';
+const COL_STOREHIST  = 'storeHistory';
 if (!window.__fbEdits) window.__fbEdits = {}; /* [FINAL FIX A] 기존 캐시 보호 */
 window.__fbSchedule = { joining: [], returning: [] };
 window.__fbReady    = false;
@@ -7863,6 +7883,117 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     }
   } catch(e) {}
 });
+// [SHARE] 칭찬/포상 통합 저장 (디바운싱)
+let _fbPraiseTimer = null;
+window.fbSetPraise = function(){
+  clearTimeout(_fbPraiseTimer);
+  _fbPraiseTimer = setTimeout(async () => {
+    try {
+      const records = (function(){ try{ return JSON.parse(localStorage.getItem('praiseRecords')||'[]'); }catch(_){ return []; }})();
+      const rewards = (function(){ try{ return JSON.parse(localStorage.getItem('praiseRewards')||'[]'); }catch(_){ return []; }})();
+      await setDoc(doc(_db, COL_PRAISE, 'data'), {
+        records: JSON.stringify(records),
+        rewards: JSON.stringify(rewards),
+        _updatedAt: serverTimestamp(),
+        _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
+      });
+    } catch(e) { console.error('fbSetPraise:', e); }
+  }, 300);
+};
+onSnapshot(doc(_db, COL_PRAISE, 'data'), (snap) => {
+  if(!snap.exists()) return;
+  try {
+    const data = snap.data() || {};
+    if(typeof data.records === 'string'){
+      const arr = JSON.parse(data.records);
+      if(Array.isArray(arr)) localStorage.setItem('praiseRecords', JSON.stringify(arr));
+    }
+    if(typeof data.rewards === 'string'){
+      const arr = JSON.parse(data.rewards);
+      if(Array.isArray(arr)) localStorage.setItem('praiseRewards', JSON.stringify(arr));
+    }
+    // 패널/대시보드가 열려있으면 갱신
+    if(typeof renderPraiseDashboard === 'function') { try { renderPraiseDashboard(); } catch(_){} }
+    if(typeof renderPraiseRewardHistory === 'function') { try { renderPraiseRewardHistory(); } catch(_){} }
+    if(typeof curEmp !== 'undefined' && curEmp && typeof renderPraiseLog === 'function'){
+      try { renderPraiseLog(curEmp.id, false); } catch(_){}
+    }
+  } catch(e) { console.error('praise snap:', e); }
+});
+
+// [SHARE] 인비테이션 통합 저장
+let _fbInvTimer = null;
+window.fbSetInvitation = function(){
+  clearTimeout(_fbInvTimer);
+  _fbInvTimer = setTimeout(async () => {
+    try {
+      const managers = (typeof invManagers !== 'undefined') ? invManagers : [];
+      const candidates = (typeof invCandidates !== 'undefined') ? invCandidates : {};
+      await setDoc(doc(_db, COL_INVITATION, 'data'), {
+        managers: JSON.stringify(managers),
+        candidates: JSON.stringify(candidates),
+        _updatedAt: serverTimestamp(),
+        _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
+      });
+    } catch(e) { console.error('fbSetInvitation:', e); }
+  }, 300);
+};
+onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
+  if(!snap.exists()) return;
+  try {
+    const data = snap.data() || {};
+    if(typeof data.managers === 'string'){
+      const arr = JSON.parse(data.managers);
+      if(Array.isArray(arr)){
+        if(typeof invManagers !== 'undefined') invManagers.splice(0, invManagers.length, ...arr);
+        localStorage.setItem('inv_managers', JSON.stringify(arr));
+      }
+    }
+    if(typeof data.candidates === 'string'){
+      const obj = JSON.parse(data.candidates);
+      if(obj && typeof obj === 'object'){
+        if(typeof invCandidates !== 'undefined'){
+          Object.keys(invCandidates).forEach(k => delete invCandidates[k]);
+          Object.assign(invCandidates, obj);
+        }
+        localStorage.setItem('inv_candidates', JSON.stringify(obj));
+      }
+    }
+    if(typeof invRender === 'function') { try { invRender(); } catch(_){} }
+  } catch(e) { console.error('invitation snap:', e); }
+});
+
+// [SHARE] 근무이력 통합 저장 (모든 직원의 hrH)
+let _fbHistTimer = null;
+window.fbSetStoreHistory = function(){
+  clearTimeout(_fbHistTimer);
+  _fbHistTimer = setTimeout(async () => {
+    try {
+      const h = (function(){ try{ return JSON.parse(localStorage.getItem('hrH')||'{}'); }catch(_){ return {}; }})();
+      await setDoc(doc(_db, COL_STOREHIST, 'data'), {
+        data: JSON.stringify(h),
+        _updatedAt: serverTimestamp(),
+        _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
+      });
+    } catch(e) { console.error('fbSetStoreHistory:', e); }
+  }, 400);
+};
+onSnapshot(doc(_db, COL_STOREHIST, 'data'), (snap) => {
+  if(!snap.exists()) return;
+  try {
+    const data = snap.data() || {};
+    if(typeof data.data === 'string'){
+      const h = JSON.parse(data.data);
+      if(h && typeof h === 'object'){
+        localStorage.setItem('hrH', JSON.stringify(h));
+        // 패널이 열려있고 해당 직원의 이력을 표시 중이면 갱신
+        if(typeof curEmp !== 'undefined' && curEmp && typeof renderHist === 'function'){
+          try { renderHist(curEmp); } catch(_){}
+        }
+      }
+    }
+  } catch(e) { console.error('history snap:', e); }
+});
 onSnapshot(doc(_db, COL_CRITERIA, 'data'), (snap) => {
   if (!snap.exists()) return;
   const data = snap.data();
@@ -7962,6 +8093,8 @@ function invSaveLocal() {
     localStorage.setItem('inv_managers', JSON.stringify(invManagers));
     localStorage.setItem('inv_candidates', JSON.stringify(invCandidates));
   } catch(e) {}
+  // [SHARE] Firebase에도 저장
+  try { if(window.fbSetInvitation) window.fbSetInvitation(); } catch(_){}
 }
 function invRender() {
   const body = document.getElementById('inv-body');
