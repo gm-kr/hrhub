@@ -8265,6 +8265,7 @@ window.invOpenCandModal = function(mgId) {
   document.getElementById('invCandGender').value = '';
   document.getElementById('invCandChannel').value = '';
   document.getElementById('invCandBrand').value = '';
+  if (document.getElementById('invCandResidence')) document.getElementById('invCandResidence').value = '';
   document.getElementById('invCandStatus').value = 'waiting';
   document.getElementById('invCandMemo').value = '';
   document.getElementById('invCandModal').classList.add('open');
@@ -8286,6 +8287,7 @@ window.invEditCandidate = function(mgId, candId) {
   document.getElementById('invCandGender').value = c.gender || '';
   document.getElementById('invCandChannel').value = c.channel || '';
   document.getElementById('invCandBrand').value = c.brand || '';
+  if (document.getElementById('invCandResidence')) document.getElementById('invCandResidence').value = c.residence || '';
   document.getElementById('invCandStatus').value = c.status || 'waiting';
   document.getElementById('invCandMemo').value = c.memo || '';
   document.getElementById('invCandModal').classList.add('open');
@@ -8301,6 +8303,7 @@ window.invSaveCandidate = async function() {
     gender:  document.getElementById('invCandGender').value,
     channel: document.getElementById('invCandChannel').value.trim(),
     brand:   document.getElementById('invCandBrand').value.trim(),
+    residence: (document.getElementById('invCandResidence') ? document.getElementById('invCandResidence').value.trim() : ''),
     status:  document.getElementById('invCandStatus').value,
     memo:    document.getElementById('invCandMemo').value.trim(),
   };
@@ -8492,6 +8495,16 @@ window.fbSetPT = async function(data) {
     <div class="inv-modal-field">
       <label class="inv-modal-label">거주지</label>
       <input class="inv-modal-input" id="invCandResidence" type="text" placeholder="예) 강남구 역삼동(서울)" />
+    </div>
+    <div class="inv-modal-field">
+      <label class="inv-modal-label">진행 상태</label>
+      <select class="inv-modal-select" id="invCandStatus">
+        <option value="waiting">⏳ 답변 대기중</option>
+        <option value="explain">📢 채용설명회</option>
+        <option value="interview">🎤 면접</option>
+        <option value="rejected">✗ 거절</option>
+        <option value="hired">✅ 채용완료</option>
+      </select>
     </div>
     <div class="inv-modal-field">
       <label class="inv-modal-label">메모</label>
