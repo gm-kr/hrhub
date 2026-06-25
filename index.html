@@ -3244,6 +3244,7 @@ function _lvDiscardDraft(){
   try {
     const actualRaw = localStorage.getItem('layoutActualData') || '{}';
     localStorage.setItem('layoutDraftData', actualRaw);
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
     if(typeof lvToast==='function') lvToast('🗑 테스트 변경 버림');
   } catch(e){}
 }
@@ -4596,6 +4597,7 @@ function saveFieldEdit(field, val){
       draft[curEmp.id]={current_store:val,channel:newCh};
       localStorage.setItem('layoutDraftData',JSON.stringify(draft));
     }catch(_){}
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   }
   if(field==='hire_date'){
     const m=val.match(/(\d{4})년/);
@@ -6168,6 +6170,7 @@ function _saveImpSlots(slots){
           draft[empId] = {current_store: emp.current_store, channel: emp.channel};
           localStorage.setItem('layoutDraftData', JSON.stringify(draft));
         } catch(_){}
+        try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
       }
     });
   });
@@ -6376,6 +6379,7 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
         draft[emp.id] = {current_store: emp.current_store, channel: emp.channel};
         localStorage.setItem('layoutDraftData', JSON.stringify(draft));
       } catch(_){}
+      try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
     } else if(lvMode==='draft'){
       lvSaveDraftMove(emp.id, storeKey);
     } else {
@@ -6961,6 +6965,7 @@ window.doAddEmp = function(){
     localStorage.setItem('layoutActualData',JSON.stringify(actual));
     localStorage.setItem('layoutDraftData',JSON.stringify(draft));
   }catch(e){}
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   if(_aePhoto){
     try{
       const hrP=JSON.parse(localStorage.getItem('hrP')||'{}');
@@ -7921,6 +7926,18 @@ window.fbSetSchedule = async function(data) {
     }
   } catch(e) {}
   window.__fbReady = true;
+  // [AUTH FLUSH] 인증 전 보관된 매장 리스트 변경분 자동 푸시
+  try {
+    const pending = localStorage.getItem('__pendingStoreList');
+    if(pending){
+      const list = JSON.parse(pending);
+      if(Array.isArray(list) && list.length){
+        window.fbSetStoreList && window.fbSetStoreList(list);
+      }
+    }
+  } catch(_){}
+  // [AUTH FLUSH] 인증 전 변경된 sharedSettings(매장기준/매니저슬롯/중요매장/draft) 자동 푸시
+  try { window.fbSetShared && window.fbSetShared(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
     try { const l = getList(); renderBar(l); renderTbl(l); } catch(e) {}
   }
@@ -7980,8 +7997,18 @@ window.addEventListener('beforeunload', () => {
   } catch(_){}
 });
 window.fbSetStoreList = async function(list) {
+  // 인증 안 되면 보관 후 인증 시 자동 푸시 — 다른 사용자에게 못 보내는 문제 방지
+  if(!window.__fbUser || !window.__fbUser.email){
+    try { localStorage.setItem('__pendingStoreList', JSON.stringify(list||[])); } catch(_){}
+    return;
+  }
   try {
-    await setDoc(doc(_db, COL_STORELIST, 'data'), { list, _updatedAt: serverTimestamp() });
+    await setDoc(doc(_db, COL_STORELIST, 'data'), {
+      list,
+      _updatedAt: serverTimestamp(),
+      _updatedBy: window.__fbUser.email
+    });
+    try { localStorage.removeItem('__pendingStoreList'); } catch(_){}
   } catch(e) { console.warn('[FB] storeList 저장 오류:', e.code, e.message); }
 };
 window.fbSetCriteria = async function(criteriaArr) {
@@ -7999,10 +8026,15 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     if(json === _lastStoreListJson) return; // 같은 데이터면 무시 (재귀 방지)
     _lastStoreListJson = json;
     localStorage.setItem('store_list_v2', json);
-    if (window.__fbReady && typeof renderSidebar === 'function') {
+    // [SYNC] 캐시 즉시 무효화 — 그렇지 않으면 옛 순서로 렌더됨
+    try { if(typeof __lslInvalidate === 'function') __lslInvalidate(); } catch(_){}
+    if (typeof renderSidebar === 'function') {
       renderSidebar();
     }
-  } catch(e) {}
+    // 배치현황도 매장 순서가 달라지므로 같이 재렌더
+    try { if(typeof window.lvRender === 'function') window.lvRender(); } catch(_){}
+    try { if(typeof window.lvRenderSB === 'function') window.lvRenderSB(); } catch(_){}
+  } catch(e) { console.error('[FB] storeList snap:', e); }
 });
 // [SHARE] 매장 기준인원·매니저 슬롯·중요매장 순위 통합 저장
 const COL_SHARED = 'sharedSettings';
