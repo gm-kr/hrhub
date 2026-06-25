@@ -4915,8 +4915,23 @@ function lvEnsureDraftData(){
   return draft;
 }
 function lvLayoutMap(){return lvMode==='draft'?lvEnsureDraftData():lvEnsureActualData();}
-function lvEmpStore(emp){const row=lvLayoutMap()[emp.id];return (row&&row.current_store!==undefined)?row.current_store:(emp.current_store||'');}
-function lvEmpChannel(emp){const row=lvLayoutMap()[emp.id];return (row&&row.channel!==undefined)?row.channel:(emp.channel||guessChannel(lvEmpStore(emp))||'');}
+// [SYNC FIX] actual 모드에선 emp.current_store(Firebase 동기화됨)를 1순위로 사용
+// draft 모드에서만 layoutDraftData override 사용
+function lvEmpStore(emp){
+  if(lvMode === 'draft'){
+    const row=lvLayoutMap()[emp.id];
+    return (row && row.current_store !== undefined) ? row.current_store : (emp.current_store||'');
+  }
+  // actual 모드: Firebase 동기화된 emp.current_store가 source of truth
+  return emp.current_store || '';
+}
+function lvEmpChannel(emp){
+  if(lvMode === 'draft'){
+    const row=lvLayoutMap()[emp.id];
+    return (row && row.channel !== undefined) ? row.channel : (emp.channel || guessChannel(lvEmpStore(emp)) || '');
+  }
+  return emp.channel || guessChannel(lvEmpStore(emp)) || '';
+}
 function lvViewEmp(emp){
   if(!emp) return emp;
   const copy=Object.assign({},emp);
@@ -5452,7 +5467,10 @@ window.hideCtxMenu=hideCtxMenu;
 const SB_BASE_KEY='lvSbBaseOverrides';
 const STORE_BASE_KEY='lvStoreBaseOverrides';
 function getStoreBaseOverrides(){try{const r=localStorage.getItem(STORE_BASE_KEY);return r?JSON.parse(r):{};}catch{return {};}}
-function saveStoreBaseOverrides(map){localStorage.setItem(STORE_BASE_KEY,JSON.stringify(map||{}));}
+function saveStoreBaseOverrides(map){
+  localStorage.setItem(STORE_BASE_KEY,JSON.stringify(map||{}));
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+}
 function getStoreBase(storeKey){
   const ov=getStoreBaseOverrides();
   if(ov[storeKey]!==undefined) return ov[storeKey];
@@ -6128,6 +6146,7 @@ function _initImpSlots(){
 }
 function _saveImpSlots(slots){
   try { localStorage.setItem('lvMgrImpSlots', JSON.stringify(slots)); } catch(_){}
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   // 슬롯의 매니저들 emp.current_store를 슬롯의 storeId로 동기화 (drift 방지)
   slots.forEach(slot => {
     (slot.managerIds||[]).forEach(empId => {
@@ -6319,6 +6338,8 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
           const secId = sectionTable.dataset.sec || secKey;
           const storeKey_ls = (secId === 'IMPORTANT') ? 'lvMgrImpStoreOrder' : ('lvMgrSandboxOrder_'+secId);
           try { localStorage.setItem(storeKey_ls, JSON.stringify(order)); } catch(_){}
+          // 중요 매장 순위만 Firebase 동기화 (일반 섹션 순서는 사용자 개인 취향)
+          if(secId === 'IMPORTANT'){ try { if(window.fbSetShared) window.fbSetShared(); } catch(_){} }
           lvRender();
         }
       }
@@ -6750,14 +6771,27 @@ function lvLoadStatuses(){
       }
     }catch(_e){}
   });
+  // [SYNC FIX] layoutActualData가 stale일 때 Firebase 동기화된 emp.current_store를 덮어쓰는 버그 차단
+  //   - __fbEdits에 current_store가 있으면 그게 source of truth (Firebase에서 받은 값)
+  //   - actual 데이터는 emp가 current_store를 모르는 경우(빈값)에만 폴백으로 사용
   const actual=lvEnsureActualData();
   EMPS.forEach(e=>{
     const row=actual[e.id];
-    if(row&&row.current_store!==undefined){
+    const fbHas = (ed[e.id] && ed[e.id].current_store !== undefined);
+    if(row && row.current_store !== undefined && !fbHas && !e.current_store){
       e.current_store=row.current_store;
       e.channel=row.channel||guessChannel(row.current_store)||e.channel;
     }
   });
+  // [SYNC FIX] layoutActualData를 EMPS의 최신값과 동기화 (stale 데이터 정리)
+  EMPS.forEach(e=>{
+    if(!actual[e.id]) actual[e.id] = {};
+    if(actual[e.id].current_store !== e.current_store){
+      actual[e.id].current_store = e.current_store || '';
+      actual[e.id].channel = e.channel || guessChannel(e.current_store||'') || '';
+    }
+  });
+  try { localStorage.setItem('layoutActualData', JSON.stringify(actual)); } catch(_){}
   EMPS.forEach(e=>syncScheduleForEmp(e, getEmpStatus(e), false));
   ppSave(ppLoad());
 }
@@ -7906,6 +7940,56 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     }
   } catch(e) {}
 });
+// [SHARE] 매장 기준인원·매니저 슬롯·중요매장 순위 통합 저장
+const COL_SHARED = 'sharedSettings';
+let _fbSharedTimer = null;
+window.fbSetShared = function(){
+  clearTimeout(_fbSharedTimer);
+  _fbSharedTimer = setTimeout(async () => {
+    try {
+      const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
+      const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
+      const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
+      // 모두 빈 값이면 Firebase에 쓰지 않음 (초기 race 방지)
+      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]') return;
+      await setDoc(doc(_db, COL_SHARED, 'data'), {
+        storeBase, mgrImpSlots, mgrImpOrder,
+        _updatedAt: serverTimestamp(),
+        _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
+      });
+    } catch(e) { console.error('fbSetShared:', e); }
+  }, 300);
+};
+onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
+  if(!snap.exists()) return;
+  try {
+    const data = snap.data() || {};
+    let needRerender = false;
+    if(typeof data.storeBase === 'string'){
+      if(localStorage.getItem('lvStoreBaseOverrides') !== data.storeBase){
+        localStorage.setItem('lvStoreBaseOverrides', data.storeBase);
+        needRerender = true;
+      }
+    }
+    if(typeof data.mgrImpSlots === 'string'){
+      if(localStorage.getItem('lvMgrImpSlots') !== data.mgrImpSlots){
+        localStorage.setItem('lvMgrImpSlots', data.mgrImpSlots);
+        needRerender = true;
+      }
+    }
+    if(typeof data.mgrImpOrder === 'string'){
+      if(localStorage.getItem('lvMgrImpStoreOrder') !== data.mgrImpOrder){
+        localStorage.setItem('lvMgrImpStoreOrder', data.mgrImpOrder);
+        needRerender = true;
+      }
+    }
+    // 배치현황 화면이 열려있으면 즉시 재렌더
+    if(needRerender && typeof window.lvRender === 'function'){
+      try { window.lvRender(); } catch(_){}
+    }
+  } catch(e) { console.error('shared snap:', e); }
+});
+
 // [SHARE] 칭찬/포상 통합 저장 (디바운싱)
 let _fbPraiseTimer = null;
 window.fbSetPraise = function(){
