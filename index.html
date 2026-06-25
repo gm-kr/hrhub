@@ -3731,6 +3731,7 @@ function saveCell(el){
       draft[id]={current_store:val,channel:newCh||emp.channel||''};
       localStorage.setItem('layoutDraftData',JSON.stringify(draft));
     }catch(_){}
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
     refresh();
   }
   if(field==='hire_date'){
@@ -4944,6 +4945,8 @@ function lvSaveDraftMove(empId,storeKey){
   const draft=lvEnsureDraftData();
   draft[empId]={current_store:storeKey,channel:guessChannel(storeKey)||''};
   lvWriteLayout(LV_DRAFT_KEY,draft);
+  // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function lvSetMode(mode){
   lvMode=mode==='actual'?'actual':'draft';
@@ -4955,8 +4958,9 @@ function lvSetMode(mode){
   lvRender(); lvRenderSB();
 }
 function lvResetDraft(){
-  if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?')) return;
+  if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?\n(모든 사용자에게 공유됩니다)')) return;
   lvWriteLayout(LV_DRAFT_KEY,lvEnsureActualData());
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   lvToast('↩ 테스트 배치를 실제 배치 기준으로 초기화했습니다.');
   showSaved();
   lvRender(); lvRenderSB();
@@ -8010,10 +8014,11 @@ window.fbSetShared = function(){
       const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
       const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
       const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
-      // 모두 빈 값이면 Firebase에 쓰지 않음 (초기 race 방지)
-      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]') return;
+      const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
+      // 모두 빈 값이면 Firebase에 쓰지 않음
+      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}') return;
       await setDoc(doc(_db, COL_SHARED, 'data'), {
-        storeBase, mgrImpSlots, mgrImpOrder,
+        storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
         _updatedAt: serverTimestamp(),
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
@@ -8040,6 +8045,12 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     if(typeof data.mgrImpOrder === 'string'){
       if(localStorage.getItem('lvMgrImpStoreOrder') !== data.mgrImpOrder){
         localStorage.setItem('lvMgrImpStoreOrder', data.mgrImpOrder);
+        needRerender = true;
+      }
+    }
+    if(typeof data.layoutDraft === 'string'){
+      if(localStorage.getItem('layoutDraftData') !== data.layoutDraft){
+        localStorage.setItem('layoutDraftData', data.layoutDraft);
         needRerender = true;
       }
     }
