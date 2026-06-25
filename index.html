@@ -5087,7 +5087,11 @@ window.lvPromotePendingHistory = function(){
 setTimeout(()=>{ if(window.lvPromotePendingHistory) window.lvPromotePendingHistory(); }, 2500);
 setInterval(()=>{ if(window.lvPromotePendingHistory) window.lvPromotePendingHistory(); }, 60*60*1000);
 function getStoreOrder(sec){try{return JSON.parse(localStorage.getItem('lvOrder_'+sec)||'null');}catch{return null;}}
-function setStoreOrder(sec,keys){localStorage.setItem('lvOrder_'+sec,JSON.stringify(keys));}
+function setStoreOrder(sec,keys){
+  localStorage.setItem('lvOrder_'+sec,JSON.stringify(keys));
+  // [SHARE] 배치현황 매장 카드 순서도 모든 사용자에 동기화
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+}
 function sortedStoreKeys(sec,keys){
   const saved=getStoreOrder(sec);
   if(!saved||!saved.length) return keys.sort((a,b)=>a.localeCompare(b,'ko'));
@@ -8047,10 +8051,18 @@ window.fbSetShared = function(){
       const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
       const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
       const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
+      // 배치현황 섹션별 매장 카드 순서 (FSMALL/DS/DFS/ATS/NUF/ETC)
+      const lvOrder = {};
+      ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
+        const v = localStorage.getItem('lvOrder_'+k);
+        if(v && v !== 'null') lvOrder[k] = v;
+      });
+      const lvOrderJson = JSON.stringify(lvOrder);
       // 모두 빈 값이면 Firebase에 쓰지 않음
-      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}') return;
+      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}') return;
       await setDoc(doc(_db, COL_SHARED, 'data'), {
         storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
+        lvOrder: lvOrderJson,
         _updatedAt: serverTimestamp(),
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
@@ -8085,6 +8097,18 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
         localStorage.setItem('layoutDraftData', data.layoutDraft);
         needRerender = true;
       }
+    }
+    if(typeof data.lvOrder === 'string'){
+      try {
+        const orderMap = JSON.parse(data.lvOrder) || {};
+        Object.keys(orderMap).forEach(k => {
+          const v = orderMap[k];
+          if(typeof v === 'string' && localStorage.getItem('lvOrder_'+k) !== v){
+            localStorage.setItem('lvOrder_'+k, v);
+            needRerender = true;
+          }
+        });
+      } catch(_){}
     }
     // 배치현황 화면이 열려있으면 즉시 재렌더
     if(needRerender && typeof window.lvRender === 'function'){
