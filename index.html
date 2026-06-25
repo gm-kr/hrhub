@@ -7430,6 +7430,8 @@ function _showAuthGate(show){
   if(gate) gate.classList.toggle('hidden', !show);
   const mini = document.getElementById('auth-logout-mini');
   if(mini) mini.classList.toggle('show', !show);
+  const syncBtn = document.getElementById('auth-force-sync');
+  if(syncBtn) syncBtn.style.display = show ? 'none' : 'inline-block';
 }
 function _renderRejectedUser(user){
   const block = document.getElementById('auth-user-block');
@@ -7457,6 +7459,55 @@ function _resetGateUI(){
   if(btn){ btn.style.display = ''; btn.disabled = false; }
   _setAuthStatus('');
 }
+// [FORCE SYNC] localStorage의 모든 변경분을 Firebase에 일괄 push
+window.__authForceSync = async function(){
+  if(!confirm('로컬 변경분을 Firebase에 강제로 동기화합니다.\n다른 사용자 계정에서도 본인의 변경사항이 보이게 됩니다.\n진행할까요?')) return;
+  const btn = document.getElementById('auth-force-sync');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ 동기화 중...'; }
+  let success = 0, failed = 0;
+  try {
+    // 1. __fbEditsCache 전체 push (직원 편집)
+    let cache = {};
+    try { cache = JSON.parse(localStorage.getItem('__fbEditsCache')||'{}') || {}; } catch(_){}
+    const empIds = Object.keys(cache);
+    for(const id of empIds){
+      try {
+        const data = cache[id] || {};
+        if(Object.keys(data).length === 0) continue;
+        await setDoc(doc(_db, COL_EDITS, id), { ...data, _updatedAt: serverTimestamp(), _updatedBy: (window.__fbUser&&window.__fbUser.email)||'' }, { merge: true });
+        success++;
+      } catch(e) { console.warn('sync emp', id, e); failed++; }
+    }
+    // 2. praise / invitation / storeHistory / sharedSettings 강제 동기화 (디바운스 무시)
+    if(window.fbSetPraise) window.fbSetPraise();
+    if(window.fbSetInvitation) window.fbSetInvitation();
+    if(window.fbSetStoreHistory) window.fbSetStoreHistory();
+    if(window.fbSetShared) window.fbSetShared();
+    // 3. 스토어 진단 - localStorage의 eval_* 키들을 Firebase에 push
+    let evalCount = 0;
+    const storeEvalMap = {};
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      const m = k && k.match(/^eval_(.+?)_(q[1-4])_(.+)$/);
+      if(!m) continue;
+      const [, storeId, q, field] = m;
+      if(!storeEvalMap[storeId]) storeEvalMap[storeId] = {};
+      storeEvalMap[storeId][`${q}_${field}`] = localStorage.getItem(k);
+      evalCount++;
+    }
+    for(const storeId of Object.keys(storeEvalMap)){
+      try {
+        await setDoc(doc(_db, 'storeEvals', storeId), { ...storeEvalMap[storeId], _updatedAt: serverTimestamp() }, { merge: true });
+      } catch(e) { console.warn('sync storeEval', storeId, e); }
+    }
+    alert(`✓ 동기화 완료\n• 직원 편집: ${success}건${failed?` (실패 ${failed}건)`:''}\n• 칭찬/포상/인비테이션/근무이력/공유설정: 자동 push 완료\n• 스토어 진단: ${Object.keys(storeEvalMap).length}개 매장, ${evalCount}개 필드\n\n다른 계정에서 새로고침하면 즉시 보입니다.`);
+  } catch(e) {
+    alert('동기화 실패: ' + (e.message||e));
+    console.error('[FORCE SYNC]', e);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = '🔄 강제 동기화'; }
+  }
+};
 window.__authLogout = async function(){
   try { await signOut(_auth); } catch(_){}
   _resetGateUI();
@@ -8754,6 +8805,7 @@ window.fbSetPT = async function(data) {
     <div class="auth-foot">© Gentle Monster · HR Hub</div>
   </div>
 </div>
+<button id="auth-force-sync" title="로컬 변경분을 Firebase에 강제 동기화 (다른 계정에서 안 보일 때 사용)" onclick="window.__authForceSync&&window.__authForceSync()" style="position:fixed;top:8px;right:88px;z-index:9999;font-size:11px;color:#5b6cf8;background:rgba(255,255,255,.9);border:1px solid #c8ccf0;border-radius:12px;padding:4px 10px;cursor:pointer;display:none">🔄 강제 동기화</button>
 <button id="auth-logout-mini" onclick="window.__authLogout&&window.__authLogout()">로그아웃</button>
 
 
