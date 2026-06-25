@@ -7602,7 +7602,7 @@ function startRealtimeListeners() {
       const _prevEdit = window.__fbEdits[id] || {};
       window.__fbEdits[id] = { ...data, ..._prevEdit, ..._pending };
       /* current_store, status는 로컬 편집이 있으면 절대 Firebase로 덮어쓰지 않음 */
-      ['current_store','channel','status','kindness','growth'].forEach(function(_pf) {
+      ['current_store','channel','status','kindness','sincerity','charm','growth'].forEach(function(_pf) {
         if (_prevEdit[_pf] !== undefined) window.__fbEdits[id][_pf] = _prevEdit[_pf];
       });
       if (typeof EMPS !== 'undefined') {
@@ -7628,7 +7628,7 @@ function startRealtimeListeners() {
         if (emp) {
           const directFields = ['status','memo','current_store','channel',
             'tenure','position','hire_date','language','residence','brand','name',
-            'kindness','growth'];
+            'kindness','sincerity','charm','growth'];
           directFields.forEach(f => {
             /* [BUG FIX 1&2] window.__fbEdits[id]는 {Firebase data, 로컬편집, pending}
                우선순위로 이미 merge된 값 → EMPS 적용 시 항상 이를 우선 사용
@@ -7668,6 +7668,8 @@ function startRealtimeListeners() {
           if (data.kindness !== undefined) fbData.kindness = data.kindness;
           if (data.growth !== undefined) fbData.growth = data.growth;
           if (data.fb_kindness !== undefined) { fbData.kindness = data.fb_kindness; emp.kindness = data.fb_kindness; }
+          if (data.fb_sincerity !== undefined) { fbData.sincerity = data.fb_sincerity; emp.sincerity = data.fb_sincerity; }
+          if (data.fb_charm !== undefined) { fbData.charm = data.fb_charm; emp.charm = data.fb_charm; }
           if (data.fb_growth !== undefined) { fbData.growth = data.fb_growth; emp.growth = data.fb_growth; }
           if (Object.keys(fbData).length > 0) {
             try {
