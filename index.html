@@ -7632,12 +7632,14 @@ function startRealtimeListeners() {
       const id   = change.doc.id;
       const data = change.doc.data();
       const _pending = (typeof _fbEditBuf !== 'undefined' && _fbEditBuf[id]) ? _fbEditBuf[id] : {};
-      /* [FINAL FIX E] 로컬 편집 우선 보장 (current_store, status, kindness, growth 등) */
       const _prevEdit = window.__fbEdits[id] || {};
-      window.__fbEdits[id] = { ...data, ..._prevEdit, ..._pending };
-      /* current_store, status는 로컬 편집이 있으면 절대 Firebase로 덮어쓰지 않음 */
+      // [SYNC FIX] 우선순위: pending(저장 중인 본인 입력) > data(Firebase 최신) > prevEdit(로컬 캐시)
+      //   기존 버그: {...data, ..._prevEdit, ..._pending} 으로 prevEdit가 Firebase를 덮어써서
+      //   다른 사용자의 변경분이 본인 화면에 안 보였음
+      window.__fbEdits[id] = { ..._prevEdit, ...data, ..._pending };
+      // 저장 중인 본인 입력만 보호 (debounce buffer에 있는 것). 그 외는 Firebase가 source of truth.
       ['current_store','channel','status','kindness','sincerity','charm','growth'].forEach(function(_pf) {
-        if (_prevEdit[_pf] !== undefined) window.__fbEdits[id][_pf] = _prevEdit[_pf];
+        if (_pending[_pf] !== undefined) window.__fbEdits[id][_pf] = _pending[_pf];
       });
       if (typeof EMPS !== 'undefined') {
         if (data._isNewEmp && !EMPS.find(e => e.id === id)) {
