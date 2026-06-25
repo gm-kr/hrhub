@@ -4228,19 +4228,110 @@ function renderScoreHistory(emp){
     const dirColor = dir==='↑'?'#16a34a': dir==='↓'?'#dc2626':'#6b7280';
     const dt = h.at ? new Date(h.at) : null;
     const dtStr = dt && !isNaN(dt) ? `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}` : '';
-    return `<div style="padding:4px 0;border-bottom:1px dashed #eef0fe">
-      <div style="display:flex;align-items:center;gap:6px;font-weight:600">
-        <span style="color:#5b6cf8">${lbl}</span>
-        <span style="color:#9aa0b3">${h.oldVal||'—'}</span>
-        <span style="color:${dirColor};font-weight:800">${dir}</span>
-        <span>${h.newVal||'—'}</span>
-        <span style="margin-left:auto;font-size:10px;color:#aab0be;font-weight:400">${dtStr}</span>
+    // 식별자: at + field + newVal (동일 시각에 동일 필드 변경은 사실상 없음)
+    const sigAt = (h.at||'').replace(/'/g,"\\'");
+    const sigField = (h.field||'').replace(/'/g,"\\'");
+    const sigNew = (String(h.newVal||'')).replace(/'/g,"\\'");
+    return `<div style="padding:6px 0;border-bottom:1px dashed #eef0fe;position:relative;display:flex;align-items:flex-start;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;font-weight:600;flex-wrap:wrap">
+          <span style="color:#5b6cf8">${lbl}</span>
+          <span style="color:#9aa0b3">${h.oldVal||'—'}</span>
+          <span style="color:${dirColor};font-weight:800">${dir}</span>
+          <span>${h.newVal||'—'}</span>
+          <span style="font-size:10px;color:#aab0be;font-weight:400">${dtStr}</span>
+        </div>
+        ${h.reason ? `<div style="font-size:11px;color:#5b6378;margin-top:2px">💬 ${(h.reason||'').replace(/</g,'&lt;')}</div>` : ''}
       </div>
-      ${h.reason ? `<div style="font-size:11px;color:#5b6378;margin-top:2px;padding-left:4px">💬 ${(h.reason||'').replace(/</g,'&lt;')}</div>` : ''}
+      <button onclick="deleteScoreHistory('${emp.id}','${sigAt}','${sigField}','${sigNew}')" title="이력 삭제" style="flex-shrink:0;width:20px;height:20px;border:none;background:#f4f5f9;color:#9aa0b3;cursor:pointer;font-size:11px;line-height:1;border-radius:50%;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626'" onmouseout="this.style.background='#f4f5f9';this.style.color='#9aa0b3'">✕</button>
     </div>`;
   }).join('');
 }
 window.renderScoreHistory = renderScoreHistory;
+
+// [DELETE+ROLLBACK] 평가 변경 이력 항목 삭제 — 이전 점수로 복구
+function deleteScoreHistory(empId, at, field, newVal){
+  if(!empId) return;
+  if(!window.__fbEdits) window.__fbEdits = {};
+  if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
+  let hist = Array.isArray(window.__fbEdits[empId].scoreHistory) ? window.__fbEdits[empId].scoreHistory : [];
+  // 삭제 대상 항목 찾기
+  const target = hist.find(h => (h.at||'')===at && (h.field||'')===field && String(h.newVal||'')===String(newVal));
+  if(!target){ alert('해당 이력을 찾을 수 없습니다.'); return; }
+  const fLabel = (typeof _fieldLabel==='function') ? _fieldLabel(field) : field;
+
+  // 1) 이력 배열에서 해당 항목 제거 (첫 매치 1건)
+  let removed = false;
+  const newHist = hist.filter(h => {
+    if(removed) return true;
+    if((h.at||'')===at && (h.field||'')===field && String(h.newVal||'')===String(newVal)){
+      removed = true;
+      return false;
+    }
+    return true;
+  });
+
+  // 2) 같은 field의 남은 이력 중 가장 최근의 newVal이 그 직원의 현재 점수가 됨
+  //    남은 이력이 없으면 blank
+  const remaining = newHist.filter(h => (h.field||'')===field)
+                           .sort((a,b)=> (b.at||'').localeCompare(a.at||''));
+  const oldVal = remaining.length ? (remaining[0].newVal||'') : '';
+
+  // 3) 사용자 확인 - 점수가 어떻게 바뀌는지 명시
+  const willChange = String(target.newVal||'') !== String(oldVal||'');
+  if(willChange){
+    const msg = (oldVal === '' || oldVal == null)
+      ? `이 이력을 삭제하면 [${fLabel}] 점수가 비워집니다.\n진행할까요?`
+      : `이 이력을 삭제하면 [${fLabel}] 점수가 ${oldVal}점이 됩니다.\n진행할까요?`;
+    if(!confirm(msg)) return;
+  } else {
+    if(!confirm('이 이력을 삭제하시겠습니까?\n(점수에는 변화 없음)')) return;
+  }
+  hist = newHist;
+  window.__fbEdits[empId].scoreHistory = hist;
+
+  // 2) 직원 점수를 oldVal로 롤백 (__fbEdits + EMPS + hr_fb_ 모두 갱신)
+  window.__fbEdits[empId][field] = oldVal;
+  try {
+    const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===empId) : null;
+    if(emp) emp[field] = oldVal;
+  } catch(_){}
+  try {
+    const _hrFb = JSON.parse(localStorage.getItem('hr_fb_'+empId)||'{}');
+    _hrFb[field] = oldVal;
+    localStorage.setItem('hr_fb_'+empId, JSON.stringify(_hrFb));
+  } catch(_){}
+
+  // 3) 캐시 + Firebase 동기화
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+  try {
+    if(window.fbSetEdit){
+      window.fbSetEdit(empId, field, oldVal);
+      window.fbSetEdit(empId, 'scoreHistory', hist);
+    }
+  } catch(_){}
+
+  // 4) UI 즉시 반영 — 점수 select + 이력 패널
+  try {
+    const selMap = {kindness:'pkindness', sincerity:'psincerity', charm:'pcharm', growth:'pgrowth'};
+    const selId = selMap[field];
+    if(selId){
+      const sel = document.getElementById(selId);
+      if(sel) sel.value = (oldVal==null || oldVal==='') ? '' : String(oldVal);
+    }
+    const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===empId) : null;
+    if(emp) renderScoreHistory(emp);
+  } catch(_){}
+
+  // 5) 배치현황 등 다른 뷰도 갱신
+  try { window.lvRender?.(); } catch(_){}
+  try {
+    if(typeof getList==='function' && typeof renderTbl==='function'){
+      const l = getList(); renderTbl(l);
+    }
+  } catch(_){}
+}
+window.deleteScoreHistory = deleteScoreHistory;
 function submitPraise(){
   if(!curEmp)return;
   const inp=document.getElementById('praise-input');
