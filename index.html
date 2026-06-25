@@ -7940,6 +7940,35 @@ window.fbSetSchedule = async function(data) {
       }
     }
   } catch(_){}
+  // [FIREBASE FIRST] 페이지 로드 시 Firebase에서 모든 공유 데이터를 먼저 fetch → localStorage 덮어쓰기
+  // Firebase가 source of truth. localStorage는 오프라인 캐시 + 속도 fallback일 뿐.
+  try {
+    const [sharedSnap, storeListSnap] = await Promise.all([
+      getDoc(doc(_db, COL_SHARED, 'data')).catch(()=>null),
+      getDoc(doc(_db, COL_STORELIST, 'data')).catch(()=>null)
+    ]);
+    if(sharedSnap && sharedSnap.exists()){
+      const d = sharedSnap.data() || {};
+      if(typeof d.storeBase    === 'string') localStorage.setItem('lvStoreBaseOverrides', d.storeBase);
+      if(typeof d.mgrImpSlots  === 'string') localStorage.setItem('lvMgrImpSlots',        d.mgrImpSlots);
+      if(typeof d.mgrImpOrder  === 'string') localStorage.setItem('lvMgrImpStoreOrder',   d.mgrImpOrder);
+      if(typeof d.layoutDraft  === 'string') localStorage.setItem('layoutDraftData',      d.layoutDraft);
+      if(typeof d.lvOrder      === 'string'){
+        try {
+          const m = JSON.parse(d.lvOrder)||{};
+          Object.keys(m).forEach(k => {
+            if(typeof m[k] === 'string') localStorage.setItem('lvOrder_'+k, m[k]);
+          });
+        } catch(_){}
+      }
+    }
+    if(storeListSnap && storeListSnap.exists()){
+      const d = storeListSnap.data() || {};
+      if(Array.isArray(d.list)) localStorage.setItem('store_list_v2', JSON.stringify(d.list));
+    }
+    // 캐시 무효화 후 다음 렌더에 반영
+    try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
+  } catch(e) { console.warn('[FIREBASE FIRST]', e); }
   // [AUTH FLUSH] 인증 전 변경된 sharedSettings(매장기준/매니저슬롯/중요매장/draft) 자동 푸시
   try { window.fbSetShared && window.fbSetShared(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
