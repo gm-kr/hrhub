@@ -7603,14 +7603,21 @@ async function loadAllEdits() {
     snap.forEach(d => { edits[d.id] = d.data(); });
     let cached = {};
     try { cached = JSON.parse(localStorage.getItem('__fbEditsCache')||'{}') || {}; } catch(e) {}
-    const merged = { ...edits };
-    Object.keys(cached).forEach(id => {
-      merged[id] = { ...(merged[id]||{}), ...(cached[id]||{}) };
+    // [SYNC FIX] 우선순위: pending(저장중) > Firebase(최신) > cached(로컬 폴백)
+    //   기존 버그: cached가 Firebase를 덮어써서 다른 사용자 변경분 무시됨
+    const merged = {};
+    const allIds = new Set([...Object.keys(edits), ...Object.keys(cached)]);
+    allIds.forEach(id => {
+      merged[id] = { ...(cached[id]||{}), ...(edits[id]||{}) };
     });
-    /* [FINAL FIX D] Firebase + 캐시 + 기존 __fbEdits 3중 병합 */
+    // 저장 중인 본인 편집(pending)이 있으면 보호
     const _existing = window.__fbEdits || {};
+    const _buf = (typeof _fbEditBuf !== 'undefined') ? _fbEditBuf : {};
     Object.keys(_existing).forEach(id => {
-      merged[id] = Object.assign({}, merged[id] || {}, _existing[id] || {});
+      const pending = _buf[id] || {};
+      if(Object.keys(pending).length > 0){
+        merged[id] = Object.assign({}, merged[id] || {}, pending);
+      }
     });
     window.__fbEdits = merged;
     try { localStorage.setItem('__fbEditsCache', JSON.stringify(merged)); } catch(e) {}
