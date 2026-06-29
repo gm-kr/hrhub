@@ -2409,8 +2409,19 @@ let __lslCache = null;
 function __lslInvalidate(){ __lslCache = null; }
 const DELETED_STORES_KEY='lvDeletedStores';
 function getDeletedStores(){try{return JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]');}catch{return[];}}
-function addDeletedStore(id){const d=getDeletedStores();if(!d.includes(id)){d.push(id);localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));}}
-function removeDeletedStore(id){const d=getDeletedStores().filter(x=>x!==id);localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));}
+function addDeletedStore(id){
+  const d=getDeletedStores();
+  if(!d.includes(id)){
+    d.push(id);
+    localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  }
+}
+function removeDeletedStore(id){
+  const d=getDeletedStores().filter(x=>x!==id);
+  localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+}
 function loadStoreList() {
   if(__lslCache) return __lslCache;
   cleanupStoreReferences();
@@ -3530,6 +3541,7 @@ function isDeletedEmpId(empId){
 }
 function saveDeletedEmpIds(ids){
   try { localStorage.setItem(DELETED_EMP_IDS_KEY, JSON.stringify(Array.from(new Set(ids||[])))); } catch(e) {}
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function markDeletedEmpId(empId){
   if(!empId) return;
@@ -7982,11 +7994,33 @@ window.fbSetEdit = function(empId, field, value) {
     try {
       const batch = _fbEditBuf[empId];
       if(!batch) return;
+      // 인증 안 됐으면 buf 보관 유지하여 인증 후 재시도
+      if(!window.__fbUser || !window.__fbUser.email){
+        return;
+      }
       delete _fbEditBuf[empId];
       const ref = doc(_db, COL_EDITS, empId);
-      await setDoc(ref, { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser?.email || '' }, { merge: true });
-    } catch(e) { console.error('[FB] fbSetEdit 오류:', e.code, e.message); }
+      await setDoc(ref, { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
+    } catch(e) {
+      console.error('[FB] fbSetEdit 오류:', e.code, e.message);
+      // 실패 시 buf 복원 (다음 재시도 가능)
+      try { _fbEditBuf[empId] = Object.assign(_fbEditBuf[empId]||{}, { [field]: value }); } catch(_){}
+    }
   }, 0);
+};
+// [AUTH FLUSH] 인증 직후 _fbEditBuf에 남은 모든 pending edits를 한 번에 push
+window.__flushPendingEdits = async function(){
+  if(!window.__fbUser || !window.__fbUser.email) return;
+  const ids = Object.keys(_fbEditBuf||{});
+  for(const id of ids){
+    try {
+      const batch = _fbEditBuf[id];
+      if(!batch || !Object.keys(batch).length) continue;
+      delete _fbEditBuf[id];
+      const ref = doc(_db, COL_EDITS, id);
+      await setDoc(ref, { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
+    } catch(e){ console.warn('[FLUSH PENDING]', id, e); }
+  }
 };
 window.fbSetSchedule = async function(data) {
   try {
@@ -8053,6 +8087,8 @@ window.fbSetSchedule = async function(data) {
           });
         } catch(_){}
       }
+      if(typeof d.deletedStores === 'string') localStorage.setItem('lvDeletedStores', d.deletedStores);
+      if(typeof d.deletedEmps   === 'string') localStorage.setItem('hrDeletedEmpIds_v1', d.deletedEmps);
     }
     if(storeListSnap && storeListSnap.exists()){
       const d = storeListSnap.data() || {};
@@ -8063,6 +8099,8 @@ window.fbSetSchedule = async function(data) {
   } catch(e) { console.warn('[FIREBASE FIRST]', e); }
   // [AUTH FLUSH] 인증 전 변경된 sharedSettings(매장기준/매니저슬롯/중요매장/draft) 자동 푸시
   try { window.fbSetShared && window.fbSetShared(); } catch(_){}
+  // [AUTH FLUSH] 인증 전에 모인 pending 직원 편집 push
+  try { if(window.__flushPendingEdits) await window.__flushPendingEdits(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
     try { const l = getList(); renderBar(l); renderTbl(l); } catch(e) {}
   }
@@ -8164,6 +8202,50 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
 // [SHARE] 매장 기준인원·매니저 슬롯·중요매장 순위 통합 저장
 const COL_SHARED = 'sharedSettings';
 let _fbSharedTimer = null;
+// [SAVE GUARANTEE] 페이지 종료/숨김 시 모든 pending 디바운스 변경분을 즉시 push
+window.__flushAllPending = function(){
+  try {
+    [_fbSharedTimer, _fbPraiseTimer, _fbInvTimer, _fbHistTimer].forEach(t => {
+      if(t) clearTimeout(t);
+    });
+  } catch(_){}
+  // 각 함수를 한 번씩 호출하면 새 디바운스가 100ms 후 push되는데, 페이지 닫히면 push 안 됨
+  // 따라서 즉시 setDoc을 호출하는 동기 함수 별도 사용
+  try {
+    if(window.__fbUser && window.__fbUser.email){
+      const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
+      const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
+      const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
+      const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
+      const lvOrder = {};
+      ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
+        const v = localStorage.getItem('lvOrder_'+k);
+        if(v && v !== 'null') lvOrder[k] = v;
+      });
+      const lvOrderJson = JSON.stringify(lvOrder);
+      const deletedStores= localStorage.getItem('lvDeletedStores')    || '[]';
+      const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1') || '[]';
+      if(!(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}' && deletedStores === '[]' && deletedEmps === '[]')){
+        setDoc(doc(_db, COL_SHARED, 'data'), {
+          storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
+          lvOrder: lvOrderJson,
+          deletedStores, deletedEmps,
+          _updatedAt: serverTimestamp(),
+          _updatedBy: window.__fbUser.email
+        }).catch(()=>{});
+      }
+    }
+  } catch(_){}
+};
+// 페이지 종료/숨김 이벤트에서 강제 flush
+window.addEventListener('beforeunload', () => { try { window.__flushAllPending(); } catch(_){} });
+window.addEventListener('pagehide',    () => { try { window.__flushAllPending(); } catch(_){} });
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden'){
+    try { window.__flushAllPending(); } catch(_){}
+  }
+});
+
 window.fbSetShared = function(){
   clearTimeout(_fbSharedTimer);
   _fbSharedTimer = setTimeout(async () => {
@@ -8172,6 +8254,8 @@ window.fbSetShared = function(){
       const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
       const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
       const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
+      const deletedStores= localStorage.getItem('lvDeletedStores')      || '[]';
+      const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1')   || '[]';
       // 배치현황 섹션별 매장 카드 순서 (FSMALL/DS/DFS/ATS/NUF/ETC)
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
@@ -8180,15 +8264,16 @@ window.fbSetShared = function(){
       });
       const lvOrderJson = JSON.stringify(lvOrder);
       // 모두 빈 값이면 Firebase에 쓰지 않음
-      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}') return;
+      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}' && deletedStores === '[]' && deletedEmps === '[]') return;
       await setDoc(doc(_db, COL_SHARED, 'data'), {
         storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
         lvOrder: lvOrderJson,
+        deletedStores, deletedEmps,
         _updatedAt: serverTimestamp(),
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
     } catch(e) { console.error('fbSetShared:', e); }
-  }, 300);
+  }, 100);
 };
 onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   if(!snap.exists()) return;
@@ -8231,6 +8316,20 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
         });
       } catch(_){}
     }
+    if(typeof data.deletedStores === 'string'){
+      if(localStorage.getItem('lvDeletedStores') !== data.deletedStores){
+        localStorage.setItem('lvDeletedStores', data.deletedStores);
+        needRerender = true;
+      }
+    }
+    if(typeof data.deletedEmps === 'string'){
+      if(localStorage.getItem('hrDeletedEmpIds_v1') !== data.deletedEmps){
+        localStorage.setItem('hrDeletedEmpIds_v1', data.deletedEmps);
+        needRerender = true;
+        // 삭제 직원 목록 변경 시 HR 테이블도 재렌더
+        try { if(typeof getList==='function' && typeof renderTbl==='function'){ const l=getList(); renderTbl(l); } } catch(_){}
+      }
+    }
     // 배치현황 화면이 열려있으면 즉시 재렌더
     if(needRerender && typeof window.lvRender === 'function'){
       try { window.lvRender(); } catch(_){}
@@ -8253,7 +8352,7 @@ window.fbSetPraise = function(){
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
     } catch(e) { console.error('fbSetPraise:', e); }
-  }, 300);
+  }, 100);
 };
 onSnapshot(doc(_db, COL_PRAISE, 'data'), (snap) => {
   if(!snap.exists()) return;
@@ -8294,7 +8393,7 @@ window.fbSetInvitation = function(){
         _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
       });
     } catch(e) { console.error('fbSetInvitation:', e); }
-  }, 300);
+  }, 100);
 };
 onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
   if(!snap.exists()) return;
