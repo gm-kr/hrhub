@@ -2881,7 +2881,6 @@ window.openMoveChannel = openMoveChannel;
         <button class="lv-btn" id="lv-pt-toggle-btn" onclick="lvTogglePT()" title="파트타이머 표시/숨김">파트타이머 제외</button>
         <button class="lv-btn" onclick="lvPTOpenStoreBulk()" title="여러 명 파트타이머 일괄 등록">＋ PT 일괄 등록</button>
         <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
-        <button class="lv-btn" id="lv-copy-actual-btn" onclick="lvCopyActualToDraft()" title="현재 배치현황 그대로 운영팀 테스트에 가져옴">📥 배치현황 → 테스트</button>
         <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
       </div>
       <span id="lv-saved">✓ 저장됨</span>
@@ -3158,7 +3157,18 @@ window.openMoveChannel = openMoveChannel;
         <option value="">매장 선택...</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">근무 기간 (선택)</label><input class="fi" id="hip" placeholder="예: 2022.03 – 2023.09"></div>
+    <div class="fg">
+      <label class="fl">근무 기간</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input class="fi" type="month" id="hip-start" style="flex:1;min-width:130px" title="시작 연월">
+        <span style="color:var(--t3)">~</span>
+        <input class="fi" type="month" id="hip-end" style="flex:1;min-width:130px" title="종료 연월 (현재 진행중이면 비워두세요)">
+        <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--t3);white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="hip-ongoing" onchange="document.getElementById('hip-end').disabled=this.checked; if(this.checked) document.getElementById('hip-end').value='';">
+          현재 진행중
+        </label>
+      </div>
+    </div>
     <div class="fg"><label class="fl">직책 (선택)</label>
       <select class="fi" id="hir">
         <option value="">선택 안함</option>
@@ -4066,7 +4076,9 @@ function openAddH(){
     hisSel.innerHTML = html;
   }
   const hisEl = document.getElementById('his'); if(hisEl) hisEl.value = '';
-  const hipEl = document.getElementById('hip'); if(hipEl) hipEl.value = '';
+  const hipS = document.getElementById('hip-start'); if(hipS) hipS.value = '';
+  const hipE = document.getElementById('hip-end');   if(hipE){ hipE.value = ''; hipE.disabled = false; }
+  const hipO = document.getElementById('hip-ongoing'); if(hipO) hipO.checked = false;
   const hirEl = document.getElementById('hir'); if(hirEl) hirEl.value = '';
   document.getElementById('hmodal').classList.add('on');
 }
@@ -4075,8 +4087,21 @@ function confirmAddH(){
   if(!curEmp)return;
   const s=document.getElementById('his').value.trim();
   if(!s){alert('매장명을 입력하세요');return;}
-  const p=document.getElementById('hip').value.trim(),r=document.getElementById('hir').value.trim();
-  const h=gHist(curEmp);h.push({store:s,period:p,role:r});setH(curEmp.id,h);renderHist(curEmp);closeAddH();
+  const sd=(document.getElementById('hip-start')||{}).value||'';
+  const ed=(document.getElementById('hip-end')||{}).value||'';
+  const ongoing=(document.getElementById('hip-ongoing')||{}).checked;
+  const fmt = ym => ym ? ym.replace(/-/,'.') : ''; // 2024-03 → 2024.03
+  let period = '';
+  if(sd && (ongoing || !ed)) period = `${fmt(sd)} ~ 현재`;
+  else if(sd && ed)          period = `${fmt(sd)} ~ ${fmt(ed)}`;
+  else if(sd)                period = fmt(sd);
+  else if(ed)                period = `~ ${fmt(ed)}`;
+  const r=document.getElementById('hir').value.trim();
+  const h=gHist(curEmp);
+  h.push({store:s, period, role:r, startYM:sd||'', endYM: ongoing?'':ed, ongoing: !!ongoing});
+  setH(curEmp.id,h);
+  renderHist(curEmp);
+  closeAddH();
 }
 function saveMemo(){if(!curEmp)return;const _mv=document.getElementById('pmemo').value;setM(curEmp.id,_mv);window.fbSetEdit&&window.fbSetEdit(curEmp.id,'memo',_mv);}
 function getF(id){
@@ -5071,16 +5096,6 @@ function lvResetDraft(){
   showSaved();
   lvRender(); lvRenderSB();
 }
-// [COPY ACTUAL → DRAFT] 배치현황의 현재 상태를 운영팀 테스트에 복사 (전체 적용의 역방향)
-function lvCopyActualToDraft(){
-  if(!confirm('현재 배치현황의 매장 배치를 운영팀 테스트에 그대로 가져옵니다.\n기존 테스트의 변경분은 사라집니다.\n진행할까요?\n(모든 사용자에게 공유됩니다)')) return;
-  lvWriteLayout(LV_DRAFT_KEY, lvEnsureActualData());
-  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
-  lvToast('✓ 배치현황 상태를 운영팀 테스트에 복사했습니다.');
-  showSaved();
-  lvRender(); lvRenderSB();
-}
-window.lvCopyActualToDraft = lvCopyActualToDraft;
 function lvApplyDraftToActual(){
   if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 14일 동안 같은 매장에 머무르면 자동으로 근무이력에 기록됩니다.')) return;
   let _ptSnapshot = null;
@@ -6025,8 +6040,6 @@ function lvSyncMgrButton(){
 function _lvSyncMgrButtonsVisibility(){
   // 매니저 현황 모드에선 전체 적용 / 테스트 초기화 버튼 숨김 (해당 모드에선 즉시 저장이라 불필요)
   const apply = document.getElementById('lv-apply-btn');
-  const copy = document.getElementById('lv-copy-actual-btn');
-  if(copy) copy.style.display = (typeof __mgrOnly!=='undefined' && __mgrOnly) ? 'none' : '';
   const reset = document.getElementById('lv-reset-draft-btn');
   const hide = !!__mgrOnly;
   if(apply) apply.style.display = hide ? 'none' : '';
