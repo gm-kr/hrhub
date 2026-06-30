@@ -2881,6 +2881,7 @@ window.openMoveChannel = openMoveChannel;
         <button class="lv-btn" id="lv-pt-toggle-btn" onclick="lvTogglePT()" title="파트타이머 표시/숨김">파트타이머 제외</button>
         <button class="lv-btn" onclick="lvPTOpenStoreBulk()" title="여러 명 파트타이머 일괄 등록">＋ PT 일괄 등록</button>
         <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
+        <button class="lv-btn" id="lv-copy-actual-btn" onclick="lvCopyActualToDraft()" title="현재 배치현황 그대로 운영팀 테스트에 가져옴">📥 배치현황 → 테스트</button>
         <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
       </div>
       <span id="lv-saved">✓ 저장됨</span>
@@ -5070,6 +5071,16 @@ function lvResetDraft(){
   showSaved();
   lvRender(); lvRenderSB();
 }
+// [COPY ACTUAL → DRAFT] 배치현황의 현재 상태를 운영팀 테스트에 복사 (전체 적용의 역방향)
+function lvCopyActualToDraft(){
+  if(!confirm('현재 배치현황의 매장 배치를 운영팀 테스트에 그대로 가져옵니다.\n기존 테스트의 변경분은 사라집니다.\n진행할까요?\n(모든 사용자에게 공유됩니다)')) return;
+  lvWriteLayout(LV_DRAFT_KEY, lvEnsureActualData());
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  lvToast('✓ 배치현황 상태를 운영팀 테스트에 복사했습니다.');
+  showSaved();
+  lvRender(); lvRenderSB();
+}
+window.lvCopyActualToDraft = lvCopyActualToDraft;
 function lvApplyDraftToActual(){
   if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 14일 동안 같은 매장에 머무르면 자동으로 근무이력에 기록됩니다.')) return;
   let _ptSnapshot = null;
@@ -6014,6 +6025,8 @@ function lvSyncMgrButton(){
 function _lvSyncMgrButtonsVisibility(){
   // 매니저 현황 모드에선 전체 적용 / 테스트 초기화 버튼 숨김 (해당 모드에선 즉시 저장이라 불필요)
   const apply = document.getElementById('lv-apply-btn');
+  const copy = document.getElementById('lv-copy-actual-btn');
+  if(copy) copy.style.display = (typeof __mgrOnly!=='undefined' && __mgrOnly) ? 'none' : '';
   const reset = document.getElementById('lv-reset-draft-btn');
   const hide = !!__mgrOnly;
   if(apply) apply.style.display = hide ? 'none' : '';
@@ -7813,7 +7826,7 @@ function startRealtimeListeners() {
       //   다른 사용자의 변경분이 본인 화면에 안 보였음
       window.__fbEdits[id] = { ..._prevEdit, ...data, ..._pending };
       // 저장 중인 본인 입력만 보호 (debounce buffer에 있는 것). 그 외는 Firebase가 source of truth.
-      ['current_store','channel','status','kindness','sincerity','charm','growth'].forEach(function(_pf) {
+      ['current_store','channel','status','kindness','sincerity','charm','growth','position','brand','name','memo','hire_date','tenure','language','residence','_prev_store','scoreHistory'].forEach(function(_pf) {
         if (_pending[_pf] !== undefined) window.__fbEdits[id][_pf] = _pending[_pf];
       });
       if (typeof EMPS !== 'undefined') {
@@ -8089,6 +8102,11 @@ window.fbSetSchedule = async function(data) {
       }
       if(typeof d.deletedStores === 'string') localStorage.setItem('lvDeletedStores', d.deletedStores);
       if(typeof d.deletedEmps   === 'string') localStorage.setItem('hrDeletedEmpIds_v1', d.deletedEmps);
+      // [RACE FIX] 부트스트랩 시 받은 값을 lastSharedSnap에 캐싱
+      window.__lastSharedSnap = window.__lastSharedSnap || {};
+      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder'].forEach(k=>{
+        if(typeof d[k] === 'string') window.__lastSharedSnap[k] = d[k];
+      });
     }
     if(storeListSnap && storeListSnap.exists()){
       const d = storeListSnap.data() || {};
@@ -8209,6 +8227,18 @@ window.__flushAllPending = function(){
       if(t) clearTimeout(t);
     });
   } catch(_){}
+  // [hrEdits FLUSH] 디바운스 중인 직원 편집(_fbEditBuf)을 즉시 모두 push
+  try {
+    if(window.__fbUser && window.__fbUser.email){
+      Object.keys(_fbEditBuf || {}).forEach(empId => {
+        const batch = _fbEditBuf[empId];
+        if(!batch || !Object.keys(batch).length) return;
+        if(_fbEditTimers[empId]) clearTimeout(_fbEditTimers[empId]);
+        delete _fbEditBuf[empId];
+        setDoc(doc(_db, COL_EDITS, empId), { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true }).catch(()=>{});
+      });
+    }
+  } catch(_){}
   // 각 함수를 한 번씩 호출하면 새 디바운스가 100ms 후 push되는데, 페이지 닫히면 push 안 됨
   // 따라서 즉시 setDoc을 호출하는 동기 함수 별도 사용
   try {
@@ -8225,14 +8255,16 @@ window.__flushAllPending = function(){
       const lvOrderJson = JSON.stringify(lvOrder);
       const deletedStores= localStorage.getItem('lvDeletedStores')    || '[]';
       const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1') || '[]';
-      if(!(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}' && deletedStores === '[]' && deletedEmps === '[]')){
+      const _last = window.__lastSharedSnap || {};
+      const cur = { storeBase, mgrImpSlots, mgrImpOrder, layoutDraft, lvOrder: lvOrderJson, deletedStores, deletedEmps };
+      const diff = {};
+      Object.keys(cur).forEach(k=>{ if(cur[k] !== (_last[k]||'')) diff[k] = cur[k]; });
+      if(Object.keys(diff).length){
         setDoc(doc(_db, COL_SHARED, 'data'), {
-          storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
-          lvOrder: lvOrderJson,
-          deletedStores, deletedEmps,
+          ...diff,
           _updatedAt: serverTimestamp(),
           _updatedBy: window.__fbUser.email
-        }).catch(()=>{});
+        }, { merge: true }).catch(()=>{});
       }
     }
   } catch(_){}
@@ -8246,32 +8278,42 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
+window.__lastSharedSnap = window.__lastSharedSnap || {};
 window.fbSetShared = function(){
   clearTimeout(_fbSharedTimer);
   _fbSharedTimer = setTimeout(async () => {
     try {
-      const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
-      const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
-      const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
-      const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
-      const deletedStores= localStorage.getItem('lvDeletedStores')      || '[]';
-      const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1')   || '[]';
-      // 배치현황 섹션별 매장 카드 순서 (FSMALL/DS/DFS/ATS/NUF/ETC)
+      if(!window.__fbUser || !window.__fbUser.email) return;
+      const cur = {
+        storeBase:    localStorage.getItem('lvStoreBaseOverrides') || '{}',
+        mgrImpSlots:  localStorage.getItem('lvMgrImpSlots')        || '[]',
+        mgrImpOrder:  localStorage.getItem('lvMgrImpStoreOrder')   || '[]',
+        layoutDraft:  localStorage.getItem('layoutDraftData')      || '{}',
+        deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
+        deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]'
+      };
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
         const v = localStorage.getItem('lvOrder_'+k);
         if(v && v !== 'null') lvOrder[k] = v;
       });
-      const lvOrderJson = JSON.stringify(lvOrder);
-      // 모두 빈 값이면 Firebase에 쓰지 않음
-      if(storeBase === '{}' && mgrImpSlots === '[]' && mgrImpOrder === '[]' && layoutDraft === '{}' && lvOrderJson === '{}' && deletedStores === '[]' && deletedEmps === '[]') return;
-      await setDoc(doc(_db, COL_SHARED, 'data'), {
-        storeBase, mgrImpSlots, mgrImpOrder, layoutDraft,
-        lvOrder: lvOrderJson,
-        deletedStores, deletedEmps,
-        _updatedAt: serverTimestamp(),
-        _updatedBy: (window.__fbUser&&window.__fbUser.email)||''
+      cur.lvOrder = JSON.stringify(lvOrder);
+      // 마지막 본 snap과 비교 - 다른 필드만 push (race 방지)
+      const diff = {};
+      Object.keys(cur).forEach(k=>{
+        if(cur[k] !== (window.__lastSharedSnap[k]||'')){
+          diff[k] = cur[k];
+        }
       });
+      if(Object.keys(diff).length === 0) return;
+      await setDoc(doc(_db, COL_SHARED, 'data'), {
+        ...diff,
+        _updatedAt: serverTimestamp(),
+        _updatedBy: window.__fbUser.email
+      }, { merge: true });
+      // push 성공한 필드는 lastSharedSnap에도 반영
+      Object.keys(diff).forEach(k => window.__lastSharedSnap[k] = diff[k]);
     } catch(e) { console.error('fbSetShared:', e); }
   }, 100);
 };
@@ -8279,6 +8321,10 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
+    // [RACE FIX] 받은 값을 lastSharedSnap에 캐싱 (다음 push 시 비교용)
+    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder'].forEach(k=>{
+      if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
+    });
     let needRerender = false;
     if(typeof data.storeBase === 'string'){
       if(localStorage.getItem('lvStoreBaseOverrides') !== data.storeBase){
