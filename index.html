@@ -7766,6 +7766,13 @@ window.__authForceSync = async function(){
   }
 };
 window.__authLogout = async function(){
+  // [24H EXPIRY] 명시적 로그아웃 시 모든 __lastLoginAt__ 키 정리
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if(k.startsWith('__lastLoginAt__')) localStorage.removeItem(k);
+    });
+  } catch(_){}
+
   try { await signOut(_auth); } catch(_){}
   _resetGateUI();
   _showAuthGate(true);
@@ -7828,6 +7835,25 @@ onAuthStateChanged(_auth, (user)=>{
     _setAuthStatus(`'${user.email}' 계정은 접근 권한이 없습니다.\n관리자에게 등록을 요청해주세요.`, 'error');
     _showAuthGate(true);
     return;
+  }
+  // [24H EXPIRY] 자동 로그인 24시간 만료 체크
+  const AUTO_LOGIN_MAX_MS = 24 * 60 * 60 * 1000; // 24시간
+  const _loginTsKey = '__lastLoginAt__' + (user.uid || 'anon');
+  let lastLoginAt = 0;
+  try { lastLoginAt = parseInt(localStorage.getItem(_loginTsKey) || '0', 10) || 0; } catch(_){}
+  const now = Date.now();
+  if(lastLoginAt && (now - lastLoginAt) > AUTO_LOGIN_MAX_MS){
+    // 24시간 초과 - 강제 로그아웃 후 재로그인 요구
+    try { localStorage.removeItem(_loginTsKey); } catch(_){}
+    try { signOut(_auth); } catch(_){}
+    _resetGateUI();
+    _showAuthGate(true);
+    _setAuthStatus('자동 로그인 세션(24시간)이 만료되었습니다. 다시 로그인해주세요.', 'error');
+    return;
+  }
+  // 최초 로그인이거나 유효한 세션 - timestamp 저장/유지
+  if(!lastLoginAt){
+    try { localStorage.setItem(_loginTsKey, String(now)); } catch(_){}
   }
   // 허용된 사용자
   window.__fbUser = {
