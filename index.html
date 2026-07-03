@@ -5758,6 +5758,8 @@ function getSbBaseOverrides(){
 }
 function saveSbBaseOverrides(map){
   localStorage.setItem(SB_BASE_KEY, JSON.stringify(map||{}));
+  // [SHARE] 브랜드 기준인원도 모든 사용자에게 동기화
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function getSbBaseValue(brandKey, fallback){
   const map=getSbBaseOverrides();
@@ -8227,9 +8229,10 @@ window.fbSetSchedule = async function(data) {
       }
       if(typeof d.deletedStores === 'string') localStorage.setItem('lvDeletedStores', d.deletedStores);
       if(typeof d.deletedEmps   === 'string') localStorage.setItem('hrDeletedEmpIds_v1', d.deletedEmps);
+      if(typeof d.sbBase        === 'string') localStorage.setItem('lvSbBaseOverrides', d.sbBase);
       // [RACE FIX] 부트스트랩 시 받은 값을 lastSharedSnap에 캐싱
       window.__lastSharedSnap = window.__lastSharedSnap || {};
-      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder'].forEach(k=>{
+      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase'].forEach(k=>{
         if(typeof d[k] === 'string') window.__lastSharedSnap[k] = d[k];
       });
     }
@@ -8381,7 +8384,8 @@ window.__flushAllPending = function(){
       const deletedStores= localStorage.getItem('lvDeletedStores')    || '[]';
       const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1') || '[]';
       const _last = window.__lastSharedSnap || {};
-      const cur = { storeBase, mgrImpSlots, mgrImpOrder, layoutDraft, lvOrder: lvOrderJson, deletedStores, deletedEmps };
+      const sbBase = localStorage.getItem('lvSbBaseOverrides') || '{}';
+      const cur = { storeBase, mgrImpSlots, mgrImpOrder, layoutDraft, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase };
       const diff = {};
       Object.keys(cur).forEach(k=>{ if(cur[k] !== (_last[k]||'')) diff[k] = cur[k]; });
       if(Object.keys(diff).length){
@@ -8416,7 +8420,8 @@ window.fbSetShared = function(){
         mgrImpOrder:  localStorage.getItem('lvMgrImpStoreOrder')   || '[]',
         layoutDraft:  localStorage.getItem('layoutDraftData')      || '{}',
         deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
-        deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]'
+        deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]',
+        sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}'
       };
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
@@ -8447,7 +8452,7 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   try {
     const data = snap.data() || {};
     // [RACE FIX] 받은 값을 lastSharedSnap에 캐싱 (다음 push 시 비교용)
-    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder'].forEach(k=>{
+    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase'].forEach(k=>{
       if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
     });
     let needRerender = false;
@@ -8499,6 +8504,13 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
         needRerender = true;
         // 삭제 직원 목록 변경 시 HR 테이블도 재렌더
         try { if(typeof getList==='function' && typeof renderTbl==='function'){ const l=getList(); renderTbl(l); } } catch(_){}
+      }
+    }
+    if(typeof data.sbBase === 'string'){
+      if(localStorage.getItem('lvSbBaseOverrides') !== data.sbBase){
+        localStorage.setItem('lvSbBaseOverrides', data.sbBase);
+        needRerender = true;
+        try { if(typeof lvRenderSB==='function') lvRenderSB(); } catch(_){}
       }
     }
     // 배치현황 화면이 열려있으면 즉시 재렌더
