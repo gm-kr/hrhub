@@ -4595,8 +4595,8 @@ function setPEditMode(on){
   if(btn) btn.textContent=on?'💾 저장':'✏️ 편집';
   if(btn) btn.style.background=on?'#5B6BE8':'';
   if(btn) btn.style.color=on?'#fff':'';
-  const viewFields=['phire','pstore','pch','pbrand','pposition','plang','paddr'];
-  const editFields=['phire-edit','pstore-edit','pch-edit','pbrand-edit','pposition-edit','plang-edit','paddr-edit'];
+  const viewFields=['phire','pstore','pch','pbrand','pposition','plang','paddr','pmetro'];
+  const editFields=['phire-edit','pstore-edit','pch-edit','pbrand-edit','pposition-edit','plang-edit','paddr-edit','pmetro-edit'];
   viewFields.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=on?'none':''; });
   editFields.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=on?'':'none'; });
   if(on && curEmp){
