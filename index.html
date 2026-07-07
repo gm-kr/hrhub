@@ -1043,6 +1043,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
         <button class="vbtn on" id="btn-tbl" onclick="setView('tbl')">☰ 리스트</button>
         <button class="vbtn" id="btn-grd" onclick="setView('grd')">⊞ 카드</button>
         <button class="vbtn" id="btn-praise-dash" onclick="setPraiseDashboardView()">👏 칭찬 점수 대시보드</button>
+        <button class="vbtn" id="btn-tenure-dash" onclick="setTenureDashboardView()">📊 근속 분포</button>
         <button class="vbtn" onclick="document.getElementById('residence-upload-input').click()" title="실거주지역·지하철역 엑셀 일괄 업로드">📎 거주지 일괄</button>
         <input type="file" id="residence-upload-input" accept=".xlsx,.xls" style="display:none" onchange="handleResidenceExcelUpload(event)">
         <div class="chips">
@@ -1078,6 +1079,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
       <div class="gwrap" id="gwrap" style="display:none">
         <div class="grid" id="grid"></div>
       </div>
+      <div id="tenure-dashboard" style="display:none;padding:16px 20px;overflow-y:auto"></div>
       <div class="praise-dashboard" id="praise-dashboard">
         <div class="pdash-panel">
           <div class="pdash-head">
@@ -3832,23 +3834,154 @@ function setView(v){
   curView=v;
   const dash=document.getElementById('praise-dashboard');
   if(dash) dash.style.display='none';
+  const tenD=document.getElementById('tenure-dashboard');
+  if(tenD) tenD.style.display='none';
   document.getElementById('twrap').style.display=v==='tbl'?'flex':'none';
   document.getElementById('gwrap').style.display=v==='grd'?'flex':'none';
   document.getElementById('btn-tbl').classList.toggle('on',v==='tbl');
   document.getElementById('btn-grd').classList.toggle('on',v==='grd');
   document.getElementById('btn-praise-dash')?.classList.remove('on');
+  document.getElementById('btn-tenure-dash')?.classList.remove('on');
   const l=getList();v==='tbl'?renderTbl(l):renderGrd(l);
 }
 function setPraiseDashboardView(){
   document.getElementById('twrap').style.display='none';
   document.getElementById('gwrap').style.display='none';
+  const tenD=document.getElementById('tenure-dashboard');
+  if(tenD) tenD.style.display='none';
   document.getElementById('praise-dashboard').style.display='block';
   document.getElementById('btn-tbl').classList.remove('on');
   document.getElementById('btn-grd').classList.remove('on');
   document.getElementById('btn-praise-dash').classList.add('on');
+  document.getElementById('btn-tenure-dash')?.classList.remove('on');
   initPraiseDashboardPeriod();
   renderPraiseDashboard();
 }
+// [TENURE DASHBOARD]
+function setTenureDashboardView(){
+  document.getElementById('twrap').style.display='none';
+  document.getElementById('gwrap').style.display='none';
+  const pdash=document.getElementById('praise-dashboard');
+  if(pdash) pdash.style.display='none';
+  const tenD=document.getElementById('tenure-dashboard');
+  if(tenD) tenD.style.display='block';
+  document.getElementById('btn-tbl').classList.remove('on');
+  document.getElementById('btn-grd').classList.remove('on');
+  document.getElementById('btn-praise-dash')?.classList.remove('on');
+  document.getElementById('btn-tenure-dash').classList.add('on');
+  renderTenureDashboard();
+}
+window.setTenureDashboardView = setTenureDashboardView;
+function _parseHireYear(hd){
+  if(!hd) return null;
+  const m = String(hd).match(/(\d{4})/);
+  return m ? parseInt(m[1],10) : null;
+}
+function renderTenureDashboard(){
+  const box = document.getElementById('tenure-dashboard');
+  if(!box) return;
+  const now = new Date();
+  const curYear = now.getFullYear();
+  // 구간 정의 - "N년차" (curYear - hireYear + 1)
+  const buckets = [
+    { key:'1',      label:'1년차 (신입)',    min:1,  max:1,   color:'#2daa72' },
+    { key:'2-3',    label:'2~3년차',          min:2,  max:3,   color:'#3c7ef3' },
+    { key:'4-5',    label:'4~5년차',          min:4,  max:5,   color:'#5b6cf8' },
+    { key:'6-10',   label:'6~10년차',         min:6,  max:10,  color:'#7c6cf8' },
+    { key:'11+',    label:'11년차 이상',      min:11, max:999, color:'#d63b8f' },
+  ];
+  // 재직 중인 정직원만 (deleted/leaving/joining 제외, 상태가 없거나 active/returning/support/transfer/leave 포함)
+  const emps = EMPS.filter(e => {
+    if(isDeletedEmpId(e.id)) return false;
+    const st = getEmpStatus(e);
+    if(st === 'deleted' || st === 'leaving') return false;
+    return true;
+  });
+  // 브랜드별 구간 카운트
+  function calcForBrand(bkFilter){
+    const list = emps.filter(e => !bkFilter || (e.brand||'').toUpperCase() === bkFilter);
+    const counts = {};
+    buckets.forEach(b => counts[b.key] = 0);
+    let unknown = 0;
+    list.forEach(e => {
+      const y = _parseHireYear(e.hire_date);
+      if(!y){ unknown++; return; }
+      const tenure = Math.max(1, curYear - y + 1);
+      const b = buckets.find(x => tenure >= x.min && tenure <= x.max);
+      if(b) counts[b.key]++;
+      else unknown++;
+    });
+    return { total: list.length, counts, unknown };
+  }
+  const stat = {
+    ALL: calcForBrand(null),
+    GM:  calcForBrand('GM'),
+    ATS: calcForBrand('ATS'),
+    NUF: calcForBrand('NUF'),
+  };
+  // 평균 근속연수
+  function avgTenure(bkFilter){
+    const list = emps.filter(e => !bkFilter || (e.brand||'').toUpperCase() === bkFilter);
+    let sum = 0, n = 0;
+    list.forEach(e => {
+      const y = _parseHireYear(e.hire_date);
+      if(!y) return;
+      sum += Math.max(1, curYear - y + 1);
+      n++;
+    });
+    return n ? (sum/n).toFixed(1) : '-';
+  }
+  const avg = { ALL: avgTenure(null), GM: avgTenure('GM'), ATS: avgTenure('ATS'), NUF: avgTenure('NUF') };
+  // HTML 조립
+  function renderBrandSection(title, s, avgVal, accent){
+    const rows = buckets.map(b => {
+      const c = s.counts[b.key] || 0;
+      const pct = s.total ? (c / s.total * 100) : 0;
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed #eef0fe">
+          <div style="width:120px;font-size:12.5px;font-weight:600;color:#3a4053">${b.label}</div>
+          <div style="flex:1;background:#f4f5f9;border-radius:6px;height:20px;overflow:hidden;position:relative">
+            <div style="width:${pct.toFixed(1)}%;background:${b.color};height:100%;transition:width .3s"></div>
+            <div style="position:absolute;top:0;left:8px;right:8px;height:20px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#2a2f42;font-weight:700">
+              <span>${c}명</span>
+              <span style="color:#5b6378;font-weight:500">${pct.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    const unknownRow = s.unknown ? `
+      <div style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:11px;color:#9aa0b3">
+        <div style="width:120px">입사일 미상</div><div>${s.unknown}명</div>
+      </div>` : '';
+    return `
+      <div style="background:#fff;border:1px solid #eef0fe;border-radius:12px;padding:16px 18px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;color:${accent}">${title}</div>
+          <div style="font-size:11.5px;color:#5b6378">
+            <span style="background:${accent};color:#fff;padding:2px 8px;border-radius:10px;font-weight:600">총 ${s.total}명</span>
+            <span style="margin-left:8px">평균 근속 <b>${avgVal}년</b></span>
+          </div>
+        </div>
+        ${rows}
+        ${unknownRow}
+      </div>
+    `;
+  }
+  box.innerHTML = `
+    <div style="max-width:900px">
+      <div style="font-size:18px;font-weight:800;color:#2a2f42;margin-bottom:6px">📊 근속연수 분포</div>
+      <div style="font-size:12px;color:#5b6378;margin-bottom:18px">
+        기준: ${curYear}년 · N년차 = 현재 연도 − 입사 연도 + 1 · 퇴사예정/삭제된 직원 제외
+      </div>
+      ${renderBrandSection('전체', stat.ALL, avg.ALL, '#5b6cf8')}
+      ${renderBrandSection('GM',  stat.GM,  avg.GM,  '#5b6cf8')}
+      ${renderBrandSection('ATS', stat.ATS, avg.ATS, '#e07b12')}
+      ${renderBrandSection('NUF', stat.NUF, avg.NUF, '#d63b8f')}
+    </div>
+  `;
+}
+window.renderTenureDashboard = renderTenureDashboard;
 function quarterRange(offset){
   const now=new Date();
   let q=Math.floor(now.getMonth()/3)+offset;
