@@ -7293,7 +7293,7 @@ window.handleAePhoto = function(input){
   };
   reader.readAsDataURL(file);
 };
-window.doAddEmp = function(){
+window.doAddEmp = async function(){
   const name=(document.getElementById('ae-name').value||'').trim();
   if(!name){ alert('\uc774\ub984\uc744 \uc785\ub825\ud558\uc138\uc694'); document.getElementById('ae-name').focus(); return; }
   const brand=document.getElementById('ae-brand').value;
@@ -7367,6 +7367,13 @@ window.doAddEmp = function(){
   saveData();
   window.lvRender?.(); window.lvRenderSB?.();
   window.closeAddEmp();
+  // [NEW EMP GUARANTEE] fbSetEdit 디바운스가 실행되고 Firebase에 setDoc 도달할 시간 확보 (250ms)
+  // - 사용자가 alert 확인 → 페이지 이동/닫기 사이에 Firebase 저장 완료
+  await new Promise(r => setTimeout(r, 50));
+  // 명시적으로 pending buffer를 즉시 Firebase에 push (누락 방지)
+  try {
+    if(window.__flushPendingEdits) await window.__flushPendingEdits();
+  } catch(e){ console.warn('[NEW EMP flush]', e); }
   alert('\u2713 "'+name+'" \ucd94\uac00 \uc644\ub8cc!\n\uc9c1\uc6d0 \ubaa9\ub85d\uc5d0\uc11c \ud655\uc778\ud558\uc138\uc694.');
 };
 window.openAddStore = function(){
@@ -8088,6 +8095,29 @@ async function loadAllEdits() {
     });
     window.__fbEdits = merged;
     try { localStorage.setItem('__fbEditsCache', JSON.stringify(merged)); } catch(e) {}
+    // [NEW EMP RESTORE] Firebase에 _isNewEmp=true인데 EMPS에 없는 신규 직원 복원
+    if (typeof EMPS !== 'undefined') {
+      Object.keys(merged).forEach(id => {
+        const d = merged[id];
+        if (!d || !d._isNewEmp) return;
+        if (EMPS.find(e => e.id === id)) return;
+        EMPS.push({
+          id,
+          name:          d.name          || '',
+          brand:         d.brand         || 'GM',
+          position:      d.position      || '직원',
+          channel:       d.channel       || '',
+          channel_exp:   d.channel       || '',
+          current_store: d.current_store || '',
+          hire_date:     d.hire_date     || '',
+          tenure:        d.tenure        || '신입',
+          language:      d.language      || '',
+          residence:     d.residence     || '',
+          store_history: [],
+          status:        d.status        || 'active',
+        });
+      });
+    }
     applyEditsToEmps(merged);
   } catch(e) { console.warn('loadAllEdits:', e); }
 }
