@@ -4200,11 +4200,27 @@ function closeP(){
 }
 function renderHist(emp){
   const w=document.getElementById('histwrap');
-  const h=gHist(emp);
-  if(!h||h.length===0){w.innerHTML='<div style="color:var(--t3);font-size:13px;padding:6px 0">매장 이력 없음</div>';return;}
-  w.innerHTML='<div class="histlist">'+h.map((x,i)=>{
+  const h=gHist(emp) || [];
+  // [현재 매장 자동 표시] 재직중 & 현재 매장이 이력에 없으면 맨 위에 진행중 항목 추가 (뷰 전용)
+  const cs = (emp && emp.current_store) || '';
+  const skipAuto = !cs || cs === '육아휴직' || /^PU\s/.test(cs);
+  const alreadyInHist = h.some(x => x && typeof x === 'object' && x.store === cs) || h.some(x => x === cs);
+  const st = (typeof getEmpStatus === 'function') ? getEmpStatus(emp) : (emp && emp.status);
+  const isCurrent = st === 'active' || st === 'returning' || st === 'support' || st === 'transfer';
+  const autoItem = (!skipAuto && !alreadyInHist && isCurrent) ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' } : null;
+  const rows = autoItem ? [autoItem, ...h] : h;
+  if(!rows.length){
+    w.innerHTML='<div style="color:var(--t3);font-size:13px;padding:6px 0">매장 이력 없음</div>';
+    return;
+  }
+  w.innerHTML='<div class="histlist">'+rows.map((x,idx)=>{
+    if(x && x._auto){
+      const pStyle='color:#2daa72;font-weight:600;font-size:12px;background:#e8f9f1;padding:1px 8px;border-radius:10px;margin-left:6px';
+      return `<div class="histitem" style="background:#f7fbf9;border-left:2.5px solid #2daa72">🏪 <strong>${x.store||''}</strong><span style="${pStyle}">● 진행중</span>${x.role?` · <span style="font-size:12px">${x.role}</span>`:''}</div>`;
+    }
+    const realIdx = autoItem ? idx-1 : idx;
     let t=typeof x==='string'?`🏪 ${x}`:`🏪 <strong>${x.store||''}</strong>`+(x.period?` <span style="color:var(--t3);font-size:12px">${x.period}</span>`:'')+( x.role?` · <span style="font-size:12px">${x.role}</span>`:'');
-    return`<div class="histitem">${t}<button class="histdel" onclick="delH(${i})">✕</button></div>`;
+    return`<div class="histitem">${t}<button class="histdel" onclick="delH(${realIdx})">✕</button></div>`;
   }).join('')+'</div>';
 }
 function delH(i){if(!curEmp)return;const h=gHist(curEmp);h.splice(i,1);setH(curEmp.id,h);renderHist(curEmp)}
@@ -5352,7 +5368,8 @@ function lvResetDraft(){
   lvRender(); lvRenderSB();
 }
 function lvApplyDraftToActual(){
-  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 14일 동안 같은 매장에 머무르면 자동으로 근무이력에 기록됩니다.')) return;
+  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 이동 후 10일 지나면 이전 매장이 자동으로 근무이력에 기록됩니다.
+• 현재 배치 매장은 상세 화면에 "진행중"으로 자동 표시됩니다.')) return;
   let _ptSnapshot = null;
   try { _ptSnapshot = localStorage.getItem('hrPT_v1'); } catch(_){}
   const draft = lvEnsureDraftData();
@@ -5370,14 +5387,25 @@ function lvApplyDraftToActual(){
     emp.channel = row.channel || guessChannel(newStore) || '';
     lvSaveToHrEdits(emp);
     applied++;
-    // [HISTORY] 매장이 실제로 바뀐 경우만 pending 이력 기록
-    if(prevStore !== newStore && newStore){
+    // [HISTORY] 이동한 경우 → 이전(떠난) 매장을 pending으로 저장. 현재 매장은 뷰에만 "진행중"
+    if(prevStore !== newStore && prevStore){
       if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
-      window.__fbEdits[emp.id]._pendingHistory = {
-        fromStore: prevStore,
-        toStore: newStore,
-        startAt: nowIso
-      };
+      // 이미 pending 있으면 (또 이동한 경우) 그 leftStore는 확실히 떠남 → 즉시 이력 확정
+      const prev_ph = window.__fbEdits[emp.id]._pendingHistory;
+      if(prev_ph && prev_ph.leftStore && prev_ph.leftStore !== prevStore){
+        try {
+          const h = (typeof getH==='function') ? getH() : {};
+          if(!Array.isArray(h[emp.id])) h[emp.id] = [];
+          const already = h[emp.id].some(x => x && x.store === prev_ph.leftStore && x.endAt === prev_ph.leftAt);
+          if(!already){
+            const d=new Date(prev_ph.leftAt);
+            const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
+            h[emp.id].push({ store:prev_ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:prev_ph.leftAt, recordedAt:new Date().toISOString() });
+            if(typeof setH==='function') setH(emp.id, h[emp.id]);
+          }
+        } catch(_){}
+      }
+      window.__fbEdits[emp.id]._pendingHistory = { leftStore:prevStore, newStore:newStore, leftAt:nowIso };
       pendingCreated++;
     }
   });
@@ -5391,65 +5419,115 @@ function lvApplyDraftToActual(){
   lvMode='actual';
   lvSetMode('actual');
   showSaved();
-  const tail = pendingCreated > 0 ? ` · ${pendingCreated}명 이력 대기(14일)` : '';
+  const tail = pendingCreated > 0 ? ` · ${pendingCreated}명 이전 매장 이력 대기(10일)` : '';
   lvToast(`💾 정직원 ${applied}명 배치 적용${tail} (PT 제외)`);
   // 즉시 한번 promote 체크 (이미 14일 지난 게 있을 가능성)
   if(typeof window.lvPromotePendingHistory==='function') window.lvPromotePendingHistory();
 }
 // [HISTORY] pending 이력 → 정식 이력 승격 체크
 // 호출 조건: 페이지 로드 + 1시간마다 + 전체 적용 직후
+// [STRONG DEDUPE] 같은 매장 이력은 무조건 1개만 남김 (period 무시, 최근 것만 유지)
+window.lvDedupeHistoryOnce = function(){
+  try {
+    const h = (typeof getH==='function') ? getH() : (function(){try{return JSON.parse(localStorage.getItem('hrH')||'{}');}catch(_){return{};}})();
+    let removed = 0;
+    Object.keys(h).forEach(empId => {
+      const arr = h[empId];
+      if(!Array.isArray(arr) || arr.length < 2) return;
+      // dedupe 기준: store + endAt(또는 period) + role
+      // → 같은 매장 같은 시기는 1개만, 시기 다르면 별개 유지 (돌아왔다가 또 옮긴 경우)
+      const seen = new Set();
+      const kept = [];
+      arr.forEach((x, idx) => {
+        if(!x){ return; }
+        if(typeof x !== 'object'){ kept.push(x); return; }
+        const key = (x.store||'') + '|' + (x.endAt || x.period || '') + '|' + (x.role||'');
+        if(seen.has(key)){ removed++; return; }
+        seen.add(key);
+        kept.push(x);
+      });
+      if(kept.length !== arr.length){ h[empId] = kept; }
+    });
+    if(removed > 0){
+      localStorage.setItem('hrH', JSON.stringify(h));
+      try { if(window.fbSetStoreHistory) window.fbSetStoreHistory(); } catch(_){}
+      if(typeof lvToast==='function') lvToast(`🧹 근무이력 중복 ${removed}건 정리됨`);
+      // 상세 패널 재렌더
+      try { if(typeof curEmp !== 'undefined' && curEmp && typeof renderHist === 'function') renderHist(curEmp); } catch(_){}
+    }
+    return removed;
+  } catch(e){ console.warn('[dedupe hist]', e); return 0; }
+};
+// 페이지 로드 후 즉시 청소 (2초 후 - Firebase 데이터 도착 후)
+setTimeout(()=>{ if(window.lvDedupeHistoryOnce) window.lvDedupeHistoryOnce(); }, 2500);
+
 window.lvPromotePendingHistory = function(){
   if(!window.__fbEdits) return 0;
-  const HOLD_DAYS = 14;
+  const HOLD_DAYS = 10;
   const HOLD_MS = HOLD_DAYS * 24 * 60 * 60 * 1000;
   const now = Date.now();
   let promoted = 0;
   let cleared = 0;
-  let updated = 0;
   Object.keys(window.__fbEdits).forEach(empId => {
     const ed = window.__fbEdits[empId];
     if(!ed || !ed._pendingHistory) return;
     const ph = ed._pendingHistory;
-    if(!ph.toStore || !ph.startAt) { delete ed._pendingHistory; return; }
+    if(!ph.leftStore || !ph.leftAt) {
+      delete ed._pendingHistory;
+      try { window.fbSetEdit && window.fbSetEdit(empId, '_pendingHistory', null); } catch(_){}
+      return;
+    }
     const emp = (typeof EMPS !== 'undefined') ? EMPS.find(e=>e.id===empId) : null;
     if(!emp) return;
     const currentStore = emp.current_store || '';
-    // 케이스 1: 현재 매장이 pending.toStore와 다름 → 중간에 또 옮긴 것
-    if(currentStore !== ph.toStore){
-      // 원래 매장(fromStore)로 돌아왔으면 → pending 취소 (왕복은 이력 무관)
-      if(currentStore === ph.fromStore){
-        delete ed._pendingHistory;
-        cleared++;
-      } else {
-        // 다른 매장으로 이동 → pending 갱신, 타이머 리셋
-        ph.toStore = currentStore;
-        ph.startAt = new Date().toISOString();
-        updated++;
-      }
+    // 케이스 1: 원래 매장으로 돌아옴 → 취소
+    if(currentStore === ph.leftStore){
+      delete ed._pendingHistory;
+      try { window.fbSetEdit && window.fbSetEdit(empId, '_pendingHistory', null); } catch(_){}
+      cleared++;
       return;
     }
-    // 케이스 2: 같은 매장에 머무름, 14일 지났는지 체크
-    const startMs = new Date(ph.startAt).getTime();
-    if(isNaN(startMs)) { delete ed._pendingHistory; return; }
-    if(now - startMs >= HOLD_MS){
-      // 정식 이력에 추가
+    // 케이스 2: 또 다른 매장으로 이동 → 즉시 이력 확정
+    if(currentStore !== ph.newStore){
       try {
         const h = (typeof getH==='function') ? getH() : {};
         if(!Array.isArray(h[empId])) h[empId] = [];
-        const startDate = new Date(ph.startAt);
-        const endDate = new Date(now);
-        const fmt = d => `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
-        h[empId].push({
-          store: ph.toStore,
-          period: `${fmt(startDate)} ~ ${fmt(endDate)} 이후`,
-          role: emp.position || '',
-          fromStore: ph.fromStore || '',
-          recordedAt: new Date().toISOString()
-        });
-        if(typeof setH==='function') setH(empId, h[empId]);
-        else { try { localStorage.setItem('hrH', JSON.stringify(h)); } catch(_){} }
+        // 같은 store + 같은 endAt만 중복 (다른 시기는 별개)
+        const already = h[empId].some(x => x && x.store === ph.leftStore && x.endAt === ph.leftAt);
+        if(!already){
+          const d=new Date(ph.leftAt);
+          const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
+          h[empId].push({ store:ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:ph.leftAt, recordedAt:new Date().toISOString() });
+          if(typeof setH==='function') setH(empId, h[empId]);
+          promoted++;
+        }
         delete ed._pendingHistory;
-        promoted++;
+        try { window.fbSetEdit && window.fbSetEdit(empId, '_pendingHistory', null); } catch(_){}
+      } catch(_){}
+      return;
+    }
+    // 케이스 3: 새 매장에 10일 이상 머무름 → 이전 매장 이력 저장
+    const leftMs = new Date(ph.leftAt).getTime();
+    if(isNaN(leftMs)) {
+      delete ed._pendingHistory;
+      try { window.fbSetEdit && window.fbSetEdit(empId, '_pendingHistory', null); } catch(_){}
+      return;
+    }
+    if(now - leftMs >= HOLD_MS){
+      try {
+        const h = (typeof getH==='function') ? getH() : {};
+        if(!Array.isArray(h[empId])) h[empId] = [];
+        const already = h[empId].some(x => x && x.store === ph.leftStore);
+        if(!already){
+          const d=new Date(ph.leftAt);
+          const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
+          h[empId].push({ store:ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:ph.leftAt, recordedAt:new Date().toISOString() });
+          if(typeof setH==='function') setH(empId, h[empId]);
+          else { try { localStorage.setItem('hrH', JSON.stringify(h)); } catch(_){} }
+          promoted++;
+        }
+        delete ed._pendingHistory;
+        try { window.fbSetEdit && window.fbSetEdit(empId, '_pendingHistory', null); } catch(_){}
       } catch(e){}
     }
   });
