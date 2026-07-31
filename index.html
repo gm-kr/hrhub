@@ -1011,6 +1011,96 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 .inv-memo-empty { color: #d4d0c8; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ============================================
+   [MOBILE OPTIMIZATION] 767px 이하 반응형
+   ============================================ */
+@media (max-width: 767px){
+  /* 앱 전체 세로 정렬 */
+  .app { flex-direction: column !important; height: auto !important; }
+  /* 좌측 사이드바 → 상단 접이식 */
+  .hrbar { width: 100% !important; max-width: 100% !important; max-height: 42vh !important; border-right: none !important; border-bottom: 1px solid var(--bdl); }
+  .barhd { padding: 8px 10px !important; }
+  .barsrch { font-size: 13px !important; padding: 8px 10px !important; }
+  .barscroll { max-height: 32vh !important; }
+  /* 메인 영역 */
+  .main { width: 100% !important; padding: 0 !important; }
+
+  /* 상단 네비 컴팩트 */
+  .nav { padding: 4px 8px !important; overflow-x: auto !important; white-space: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .nav .tab, .nav .tab.on { font-size: 12px !important; padding: 8px 10px !important; }
+  .nav > * { flex-shrink: 0; }
+
+  /* 툴바 접힘/축소 */
+  .tbar { flex-wrap: wrap !important; gap: 4px !important; padding: 8px !important; }
+  .tbar .ttl { font-size: 14px !important; width: 100%; }
+  .vbtn { font-size: 11px !important; padding: 6px 9px !important; }
+  .chips { flex-wrap: wrap; gap: 4px !important; }
+  .chip { font-size: 11px !important; padding: 4px 10px !important; }
+
+  /* HR 테이블 가로 스크롤 */
+  .twrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .tbl { min-width: 900px !important; font-size: 12px !important; }
+
+  /* 카드 그리드 1열 */
+  .grid { grid-template-columns: 1fr !important; gap: 8px !important; padding: 8px !important; }
+
+  /* 직원 상세 우측 패널 - 모바일에서는 오버레이 모달처럼 */
+  #pdrawer.pdrawer, .pdrawer { position: fixed !important; inset: 0 !important; z-index: 9999 !important; width: 100% !important; max-width: 100% !important; height: 100vh !important; overflow-y: auto !important; box-shadow: none !important; }
+  .pdrawer .pd-close { position: sticky; top: 0; z-index: 5; }
+
+  /* 배치현황 매장 카드 1열 */
+  .lv-store-card, .lv-storecard { width: 100% !important; }
+  .lv-scroll { padding: 8px !important; }
+  .lv-storegrid, [id^="lv-store-grid"] { grid-template-columns: 1fr !important; }
+  /* 배치현황 상단 툴바 */
+  .lv-tbar, .lv-top { flex-wrap: wrap !important; gap: 4px !important; }
+  .lv-btn { font-size: 11px !important; padding: 6px 9px !important; }
+  .lv-tab { font-size: 11px !important; padding: 6px 10px !important; }
+  .lv-tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  .lv-tabs > * { flex-shrink: 0; }
+
+  /* SB 인원 테이블 - 가로 스크롤 */
+  .lv-sb-brand-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .lv-sb-brand-tbl { min-width: 600px !important; font-size: 11px !important; }
+
+  /* 매니저 슬롯/2단 그리드 → 1단 */
+  .lv-mgr-grid2, .lv-mgr-imp-split { grid-template-columns: 1fr !important; gap: 10px !important; }
+
+  /* 모달 폭 조정 */
+  .mover .mbox, .overlay .modal, .se-modal, .storeRenameOverlay .modal { width: calc(100vw - 24px) !important; max-width: calc(100vw - 24px) !important; padding: 16px !important; }
+
+  /* 스토어 진단 사이드바 */
+  #store-top-nav, .top-nav { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 6px 8px !important; }
+  .sb-rail, .store-side-rail { max-width: 42vw !important; overflow-y: auto; }
+
+  /* 대시보드 여백 축소 */
+  .praise-dashboard, #tenure-dashboard { padding: 8px !important; }
+  .pdash-table { min-width: 700px; }
+  .pdash-controls { flex-wrap: wrap; gap: 4px; }
+
+  /* 로그인 카드 */
+  .auth-card { width: 88vw !important; padding: 28px 20px !important; }
+
+  /* 우측 상단 로그아웃/동기화 버튼 축소 */
+  #auth-logout-mini, #auth-force-sync { font-size: 10.5px !important; padding: 3px 8px !important; }
+
+  /* 인비테이션 등 폼 */
+  .fg { flex-direction: column; align-items: stretch !important; }
+  .fi { width: 100% !important; }
+  input[type="text"], input[type="date"], input[type="month"], input[type="number"], select, textarea { font-size: 15px !important; /* 확대 방지 */ }
+
+  /* 스크롤바 얇게 */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+}
+
+/* 태블릿 (768~1023px): 사이드바 조금 좁게 */
+@media (max-width: 1023px) and (min-width: 768px){
+  .hrbar { width: 240px !important; }
+  .grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .lv-storegrid, [id^="lv-store-grid"] { grid-template-columns: repeat(2, 1fr) !important; }
+}
+</style>
 </head>
 <body><nav class="nav">
   <div class="logo"><span class="logo-dot"></span>HR Hub</div>
