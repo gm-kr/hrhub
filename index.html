@@ -4198,30 +4198,94 @@ function closeP(){
   document.querySelectorAll('.ei').forEach(el=>el.classList.remove('on'));
   curEmp=null;
 }
+// [HIST SORT] 정렬 키 - 오래된 → 최근
+function _histSortKey(x){
+  if(!x || typeof x !== 'object') return '9999-99';
+  if(x.startYM) return x.startYM;
+  if(x.startAt) return x.startAt.slice(0,7);
+  if(x.endAt)   return x.endAt.slice(0,7);
+  if(x.period){ const m = String(x.period).match(/(\d{4})[.\-](\d{2})/); if(m) return m[1]+'-'+m[2]; }
+  if(x.recordedAt) return x.recordedAt.slice(0,7);
+  return '9999-99';
+}
+// [HIST MOVE] 이력 수동 순서 조정 (기간 모를 때)
+function moveHistUp(i){
+  if(!curEmp) return;
+  const h=gHist(curEmp);
+  if(i<=0 || i>=h.length) return;
+  [h[i-1], h[i]] = [h[i], h[i-1]];
+  setH(curEmp.id, h);
+  renderHist(curEmp);
+}
+function moveHistDown(i){
+  if(!curEmp) return;
+  const h=gHist(curEmp);
+  if(i<0 || i>=h.length-1) return;
+  [h[i], h[i+1]] = [h[i+1], h[i]];
+  setH(curEmp.id, h);
+  renderHist(curEmp);
+}
+function sortHistAuto(){
+  if(!curEmp) return;
+  const h=gHist(curEmp);
+  h.sort((a,b) => _histSortKey(a).localeCompare(_histSortKey(b)));
+  setH(curEmp.id, h);
+  renderHist(curEmp);
+  if(typeof lvToast==='function') lvToast('📅 시간순 자동 정렬됨');
+}
+window.moveHistUp = moveHistUp;
+window.moveHistDown = moveHistDown;
+window.sortHistAuto = sortHistAuto;
+
 function renderHist(emp){
   const w=document.getElementById('histwrap');
   const h=gHist(emp) || [];
-  // [현재 매장 자동 표시] 재직중 & 현재 매장이 이력에 없으면 맨 위에 진행중 항목 추가 (뷰 전용)
+  // [현재 매장 자동 표시] 재직중 & 현재 매장이 이력에 없으면 진행중 항목 추가 (뷰 전용)
   const cs = (emp && emp.current_store) || '';
   const skipAuto = !cs || cs === '육아휴직' || /^PU\s/.test(cs);
   const alreadyInHist = h.some(x => x && typeof x === 'object' && x.store === cs) || h.some(x => x === cs);
   const st = (typeof getEmpStatus === 'function') ? getEmpStatus(emp) : (emp && emp.status);
   const isCurrent = st === 'active' || st === 'returning' || st === 'support' || st === 'transfer';
   const autoItem = (!skipAuto && !alreadyInHist && isCurrent) ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' } : null;
-  const rows = autoItem ? [autoItem, ...h] : h;
-  if(!rows.length){
+
+  // 실제 이력에 원본 인덱스 매핑
+  const indexed = h.map((x, realIdx) => ({ x, realIdx }));
+  // 오래된 → 최신 정렬 (기간 없는 건 뒤로)
+  indexed.sort((a,b) => _histSortKey(a.x).localeCompare(_histSortKey(b.x)));
+  if(autoItem) indexed.push({ x: autoItem, realIdx: -1 });
+
+  if(!indexed.length){
     w.innerHTML='<div style="color:var(--t3);font-size:13px;padding:6px 0">매장 이력 없음</div>';
     return;
   }
-  w.innerHTML='<div class="histlist">'+rows.map((x,idx)=>{
+  const realCount = h.length;
+  const arrowStyle = 'border:none;background:transparent;color:#7a8299;cursor:pointer;font-size:13px;padding:2px 5px;line-height:1;border-radius:4px';
+  const sortBtn = realCount > 1 ? '<div style="margin-top:6px;text-align:right"><button onclick="sortHistAuto()" style="font-size:10.5px;color:#5b6cf8;background:#eef0fe;border:1px solid #d0d6f8;border-radius:8px;padding:2px 8px;cursor:pointer" title="기간 정보 기준 자동 정렬">📅 시간순 정렬</button></div>' : '';
+
+  w.innerHTML = '<div class="histlist">' + indexed.map((row, idx) => {
+    const x = row.x;
+    const realIdx = row.realIdx;
     if(x && x._auto){
       const pStyle='color:#2daa72;font-weight:600;font-size:12px;background:#e8f9f1;padding:1px 8px;border-radius:10px;margin-left:6px';
-      return `<div class="histitem" style="background:#f7fbf9;border-left:2.5px solid #2daa72">🏪 <strong>${x.store||''}</strong><span style="${pStyle}">● 진행중</span>${x.role?` · <span style="font-size:12px">${x.role}</span>`:''}</div>`;
+      return '<div class="histitem" style="background:#f7fbf9;border-left:2.5px solid #2daa72">🏪 <strong>'+(x.store||'')+'</strong><span style="'+pStyle+'">● 진행중</span>'+(x.role?' · <span style="font-size:12px">'+x.role+'</span>':'')+'</div>';
     }
-    const realIdx = autoItem ? idx-1 : idx;
-    let t=typeof x==='string'?`🏪 ${x}`:`🏪 <strong>${x.store||''}</strong>`+(x.period?` <span style="color:var(--t3);font-size:12px">${x.period}</span>`:'')+( x.role?` · <span style="font-size:12px">${x.role}</span>`:'');
-    return`<div class="histitem">${t}<button class="histdel" onclick="delH(${realIdx})">✕</button></div>`;
-  }).join('')+'</div>';
+    let t = (typeof x==='string')
+      ? '🏪 '+x
+      : '🏪 <strong>'+(x.store||'')+'</strong>'
+        + (x.period ? ' <span style="color:var(--t3);font-size:12px">'+x.period+'</span>' : '')
+        + (x.role   ? ' · <span style="font-size:12px">'+x.role+'</span>'   : '');
+    const posInReal = indexed.filter(r=>r.realIdx>=0).findIndex(r=>r.realIdx===realIdx);
+    const upDisabled  = posInReal === 0 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
+    const downDisabled= posInReal >= realCount-1 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
+    return '<div class="histitem" style="align-items:center;display:flex">'
+      + '<div style="flex:1;min-width:0">'+t+'</div>'
+      + '<div style="display:flex;align-items:center;gap:2px;flex-shrink:0">'
+      + '<button '+upDisabled+' onclick="moveHistUp('+realIdx+')" title="위로">▲</button>'
+      + '<button '+downDisabled+' onclick="moveHistDown('+realIdx+')" title="아래로">▼</button>'
+      + '<button class="histdel" onclick="delH('+realIdx+')">✕</button>'
+      + '</div>'
+      + '</div>';
+  }).join('') + '</div>' + sortBtn;
 }
 function delH(i){if(!curEmp)return;const h=gHist(curEmp);h.splice(i,1);setH(curEmp.id,h);renderHist(curEmp)}
 function openAddH(){
