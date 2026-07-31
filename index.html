@@ -5368,8 +5368,7 @@ function lvResetDraft(){
   lvRender(); lvRenderSB();
 }
 function lvApplyDraftToActual(){
-  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 이동 후 10일 지나면 이전 매장이 자동으로 근무이력에 기록됩니다.
-• 현재 배치 매장은 상세 화면에 "진행중"으로 자동 표시됩니다.')) return;
+  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 이동 후 10일 지나면 이전 매장이 자동으로 근무이력에 기록됩니다.\n• 현재 배치 매장은 상세 화면에 "진행중"으로 자동 표시됩니다.')) return;
   let _ptSnapshot = null;
   try { _ptSnapshot = localStorage.getItem('hrPT_v1'); } catch(_){}
   const draft = lvEnsureDraftData();
