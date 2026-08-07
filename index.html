@@ -1234,6 +1234,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
   <div class="ctx-item" onclick="openOrderModalForChannel()">↕ 채널 내 순서 변경</div>
   <div class="ctx-item" onclick="openRenameStore()">✏️ 이름 수정</div>
   <div class="ctx-item" onclick="openMoveChannel()">🔀 채널 변경</div>
+  <div class="ctx-item" onclick="editStoreLink()">🔗 링크 설정 (SharePoint 등)</div>
   <hr class="ctx-divider">
   <div class="ctx-item danger" onclick="confirmDeleteStore()">🗑️ 매장 삭제</div>
 </div>
@@ -2669,6 +2670,104 @@ function confirmAddStore() {
   selectStore(id);
 }
 let _renameTargetId = null; // document click 리스너가 _ctxTargetId를 초기화하므로 별도 변수 사용
+// [STORE LINK] 매장별 외부 링크 (SharePoint 등)
+function getStoreLinks(){
+  try { return JSON.parse(localStorage.getItem('lvStoreLinks')||'{}'); } catch(_){ return {}; }
+}
+function saveStoreLinks(map){
+  try { localStorage.setItem('lvStoreLinks', JSON.stringify(map||{})); } catch(_){}
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+}
+function getStoreLink(storeId){
+  return (getStoreLinks()[storeId]) || '';
+}
+function editStoreLink(){
+  const id = _ctxTargetId;
+  closeCtxMenu();
+  if(!id) return;
+  const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
+  const s = list.find(x=>x.id===id);
+  const name = s ? (s.displayName || s.name || id) : id;
+  const current = getStoreLink(id);
+  const url = window.prompt('🔗 "' + name + '" 매장의 링크 URL을 입력하세요\n(비우면 삭제됩니다):\n\n예: SharePoint 엑셀 URL 등', current);
+  if(url === null) return; // 취소
+  const map = getStoreLinks();
+  const trimmed = (url||'').trim();
+  if(trimmed){
+    map[id] = trimmed;
+  } else {
+    delete map[id];
+  }
+  saveStoreLinks(map);
+  if(typeof lvRender==='function') lvRender();
+  if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨' : '🔗 링크 삭제됨');
+}
+window.editStoreLink = editStoreLink;
+window.getStoreLink = getStoreLink;
+// [STORE LINK SEED] Firebase 인증/부트스트랩 완료 후 실행 (덮어쓰기 방지)
+function _runStoreLinkSeed(){
+  try {
+    const map = getStoreLinks();
+    const SEEDS = {
+      'GM_서울_하우스 노웨어_서울': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%EC%84%9C%EC%9A%B8_FS_%EC%84%9C%EC%9A%B8_%EC%8B%9C%ED%94%84%ED%8B%B0%20%EC%8A%A4%EC%BC%80%EC%A5%B4.xlsx?d=w41173176aedf45c0a2a90f6e8624a76a&csf=1&web=1&e=6ZZksW',
+      'GM_서울_FS_신사':           'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%EC%84%9C%EC%9A%B8_FS_%EC%8B%A0%EC%82%AC_%EC%8B%9C%ED%94%84%ED%8B%B0%20%EC%8A%A4%EC%BC%80%EC%A5%B4.xlsx?d=w24d5e347455346daac6dafa062193aa5&csf=1&web=1&e=PNBqF7',
+      'GM_서울_FS_홍대':           'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%EC%84%9C%EC%9A%B8_FS_%ED%99%8D%EB%8C%80_%EC%8B%9C%ED%94%84%ED%8B%B0_%EC%8A%A4%EC%BC%80%EC%A4%84.xlsx?d=w7d4b97fab6ac4c7da9d6968852366995&csf=1&web=1&e=ZUQzcQ',
+      'GM_서울_하우스 노웨어_도산': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%EC%84%9C%EC%9A%B8_%ED%95%98%EC%9A%B0%EC%8A%A4%EB%85%B8%EC%9B%A8%EC%96%B4_%EB%8F%84%EC%82%B0_%EC%8B%9C%ED%94%84%ED%8B%B0%20%EC%8A%A4%EC%BC%80%EC%A4%84.xlsx?d=w1f5d7f9a0ffd403798680ab06c491707&csf=1&web=1&e=9USPMH',
+      'GM_경기_DS_갤러리아_광교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%80%E1%85%A2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%85%E1%85%B5%E1%84%8B%E1%85%A1_%E1%84%80%E1%85%AA%E1%86%BC%E1%84%80%E1%85%AD.xlsx?d=wece4fcc28ea346e19813d4b568a73ff8&csf=1&web=1&e=obXKvS',
+      'GM_경기_DS_롯데_동탄': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%85%E1%85%A9%E1%86%BA%E1%84%83%E1%85%A6_%E1%84%83%E1%85%A9%E1%86%BC%E1%84%90%E1%85%A1%E1%86%AB.xlsx?d=w17323468304143c6aa2d1803b863b3b9&csf=1&web=1&e=ME5wha',
+      'GM_경기_MALL_신세계스타필드_하남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_MALL_%E1%84%89%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A6%E1%84%80%E1%85%A8%E1%84%89%E1%85%B3%E1%84%90%E1%85%A1%E1%84%91%E1%85%B5%E1%86%AF%E1%84%83%E1%85%B3_%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1%E1%86%B7_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5.xlsx?d=we8aa3ee0ddd941cca631b447057a846f&csf=1&web=1&e=IiqD4I',
+      'GM_경기_DS_신세계_사우스시티': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%82%AC%EC%9A%B0%EC%8A%A4%EC%8B%9C%ED%8B%B0_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wbf2e71b0408a4d709235575f863b9a4c&csf=1&web=1&e=DvlCja',
+      'GM_경기_DS_신세계_의정부': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%9D%98%EC%A0%95%EB%B6%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w3dd91de71cde413295469ff67276f114&csf=1&web=1&e=1hgiHP',
+      'GM_경기_DS_현대_판교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%ED%98%84%EB%8C%80_%ED%8C%90%EA%B5%90_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w802b34dd019747e383e2d9f408cc3544&csf=1&web=1&e=BokAOW',
+      'GM_광주_DS_신세계_광주': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B4%91%EC%A3%BC_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EA%B4%91%EC%A3%BC_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w7965562bd40d480aacf02952abd6931b&csf=1&web=1&e=AbIhPZ',
+      'GM_대구_DS_신세계_대구': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EA%B5%AC_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%8C%80%EA%B5%AC_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w121c1634aeea4aacbd6c553983ac053e&csf=1&web=1&e=fRCcKm',
+      'GM_대구_DS_현대_대구': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EA%B5%AC_DS_%ED%98%84%EB%8C%80_%EB%8C%80%EA%B5%AC_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w324f69b5d1e44f1586e825918e3478a5&csf=1&web=1&e=q0laD7',
+      'GM_대전_DS_갤러리아_대전': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EC%A0%84_DS_%EA%B0%A4%EB%9F%AC%EB%A6%AC%EC%95%84_%EB%8C%80%EC%A0%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wb1254381e0dd45c3a9a6ccfe87beae9d&csf=1&web=1&e=5DuNHS',
+      'GM_대전_DS_신세계_대전': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EC%A0%84_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%8C%80%EC%A0%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w357719c11aab42d9bc4362e33519311d&csf=1&web=1&e=qZTaBe',
+      'GM_부산_DS_롯데_서면': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EB%A1%AF%EB%8D%B0_%EC%84%9C%EB%A9%B4.xlsx?d=w06f7fa3d888043af9554dd9159cdaf2d&csf=1&web=1&e=uO3jEM',
+      'GM_부산_DS_신세계_센텀': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%84%BC%ED%85%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wd9f527b602614a6fa9afc65d05bf7bd4&csf=1&web=1&e=qNJpO5',
+      'GM_서울_DS_현대_여의도': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%89%E1%85%A5%E1%84%8B%E1%85%AE%E1%86%AF_DS_%E1%84%92%E1%85%A7%E1%86%AB%E1%84%83%E1%85%A2_%E1%84%8B%E1%85%A7%E1%84%8B%E1%85%B4%E1%84%83%E1%85%A9_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5.xlsx?d=we115096fbdf449f5915745dd31447591&csf=1&web=1&e=c6eKRB',
+      'GM_서울_DS_갤러리아_압구정': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EA%B0%A4%EB%9F%AC%EB%A6%AC%EC%95%84_%EC%95%95%EA%B5%AC%EC%A0%95_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w79681bb6941c4a68893c9767a0a786bf&csf=1&web=1&e=KTiZl1',
+      'GM_서울_DS_롯데_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EB%A1%AF%EB%8D%B0_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w0cfbdfd4563b4990809c64ded94c9342&csf=1&web=1&e=GWtiCo',
+      'GM_서울_DS_신세계_강남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EA%B0%95%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=waa5e5368a67646f0a090bf557444a830&csf=1&web=1&e=D8WR6e',
+      'GM_서울_DS_신세계_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w65adbcca2abf4006985583a7e7e02ae4&csf=1&web=1&e=WWr5ah',
+      'GM_서울_DS_현대_목동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EB%AA%A9%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w26eccb7b06634bbd8bf86799b96113c8&csf=1&web=1&e=I615bv',
+      'GM_서울_DS_현대_압구정': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EC%95%95%EA%B5%AC%EC%A0%95.xlsx?d=w0cd85b38ff99425ab962553c7a42e834&csf=1&web=1&e=G9vBB0',
+      'GM_서울_DFS_롯데_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%84%9C%EC%9A%B8_DFS_%EB%A1%AF%EB%8D%B0_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w6b892f9f46b940b5908972d802853ace&csf=1&web=1&e=F6Kdd0',
+      'GM_서울_DFS_롯데_월드몰': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%84%9C%EC%9A%B8_DFS_%EB%A1%AF%EB%8D%B0_%EC%9B%94%EB%93%9C%EB%AA%B0_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w2f667ccfc6aa46e087d820bb1aa99c57&csf=1&web=1&e=dpPS4m',
+      'GM_서울_DFS_신라_서울': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%84%9C%EC%9A%B8_DFS_%EC%8B%A0%EB%9D%BC_%EC%84%9C%EC%9A%B8.xlsx?d=web3c592ad2424dd996d27093fc08343d&csf=1&web=1&e=Ax3AF5',
+      'GM_서울_DFS_신세계_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%84%9C%EC%9A%B8_DFS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wfcec0f3f05ba42de9b8a3e371028d469&csf=1&web=1&e=m9gyDb',
+      'GM_인천_DFS_신라_인천공항T2': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%9D%B8%EC%B2%9C_DFS_%EC%8B%A0%EB%9D%BC_%EC%9D%B8%EC%B2%9C%EA%B3%B5%ED%95%ADT2_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=we85c4680b0184fc2b982448edf66c3a6&csf=1&web=1&e=fYcmY3',
+      'GM_인천_DFS_현대_인천공항T1': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%9D%B8%EC%B2%9C_DFS_%ED%98%84%EB%8C%80_%EC%9D%B8%EC%B2%9C%EA%B3%B5%ED%95%ADT1%20%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w201a50a0e5fe47dfad85db95167d36d3&csf=1&web=1&e=MqwW4s',
+      'GM_제주_DFS_롯데_제주': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%E1%84%8C%E1%85%A6%E1%84%8C%E1%85%AE_DFS_%E1%84%85%E1%85%A9%E1%86%BA%E1%84%83%E1%85%A6_%E1%84%8C%E1%85%A6%E1%84%8C%E1%85%AE_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5.xlsx?d=w46e2c886e2e74157b77c21d9e4d0c572&csf=1&web=1&e=x2Dpa1',
+      'GM_제주_DFS_신라_제주': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DFS/GM_%EC%A0%9C%EC%A3%BC_DFS_%EC%8B%A0%EB%9D%BC_%EC%A0%9C%EC%A3%BC_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wad9d762326b74addaedd1f2c1673d820&csf=1&web=1&e=HocGTH',
+      'GM_서울_DS_현대_무역':      'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/%EB%8F%99%EB%B6%80%EA%B6%8C%20%EA%B7%B8%EB%A3%B9%ED%95%91%20%EB%A1%9C%ED%85%8C%EC%9D%B4%EC%85%98/GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EB%AC%B4%EC%97%AD_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w0eb4c61ab30142de80dd1352c5743653&csf=1&web=1&e=hMhB2f',
+      'GM_서울_DS_롯데_잠실':      'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/%EB%8F%99%EB%B6%80%EA%B6%8C%20%EA%B7%B8%EB%A3%B9%ED%95%91%20%EB%A1%9C%ED%85%8C%EC%9D%B4%EC%85%98/GM_%EC%84%9C%EC%9A%B8_DS_%EB%A1%AF%EB%8D%B0_%EC%9E%A0%EC%8B%A4_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w3f4a18f588fa410cb5a4eb15ff4c1ee4&csf=1&web=1&e=fOrV77',
+      'GM_서울_MALL_롯데_월드몰':  'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/%EB%8F%99%EB%B6%80%EA%B6%8C%20%EA%B7%B8%EB%A3%B9%ED%95%91%20%EB%A1%9C%ED%85%8C%EC%9D%B4%EC%85%98/GM_%EC%84%9C%EC%9A%B8_MALL_%EB%A1%AF%EB%8D%B0_%EC%9B%94%EB%93%9C%EB%AA%B0_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w706ecc6bbe394f348e710c0c78c96271&csf=1&web=1&e=YkMqpj'
+    };
+    let changed = false;
+    Object.keys(SEEDS).forEach(k => {
+      if(!map[k]){ map[k] = SEEDS[k]; changed = true; }
+    });
+    if(changed) saveStoreLinks(map);
+  } catch(_){}
+}
+// Firebase ready 후 실행 (부트스트랩이 seed 데이터를 덮어쓰지 않도록)
+(function _waitFbSeed(){
+  if(window.__fbReady){
+    setTimeout(_runStoreLinkSeed, 500);  // 부트스트랩 완료 확실히 후
+    return;
+  }
+  const _tid = setInterval(() => {
+    if(window.__fbReady){
+      clearInterval(_tid);
+      setTimeout(_runStoreLinkSeed, 500);
+    }
+  }, 300);
+  // 최대 30초 대기 후 강제 실행
+  setTimeout(() => { clearInterval(_tid); _runStoreLinkSeed(); }, 30000);
+})();
+
 function openRenameStore() {
   const targetId = _ctxTargetId;
   closeCtxMenu();
@@ -3775,6 +3874,7 @@ function saveCell(el){
       localStorage.setItem('layoutDraftData',JSON.stringify(draft));
     }catch(_){}
     try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+    try { if(window.trackStoreChange && oldVal && val) window.trackStoreChange(id, oldVal, val); } catch(_){}
     refresh();
   }
   if(field==='hire_date'){
@@ -5024,6 +5124,7 @@ function saveFieldEdit(field, val){
     const newCh = guessChannel(val) || curEmp.channel || '';
     // [BUG FIX] curEmp.current_store는 이미 val로 덮어쓰여진 상태 → _oldFieldVal 사용
     const _prevStore = _oldFieldVal || '';
+    try { if(window.trackStoreChange && _prevStore && val) window.trackStoreChange(curEmp.id, _prevStore, val); } catch(_){}
     if(_prevStore && _prevStore !== val){
       curEmp._prev_store = _prevStore;
       if(!window.__fbEdits) window.__fbEdits = {};
@@ -5523,6 +5624,49 @@ window.lvDedupeHistoryOnce = function(){
 };
 // 페이지 로드 후 즉시 청소 (2초 후 - Firebase 데이터 도착 후)
 setTimeout(()=>{ if(window.lvDedupeHistoryOnce) window.lvDedupeHistoryOnce(); }, 2500);
+
+// [STORE CHANGE HOOK] 모든 매장 변경 경로에서 호출 → 이전 매장 pending 기록
+// 매장 변경 (배치현황 드롭, HR 편집, 상세 편집, 슬롯 등) 어디서든 이 함수 호출하면 자동 이력.
+window.trackStoreChange = function(empId, prevStore, newStore){
+  if(!empId || !prevStore || !newStore) return;
+  if(prevStore === newStore) return;
+  // 특수 케이스 제외
+  if(prevStore === '육아휴직' || /^PU\s/.test(prevStore)) return;
+  if(!window.__fbEdits) window.__fbEdits = {};
+  if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
+
+  // 이전 pending의 leftStore가 이번 prevStore와 다르면 → 확실히 떠남 → 즉시 이력 확정
+  const prev_ph = window.__fbEdits[empId]._pendingHistory;
+  if(prev_ph && prev_ph.leftStore && prev_ph.leftStore !== prevStore){
+    try {
+      const h = (typeof getH==='function') ? getH() : {};
+      if(!Array.isArray(h[empId])) h[empId] = [];
+      const already = h[empId].some(x => x && x.store === prev_ph.leftStore && x.endAt === prev_ph.leftAt);
+      if(!already){
+        const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===empId) : null;
+        const d = new Date(prev_ph.leftAt);
+        const fmt = dd => `${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
+        h[empId].push({
+          store: prev_ph.leftStore,
+          period: `~ ${fmt(d)} 이동`,
+          role: (emp && emp.position) || '',
+          endAt: prev_ph.leftAt,
+          recordedAt: new Date().toISOString()
+        });
+        if(typeof setH==='function') setH(empId, h[empId]);
+      }
+    } catch(_){}
+  }
+  // 새 pending 시작
+  const nowIso = new Date().toISOString();
+  window.__fbEdits[empId]._pendingHistory = {
+    leftStore: prevStore,
+    newStore: newStore,
+    leftAt: nowIso
+  };
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+  try { if(window.fbSetEdit) window.fbSetEdit(empId, '_pendingHistory', window.__fbEdits[empId]._pendingHistory); } catch(_){}
+};
 
 window.lvPromotePendingHistory = function(){
   if(!window.__fbEdits) return 0;
@@ -6690,9 +6834,11 @@ function _saveImpSlots(slots){
       const emp = EMPS.find(e=>e.id===empId);
       if(!emp) return;
       if(emp.current_store !== slot.storeId){
+        const _prevSlot = emp.current_store || '';
         emp.current_store = slot.storeId;
         emp.channel = (typeof guessChannel==='function' ? guessChannel(slot.storeId) : '') || emp.channel || '';
         if(typeof lvSaveToHrEdits==='function') lvSaveToHrEdits(emp);
+        try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prevSlot, slot.storeId); } catch(_){}
         try {
           const actual = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
           actual[empId] = {current_store: emp.current_store, channel: emp.channel};
@@ -6899,9 +7045,11 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
     // 매니저 모드: 즉시 actual+draft 양쪽 저장 (전체 적용 불필요)
     // 일반 모드(전체 직원): 기존 흐름 유지 - draft 모드면 draft에만, actual 모드면 actual에만
     if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
+      const _prev = emp.current_store || '';
       emp.current_store = storeKey;
       emp.channel = guessChannel(storeKey) || emp.channel || '';
       lvSaveToHrEdits(emp);
+      try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prev, storeKey); } catch(_){}
       try {
         const actual = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
         actual[emp.id] = {current_store: emp.current_store, channel: emp.channel};
@@ -6914,9 +7062,11 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
     } else if(lvMode==='draft'){
       lvSaveDraftMove(emp.id, storeKey);
     } else {
+      const _prev = emp.current_store || '';
       emp.current_store = storeKey;
       emp.channel = guessChannel(storeKey);
       lvSaveToHrEdits(emp);
+      try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prev, storeKey); } catch(_){}
       const actual = lvEnsureActualData();
       actual[emp.id] = {current_store: emp.current_store, channel: emp.channel};
       lvWriteLayout(LV_ACTUAL_KEY, actual);
@@ -7026,8 +7176,10 @@ function buildCard(storeKey,emps,secKey,accent){
       if(lvMode==='draft'){
         lvSaveDraftMove(emp.id,storeKey);
       }else{
+        const _prev = emp.current_store || '';
         emp.current_store=storeKey; emp.channel=guessChannel(storeKey);
         lvSaveToHrEdits(emp);
+        try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prev, storeKey); } catch(_){}
         const actual=lvEnsureActualData();
         actual[emp.id]={current_store:emp.current_store,channel:emp.channel};
         lvWriteLayout(LV_ACTUAL_KEY,actual);
@@ -7192,7 +7344,13 @@ function buildCard(storeKey,emps,secKey,accent){
       <div class="lv-drag-handle">⠿</div>
       <div class="lv-store-icon" style="background:${ibg};color:${accent}">${ic}</div>
       <div style="flex:1;min-width:0">
-        <div class="lv-store-name">${nm}</div>
+        ${(function(){
+          const _url = (typeof getStoreLink==='function') ? getStoreLink(storeKey) : '';
+          if(_url){
+            return `<a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>`;
+          }
+          return `<div class="lv-store-name">${nm}</div>`;
+        })()}
         ${rg?`<div class="lv-store-region">${rg}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:4px">
@@ -8571,9 +8729,10 @@ window.fbSetSchedule = async function(data) {
       if(typeof d.deletedStores === 'string') localStorage.setItem('lvDeletedStores', d.deletedStores);
       if(typeof d.deletedEmps   === 'string') localStorage.setItem('hrDeletedEmpIds_v1', d.deletedEmps);
       if(typeof d.sbBase        === 'string') localStorage.setItem('lvSbBaseOverrides', d.sbBase);
+      if(typeof d.storeLinks    === 'string') localStorage.setItem('lvStoreLinks', d.storeLinks);
       // [RACE FIX] 부트스트랩 시 받은 값을 lastSharedSnap에 캐싱
       window.__lastSharedSnap = window.__lastSharedSnap || {};
-      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase'].forEach(k=>{
+      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks'].forEach(k=>{
         if(typeof d[k] === 'string') window.__lastSharedSnap[k] = d[k];
       });
     }
@@ -8762,7 +8921,8 @@ window.fbSetShared = function(){
         layoutDraft:  localStorage.getItem('layoutDraftData')      || '{}',
         deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
         deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]',
-        sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}'
+        sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}',
+        storeLinks:   localStorage.getItem('lvStoreLinks')         || '{}'
       };
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
@@ -8793,7 +8953,7 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   try {
     const data = snap.data() || {};
     // [RACE FIX] 받은 값을 lastSharedSnap에 캐싱 (다음 push 시 비교용)
-    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase'].forEach(k=>{
+    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks'].forEach(k=>{
       if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
     });
     let needRerender = false;
@@ -8852,6 +9012,12 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
         localStorage.setItem('lvSbBaseOverrides', data.sbBase);
         needRerender = true;
         try { if(typeof lvRenderSB==='function') lvRenderSB(); } catch(_){}
+      }
+    }
+    if(typeof data.storeLinks === 'string'){
+      if(localStorage.getItem('lvStoreLinks') !== data.storeLinks){
+        localStorage.setItem('lvStoreLinks', data.storeLinks);
+        needRerender = true;
       }
     }
     // 배치현황 화면이 열려있으면 즉시 재렌더
