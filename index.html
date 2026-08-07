@@ -4343,10 +4343,10 @@ function renderHist(emp){
   // [현재 매장 자동 표시] 재직중 & 현재 매장이 이력에 없으면 진행중 항목 추가 (뷰 전용)
   const cs = (emp && emp.current_store) || '';
   const skipAuto = !cs || cs === '육아휴직' || /^PU\s/.test(cs);
-  const alreadyInHist = h.some(x => x && typeof x === 'object' && x.store === cs) || h.some(x => x === cs);
   const st = (typeof getEmpStatus === 'function') ? getEmpStatus(emp) : (emp && emp.status);
   const isCurrent = st === 'active' || st === 'returning' || st === 'support' || st === 'transfer';
-  const autoItem = (!skipAuto && !alreadyInHist && isCurrent) ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' } : null;
+  // [간소화] 재직중이면 무조건 진행중 표시 (이력에 그 매장이 있어도 별개 - 옛 근무는 이력, 현재는 진행중)
+  const autoItem = (!skipAuto && isCurrent) ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' } : null;
 
   // 실제 이력에 원본 인덱스 매핑
   const indexed = h.map((x, realIdx) => ({ x, realIdx }));
