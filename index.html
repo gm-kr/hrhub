@@ -1053,7 +1053,6 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
         <button class="vbtn on" id="btn-tbl" onclick="setView('tbl')">☰ 리스트</button>
         <button class="vbtn" id="btn-grd" onclick="setView('grd')">⊞ 카드</button>
         <button class="vbtn" id="btn-praise-dash" onclick="setPraiseDashboardView()">👏 칭찬 점수 대시보드</button>
-        <button class="vbtn" id="btn-tenure-dash" onclick="setTenureDashboardView()">📊 근속 분포</button>
         <button class="vbtn" onclick="document.getElementById('residence-upload-input').click()" title="실거주지역·지하철역 엑셀 일괄 업로드">📎 거주지 일괄</button>
         <input type="file" id="residence-upload-input" accept=".xlsx,.xls" style="display:none" onchange="handleResidenceExcelUpload(event)">
         <div class="chips">
@@ -1089,7 +1088,6 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
       <div class="gwrap" id="gwrap" style="display:none">
         <div class="grid" id="grid"></div>
       </div>
-      <div id="tenure-dashboard" style="display:none;padding:16px 20px;overflow-y:auto"></div>
       <div class="praise-dashboard" id="praise-dashboard">
         <div class="pdash-panel">
           <div class="pdash-head">
@@ -2716,7 +2714,7 @@ function _runStoreLinkSeed(){
       'GM_서울_하우스 노웨어_도산': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%EC%84%9C%EC%9A%B8_%ED%95%98%EC%9A%B0%EC%8A%A4%EB%85%B8%EC%9B%A8%EC%96%B4_%EB%8F%84%EC%82%B0_%EC%8B%9C%ED%94%84%ED%8B%B0%20%EC%8A%A4%EC%BC%80%EC%A4%84.xlsx?d=w1f5d7f9a0ffd403798680ab06c491707&csf=1&web=1&e=9USPMH',
       'GM_경기_DS_갤러리아_광교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%80%E1%85%A2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%85%E1%85%B5%E1%84%8B%E1%85%A1_%E1%84%80%E1%85%AA%E1%86%BC%E1%84%80%E1%85%AD.xlsx?d=wece4fcc28ea346e19813d4b568a73ff8&csf=1&web=1&e=obXKvS',
       'GM_경기_DS_롯데_동탄': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%85%E1%85%A9%E1%86%BA%E1%84%83%E1%85%A6_%E1%84%83%E1%85%A9%E1%86%BC%E1%84%90%E1%85%A1%E1%86%AB.xlsx?d=w17323468304143c6aa2d1803b863b3b9&csf=1&web=1&e=ME5wha',
-      'GM_경기_MALL_신세계스타필드_하남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_MALL_%E1%84%89%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A6%E1%84%80%E1%85%A8%E1%84%89%E1%85%B3%E1%84%90%E1%85%A1%E1%84%91%E1%85%B5%E1%86%AF%E1%84%83%E1%85%B3_%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1%E1%86%B7_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5.xlsx?d=we8aa3ee0ddd941cca631b447057a846f&csf=1&web=1&e=IiqD4I',
+      'GM_경기_MALL_신세계스타필드_하남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE7F9D1B4-15CF-46AA-A749-BA7DDE825BB8%7D&file=GM_%EA%B2%BD%EA%B8%B0_MALL_%EC%8B%A0%EC%84%B8%EA%B3%84%EC%8A%A4%ED%83%80%ED%95%84%EB%93%9C_%ED%95%98%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
       'GM_경기_DS_신세계_사우스시티': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%82%AC%EC%9A%B0%EC%8A%A4%EC%8B%9C%ED%8B%B0_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wbf2e71b0408a4d709235575f863b9a4c&csf=1&web=1&e=DvlCja',
       'GM_경기_DS_신세계_의정부': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%9D%98%EC%A0%95%EB%B6%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w3dd91de71cde413295469ff67276f114&csf=1&web=1&e=1hgiHP',
       'GM_경기_DS_현대_판교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%ED%98%84%EB%8C%80_%ED%8C%90%EA%B5%90_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w802b34dd019747e383e2d9f408cc3544&csf=1&web=1&e=BokAOW',
@@ -2750,6 +2748,12 @@ function _runStoreLinkSeed(){
     Object.keys(SEEDS).forEach(k => {
       if(!map[k]){ map[k] = SEEDS[k]; changed = true; }
     });
+    // [URL MIGRATION] 하남 옛 URL 자동 교체 (기존 사용자에게도 적용)
+    const HANAM_KEY = 'GM_경기_MALL_신세계스타필드_하남';
+    if(map[HANAM_KEY] && map[HANAM_KEY].includes('we8aa3ee0ddd941cca631b447057a846f')){
+      map[HANAM_KEY] = SEEDS[HANAM_KEY];
+      changed = true;
+    }
     if(changed) saveStoreLinks(map);
   } catch(_){}
 }
@@ -3945,154 +3949,23 @@ function setView(v){
   curView=v;
   const dash=document.getElementById('praise-dashboard');
   if(dash) dash.style.display='none';
-  const tenD=document.getElementById('tenure-dashboard');
-  if(tenD) tenD.style.display='none';
   document.getElementById('twrap').style.display=v==='tbl'?'flex':'none';
   document.getElementById('gwrap').style.display=v==='grd'?'flex':'none';
   document.getElementById('btn-tbl').classList.toggle('on',v==='tbl');
   document.getElementById('btn-grd').classList.toggle('on',v==='grd');
   document.getElementById('btn-praise-dash')?.classList.remove('on');
-  document.getElementById('btn-tenure-dash')?.classList.remove('on');
   const l=getList();v==='tbl'?renderTbl(l):renderGrd(l);
 }
 function setPraiseDashboardView(){
   document.getElementById('twrap').style.display='none';
   document.getElementById('gwrap').style.display='none';
-  const tenD=document.getElementById('tenure-dashboard');
-  if(tenD) tenD.style.display='none';
   document.getElementById('praise-dashboard').style.display='block';
   document.getElementById('btn-tbl').classList.remove('on');
   document.getElementById('btn-grd').classList.remove('on');
   document.getElementById('btn-praise-dash').classList.add('on');
-  document.getElementById('btn-tenure-dash')?.classList.remove('on');
   initPraiseDashboardPeriod();
   renderPraiseDashboard();
 }
-// [TENURE DASHBOARD]
-function setTenureDashboardView(){
-  document.getElementById('twrap').style.display='none';
-  document.getElementById('gwrap').style.display='none';
-  const pdash=document.getElementById('praise-dashboard');
-  if(pdash) pdash.style.display='none';
-  const tenD=document.getElementById('tenure-dashboard');
-  if(tenD) tenD.style.display='block';
-  document.getElementById('btn-tbl').classList.remove('on');
-  document.getElementById('btn-grd').classList.remove('on');
-  document.getElementById('btn-praise-dash')?.classList.remove('on');
-  document.getElementById('btn-tenure-dash').classList.add('on');
-  renderTenureDashboard();
-}
-window.setTenureDashboardView = setTenureDashboardView;
-function _parseHireYear(hd){
-  if(!hd) return null;
-  const m = String(hd).match(/(\d{4})/);
-  return m ? parseInt(m[1],10) : null;
-}
-function renderTenureDashboard(){
-  const box = document.getElementById('tenure-dashboard');
-  if(!box) return;
-  const now = new Date();
-  const curYear = now.getFullYear();
-  // 구간 정의 - "N년차" (curYear - hireYear + 1)
-  const buckets = [
-    { key:'1',      label:'1년차 (신입)',    min:1,  max:1,   color:'#2daa72' },
-    { key:'2-3',    label:'2~3년차',          min:2,  max:3,   color:'#3c7ef3' },
-    { key:'4-5',    label:'4~5년차',          min:4,  max:5,   color:'#5b6cf8' },
-    { key:'6-10',   label:'6~10년차',         min:6,  max:10,  color:'#7c6cf8' },
-    { key:'11+',    label:'11년차 이상',      min:11, max:999, color:'#d63b8f' },
-  ];
-  // 재직 중인 정직원만 (deleted/leaving/joining 제외, 상태가 없거나 active/returning/support/transfer/leave 포함)
-  const emps = EMPS.filter(e => {
-    if(isDeletedEmpId(e.id)) return false;
-    const st = getEmpStatus(e);
-    if(st === 'deleted' || st === 'leaving') return false;
-    return true;
-  });
-  // 브랜드별 구간 카운트
-  function calcForBrand(bkFilter){
-    const list = emps.filter(e => !bkFilter || (e.brand||'').toUpperCase() === bkFilter);
-    const counts = {};
-    buckets.forEach(b => counts[b.key] = 0);
-    let unknown = 0;
-    list.forEach(e => {
-      const y = _parseHireYear(e.hire_date);
-      if(!y){ unknown++; return; }
-      const tenure = Math.max(1, curYear - y + 1);
-      const b = buckets.find(x => tenure >= x.min && tenure <= x.max);
-      if(b) counts[b.key]++;
-      else unknown++;
-    });
-    return { total: list.length, counts, unknown };
-  }
-  const stat = {
-    ALL: calcForBrand(null),
-    GM:  calcForBrand('GM'),
-    ATS: calcForBrand('ATS'),
-    NUF: calcForBrand('NUF'),
-  };
-  // 평균 근속연수
-  function avgTenure(bkFilter){
-    const list = emps.filter(e => !bkFilter || (e.brand||'').toUpperCase() === bkFilter);
-    let sum = 0, n = 0;
-    list.forEach(e => {
-      const y = _parseHireYear(e.hire_date);
-      if(!y) return;
-      sum += Math.max(1, curYear - y + 1);
-      n++;
-    });
-    return n ? (sum/n).toFixed(1) : '-';
-  }
-  const avg = { ALL: avgTenure(null), GM: avgTenure('GM'), ATS: avgTenure('ATS'), NUF: avgTenure('NUF') };
-  // HTML 조립
-  function renderBrandSection(title, s, avgVal, accent){
-    const rows = buckets.map(b => {
-      const c = s.counts[b.key] || 0;
-      const pct = s.total ? (c / s.total * 100) : 0;
-      return `
-        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed #eef0fe">
-          <div style="width:120px;font-size:12.5px;font-weight:600;color:#3a4053">${b.label}</div>
-          <div style="flex:1;background:#f4f5f9;border-radius:6px;height:20px;overflow:hidden;position:relative">
-            <div style="width:${pct.toFixed(1)}%;background:${b.color};height:100%;transition:width .3s"></div>
-            <div style="position:absolute;top:0;left:8px;right:8px;height:20px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#2a2f42;font-weight:700">
-              <span>${c}명</span>
-              <span style="color:#5b6378;font-weight:500">${pct.toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    const unknownRow = s.unknown ? `
-      <div style="display:flex;align-items:center;gap:10px;padding:4px 0;font-size:11px;color:#9aa0b3">
-        <div style="width:120px">입사일 미상</div><div>${s.unknown}명</div>
-      </div>` : '';
-    return `
-      <div style="background:#fff;border:1px solid #eef0fe;border-radius:12px;padding:16px 18px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:14px;font-weight:700;color:${accent}">${title}</div>
-          <div style="font-size:11.5px;color:#5b6378">
-            <span style="background:${accent};color:#fff;padding:2px 8px;border-radius:10px;font-weight:600">총 ${s.total}명</span>
-            <span style="margin-left:8px">평균 근속 <b>${avgVal}년</b></span>
-          </div>
-        </div>
-        ${rows}
-        ${unknownRow}
-      </div>
-    `;
-  }
-  box.innerHTML = `
-    <div style="max-width:900px">
-      <div style="font-size:18px;font-weight:800;color:#2a2f42;margin-bottom:6px">📊 근속연수 분포</div>
-      <div style="font-size:12px;color:#5b6378;margin-bottom:18px">
-        기준: ${curYear}년 · N년차 = 현재 연도 − 입사 연도 + 1 · 퇴사예정/삭제된 직원 제외
-      </div>
-      ${renderBrandSection('전체', stat.ALL, avg.ALL, '#5b6cf8')}
-      ${renderBrandSection('GM',  stat.GM,  avg.GM,  '#5b6cf8')}
-      ${renderBrandSection('ATS', stat.ATS, avg.ATS, '#e07b12')}
-      ${renderBrandSection('NUF', stat.NUF, avg.NUF, '#d63b8f')}
-    </div>
-  `;
-}
-window.renderTenureDashboard = renderTenureDashboard;
 function quarterRange(offset){
   const now=new Date();
   let q=Math.floor(now.getMonth()/3)+offset;
