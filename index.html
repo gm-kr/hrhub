@@ -5557,20 +5557,25 @@ function lvApplyDraftToActual(){
       if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
       // 이미 pending 있으면 (또 이동한 경우) 그 leftStore는 확실히 떠남 → 즉시 이력 확정
       const prev_ph = window.__fbEdits[emp.id]._pendingHistory;
-      if(prev_ph && prev_ph.leftStore && prev_ph.leftStore !== prevStore){
+      if(prev_ph && prev_ph.leftStore && prev_ph.leftStore !== prevStore && prev_ph.prevStartAt){
+        // prevStartAt 있을 때만 저장 (초기 세팅 스킵)
         try {
           const h = (typeof getH==='function') ? getH() : {};
           if(!Array.isArray(h[emp.id])) h[emp.id] = [];
           const already = h[emp.id].some(x => x && x.store === prev_ph.leftStore && x.endAt === prev_ph.leftAt);
           if(!already){
-            const d=new Date(prev_ph.leftAt);
-            const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
-            h[emp.id].push({ store:prev_ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:prev_ph.leftAt, recordedAt:new Date().toISOString() });
+            const fmt=iso=>{const d=new Date(iso);return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;};
+            h[emp.id].push({ store:prev_ph.leftStore, period:`${fmt(prev_ph.prevStartAt)} ~ ${fmt(prev_ph.leftAt)}`, role:emp.position||'', startAt:prev_ph.prevStartAt, endAt:prev_ph.leftAt, recordedAt:new Date().toISOString() });
             if(typeof setH==='function') setH(emp.id, h[emp.id]);
           }
         } catch(_){}
       }
-      window.__fbEdits[emp.id]._pendingHistory = { leftStore:prevStore, newStore:newStore, leftAt:nowIso };
+      // 이전 매장 진입 시각 - 시스템이 기록한 시각. 없으면 초기 세팅 (이력 저장 안 됨)
+      const _prevStartAt = (window.__fbEdits[emp.id] && window.__fbEdits[emp.id]._currentStoreStartAt) || null;
+      window.__fbEdits[emp.id]._pendingHistory = { leftStore:prevStore, newStore:newStore, leftAt:nowIso, prevStartAt:_prevStartAt };
+      // 새 매장 진입 시각 기록
+      window.__fbEdits[emp.id]._currentStoreStartAt = nowIso;
+      try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_currentStoreStartAt', nowIso); } catch(_){}
       pendingCreated++;
     }
   });
@@ -5627,46 +5632,62 @@ window.lvDedupeHistoryOnce = function(){
 setTimeout(()=>{ if(window.lvDedupeHistoryOnce) window.lvDedupeHistoryOnce(); }, 2500);
 
 // [STORE CHANGE HOOK] 모든 매장 변경 경로에서 호출 → 이전 매장 pending 기록
-// 매장 변경 (배치현황 드롭, HR 편집, 상세 편집, 슬롯 등) 어디서든 이 함수 호출하면 자동 이력.
+// 매장 진입 시각(_currentStoreStartAt)이 있어야만 이력 저장 (초기 세팅 매장은 저장 안 함)
 window.trackStoreChange = function(empId, prevStore, newStore){
   if(!empId || !prevStore || !newStore) return;
   if(prevStore === newStore) return;
-  // 특수 케이스 제외
   if(prevStore === '육아휴직' || /^PU\s/.test(prevStore)) return;
   if(!window.__fbEdits) window.__fbEdits = {};
   if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
 
+  const ed = window.__fbEdits[empId];
+  // 이전 매장(prevStore)에 언제 들어왔는지 - 시스템이 기록한 시각이 있어야 이력 저장 가능
+  const prevStartAt = ed._currentStoreStartAt || null;
+
   // 이전 pending의 leftStore가 이번 prevStore와 다르면 → 확실히 떠남 → 즉시 이력 확정
-  const prev_ph = window.__fbEdits[empId]._pendingHistory;
+  const prev_ph = ed._pendingHistory;
   if(prev_ph && prev_ph.leftStore && prev_ph.leftStore !== prevStore){
-    try {
-      const h = (typeof getH==='function') ? getH() : {};
-      if(!Array.isArray(h[empId])) h[empId] = [];
-      const already = h[empId].some(x => x && x.store === prev_ph.leftStore && x.endAt === prev_ph.leftAt);
-      if(!already){
-        const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===empId) : null;
-        const d = new Date(prev_ph.leftAt);
-        const fmt = dd => `${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
-        h[empId].push({
-          store: prev_ph.leftStore,
-          period: `~ ${fmt(d)} 이동`,
-          role: (emp && emp.position) || '',
-          endAt: prev_ph.leftAt,
-          recordedAt: new Date().toISOString()
-        });
-        if(typeof setH==='function') setH(empId, h[empId]);
-      }
-    } catch(_){}
+    if(prev_ph.prevStartAt){
+      // 시작일 정보 있는 경우만 이력 확정 저장
+      try {
+        const h = (typeof getH==='function') ? getH() : {};
+        if(!Array.isArray(h[empId])) h[empId] = [];
+        const already = h[empId].some(x => x && x.store === prev_ph.leftStore && x.endAt === prev_ph.leftAt);
+        if(!already){
+          const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===empId) : null;
+          const fmt = iso => { const d=new Date(iso); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`; };
+          h[empId].push({
+            store: prev_ph.leftStore,
+            period: `${fmt(prev_ph.prevStartAt)} ~ ${fmt(prev_ph.leftAt)}`,
+            role: (emp && emp.position) || '',
+            startAt: prev_ph.prevStartAt,
+            endAt: prev_ph.leftAt,
+            recordedAt: new Date().toISOString()
+          });
+          if(typeof setH==='function') setH(empId, h[empId]);
+        }
+      } catch(_){}
+    }
+    // prevStartAt이 없으면 초기 세팅 상태 → 이력 저장 스킵 (사용자 요구)
   }
-  // 새 pending 시작
+
+  // 새 pending 시작 (다음 이동 시 판단용)
   const nowIso = new Date().toISOString();
-  window.__fbEdits[empId]._pendingHistory = {
+  ed._pendingHistory = {
     leftStore: prevStore,
     newStore: newStore,
-    leftAt: nowIso
+    leftAt: nowIso,
+    prevStartAt: prevStartAt   // 이전 매장 시작일 (없으면 null = 초기 세팅)
   };
+  // 새 매장(newStore)에 지금 진입 → 다음 이동 시 이 매장의 시작일로 사용됨
+  ed._currentStoreStartAt = nowIso;
   try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
-  try { if(window.fbSetEdit) window.fbSetEdit(empId, '_pendingHistory', window.__fbEdits[empId]._pendingHistory); } catch(_){}
+  try {
+    if(window.fbSetEdit){
+      window.fbSetEdit(empId, '_pendingHistory', ed._pendingHistory);
+      window.fbSetEdit(empId, '_currentStoreStartAt', nowIso);
+    }
+  } catch(_){}
 };
 
 window.lvPromotePendingHistory = function(){
@@ -5702,10 +5723,10 @@ window.lvPromotePendingHistory = function(){
         if(!Array.isArray(h[empId])) h[empId] = [];
         // 같은 store + 같은 endAt만 중복 (다른 시기는 별개)
         const already = h[empId].some(x => x && x.store === ph.leftStore && x.endAt === ph.leftAt);
-        if(!already){
-          const d=new Date(ph.leftAt);
-          const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
-          h[empId].push({ store:ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:ph.leftAt, recordedAt:new Date().toISOString() });
+        if(!already && ph.prevStartAt){
+          // prevStartAt 있을 때만 저장 (초기 세팅 매장은 스킵)
+          const fmt=iso=>{const d=new Date(iso);return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;};
+          h[empId].push({ store:ph.leftStore, period:`${fmt(ph.prevStartAt)} ~ ${fmt(ph.leftAt)}`, role:emp.position||'', startAt:ph.prevStartAt, endAt:ph.leftAt, recordedAt:new Date().toISOString() });
           if(typeof setH==='function') setH(empId, h[empId]);
           promoted++;
         }
@@ -5725,11 +5746,11 @@ window.lvPromotePendingHistory = function(){
       try {
         const h = (typeof getH==='function') ? getH() : {};
         if(!Array.isArray(h[empId])) h[empId] = [];
-        const already = h[empId].some(x => x && x.store === ph.leftStore);
-        if(!already){
-          const d=new Date(ph.leftAt);
-          const fmt=dd=>`${dd.getFullYear()}.${String(dd.getMonth()+1).padStart(2,'0')}`;
-          h[empId].push({ store:ph.leftStore, period:`~ ${fmt(d)} 이동`, role:emp.position||'', endAt:ph.leftAt, recordedAt:new Date().toISOString() });
+        const already = h[empId].some(x => x && x.store === ph.leftStore && x.endAt === ph.leftAt);
+        if(!already && ph.prevStartAt){
+          // prevStartAt 있을 때만 저장 (초기 세팅 매장은 스킵)
+          const fmt=iso=>{const d=new Date(iso);return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;};
+          h[empId].push({ store:ph.leftStore, period:`${fmt(ph.prevStartAt)} ~ ${fmt(ph.leftAt)}`, role:emp.position||'', startAt:ph.prevStartAt, endAt:ph.leftAt, recordedAt:new Date().toISOString() });
           if(typeof setH==='function') setH(empId, h[empId]);
           else { try { localStorage.setItem('hrH', JSON.stringify(h)); } catch(_){} }
           promoted++;
