@@ -342,7 +342,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-card.drag-over{border-color:#5b6cf8 !important; box-shadow:0 0 0 3px rgba(91,108,248,.18) !important; background:#f5f7ff !important;}
 .lv-card-head{display:flex; align-items:center; padding:11px 14px; gap:10px; border-bottom:1px solid #f2f4f8;}
 .lv-store-icon{width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; flex-shrink:0;}
-.lv-store-name { flex:1; font-size:12.5px; font-weight:700; color:#2a2f42; line-height:1.3; word-break:keep-all; }
+.lv-store-name { flex:1; font-size:12.5px; font-weight:700; color:#2a2f42; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .lv-store-region { font-size:10px; color:#aab0be; font-weight:400; }
 .lv-cnt-badge{min-width:24px; height:24px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;}
 .lv-body { padding:10px; min-height:50px; }
@@ -7348,7 +7348,7 @@ function buildCard(storeKey,emps,secKey,accent){
         ${(function(){
           const _url = (typeof getStoreLink==='function') ? getStoreLink(storeKey) : '';
           if(_url){
-            return `<a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>`;
+            return `<a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>`;
           }
           return `<div class="lv-store-name">${nm}</div>`;
         })()}
