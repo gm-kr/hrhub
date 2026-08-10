@@ -2398,6 +2398,7 @@ function buildStoreAliasMap(){
 }
 function cleanupStoreReferences(){
   // STORE CRUD FIX
+  if(typeof EMPS === 'undefined') return; // EMPS 정의 전 호출 방어
   const aliasMap=buildStoreAliasMap();
   const normalizeRef=v=>aliasMap[normalizeStoreName(v)]||v;
   EMPS.forEach(emp=>{
@@ -4342,11 +4343,11 @@ function renderHist(emp){
   const h=gHist(emp) || [];
   // [현재 매장 자동 표시] 재직중 & 현재 매장이 이력에 없으면 진행중 항목 추가 (뷰 전용)
   const cs = (emp && emp.current_store) || '';
-  const skipAuto = !cs || cs === '육아휴직' || /^PU\s/.test(cs);
   const st = (typeof getEmpStatus === 'function') ? getEmpStatus(emp) : (emp && emp.status);
-  const isCurrent = st === 'active' || st === 'returning' || st === 'support' || st === 'transfer';
-  // [간소화] 재직중이면 무조건 진행중 표시 (이력에 그 매장이 있어도 별개 - 옛 근무는 이력, 현재는 진행중)
-  const autoItem = (!skipAuto && isCurrent) ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' } : null;
+  // [최대 완화] 현재 매장이 있고 삭제/퇴사 상태가 아니면 무조건 진행중 표시
+  const autoItem = (cs && st !== 'deleted' && st !== 'leaving' && cs !== '육아휴직' && !/^PU\s/.test(cs))
+    ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' }
+    : null;
 
   // 실제 이력에 원본 인덱스 매핑
   const indexed = h.map((x, realIdx) => ({ x, realIdx }));
@@ -5231,7 +5232,7 @@ window.openP       = openP;
 window.closeP      = closeP;
 window.saveCell    = saveCell;
 window.saveABC     = saveABC;
-window.saveAbcFromTbl = saveAbcFromTbl;
+// window.saveAbcFromTbl removed (function was undefined causing script crash)
 window.saveQual    = saveQual;
 window.saveMemo    = saveMemo;
 window.saveSwitch  = saveSwitch;
@@ -5738,7 +5739,7 @@ window.lvPromotePendingHistory = function(){
       } catch(e){}
     }
   });
-  if(promoted + cleared + updated > 0){
+  if(promoted + cleared > 0){
     try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
     if(promoted > 0 && typeof lvToast==='function'){
       lvToast(`📋 ${promoted}명 근무이력 자동 기록`);
@@ -8708,9 +8709,10 @@ window.fbSetSchedule = async function(data) {
   // [FIREBASE FIRST] 페이지 로드 시 Firebase에서 모든 공유 데이터를 먼저 fetch → localStorage 덮어쓰기
   // Firebase가 source of truth. localStorage는 오프라인 캐시 + 속도 fallback일 뿐.
   try {
+    // 하드코딩: COL_SHARED/COL_STORELIST 상수가 아래에 정의돼 TDZ 오류 발생하므로 문자열 직접 사용
     const [sharedSnap, storeListSnap] = await Promise.all([
-      getDoc(doc(_db, COL_SHARED, 'data')).catch(()=>null),
-      getDoc(doc(_db, COL_STORELIST, 'data')).catch(()=>null)
+      getDoc(doc(_db, 'sharedSettings', 'data')).catch(()=>null),
+      getDoc(doc(_db, 'storeList', 'data')).catch(()=>null)
     ]);
     if(sharedSnap && sharedSnap.exists()){
       const d = sharedSnap.data() || {};
