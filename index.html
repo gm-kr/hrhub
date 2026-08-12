@@ -5934,17 +5934,117 @@ function buildEmpDatalist(){
   });
   document.body.appendChild(dl);
 }
-function lvSetStatus(empId, status){
+// [STATUS AUTO-PROCESS] 예정일 도래 시 자동 처리
+// - joining/transfer + 오늘 <= 예정일 → active 자동 전환
+// - leaving + 오늘 >= 예정일 → 삭제 확인 알림
+window._lvStatusAutoRun = false;
+window.lvProcessStatusDates = function(){
+  if(!window.__fbEdits || typeof EMPS === 'undefined') return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const _fmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const todayStr = _fmt(today);
+  let autoActive = [];
+  let leavingDue = [];
+  EMPS.forEach(emp => {
+    const ed = window.__fbEdits[emp.id] || {};
+    const st = ed.status || emp.status;
+    const dt = ed._statusDate;
+    if(!dt) return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
+    if(st === 'joining' || st === 'transfer'){
+      if(dt <= todayStr){
+        autoActive.push(emp);
+      }
+    } else if(st === 'leaving'){
+      if(dt <= todayStr){
+        leavingDue.push(emp);
+      }
+    }
+  });
+  // 1) joining/transfer 자동 active 전환
+  autoActive.forEach(emp => {
+    emp.status = 'active';
+    if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+    window.__fbEdits[emp.id].status = 'active';
+    delete window.__fbEdits[emp.id]._statusDate;
+    try { if(window.fbSetEdit){ window.fbSetEdit(emp.id, 'status', 'active'); window.fbSetEdit(emp.id, '_statusDate', null); } } catch(_){}
+  });
+  if(autoActive.length){
+    try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+    if(typeof lvToast==='function') lvToast(`✅ ${autoActive.length}명 예정일 도래 → 재직중 전환`);
+  }
+  // 2) leaving 삭제 확인 알림 (한 명씩)
+  if(leavingDue.length && !window._lvLeavingAlertShown){
+    window._lvLeavingAlertShown = true;
+    setTimeout(async () => {
+      for(const emp of leavingDue){
+        const ed = window.__fbEdits[emp.id] || {};
+        const dt = ed._statusDate || '';
+        const ok = await window.openLeavingConfirmModal(emp.name, dt);
+        if(ok){
+          markDeletedEmpId(emp.id);
+          emp.status = 'deleted';
+          if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+          window.__fbEdits[emp.id].status = 'deleted';
+          delete window.__fbEdits[emp.id]._statusDate;
+          try { if(window.fbSetEdit){ window.fbSetEdit(emp.id, 'status', 'deleted'); window.fbSetEdit(emp.id, '_statusDate', null); } } catch(_){}
+        }
+      }
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      if(typeof lvRender==='function') lvRender();
+    }, 500);
+  }
+};
+// 배치현황 진입/렌더 시 자동 실행 (한 번만)
+(function _hookStatusAutoRun(){
+  const origLvRender = window.lvRender;
+  if(typeof origLvRender === 'function' && !origLvRender._statusHooked){
+    window.lvRender = function(){
+      if(!window._lvStatusAutoRun){
+        window._lvStatusAutoRun = true;
+        try { window.lvProcessStatusDates(); } catch(_){}
+      }
+      return origLvRender.apply(this, arguments);
+    };
+    window.lvRender._statusHooked = true;
+  } else {
+    // lvRender가 아직 정의 안 됐으면 잠시 후 재시도
+    setTimeout(_hookStatusAutoRun, 300);
+  }
+})();
+
+async function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
+  // [STATUS DATE] joining/transfer/leaving 지정 시 달력 모달로 예정일 입력
+  const needsDate = (status==='joining' || status==='transfer' || status==='leaving');
+  let statusDate = null;
+  if(needsDate){
+    hideCtxMenu();
+    const cur = (window.__fbEdits && window.__fbEdits[empId] && window.__fbEdits[empId]._statusDate) || '';
+    const input = await window.openStatusDateModal(emp.name, status, cur);
+    if(input === null){ return; }  // 취소
+    statusDate = input || null;
+  }
   emp.status=status;
   if(status==='deleted') markDeletedEmpId(empId); else unmarkDeletedEmpId(empId);
   lvPersistEdit(empId, 'status', status);
   if(window.fbSetEdit) window.fbSetEdit(empId, 'status', status);
-  /* [FIX 1] 상태 변경 즉시 캐시 저장 보장 */
+  // 예정일 저장 (또는 제거)
+  if(needsDate){
+    if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
+    window.__fbEdits[empId]._statusDate = statusDate;
+    if(window.fbSetEdit) window.fbSetEdit(empId, '_statusDate', statusDate);
+  } else {
+    if(window.__fbEdits[empId] && window.__fbEdits[empId]._statusDate){
+      delete window.__fbEdits[empId]._statusDate;
+      if(window.fbSetEdit) window.fbSetEdit(empId, '_statusDate', null);
+    }
+  }
   try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e){}
   syncScheduleForEmp(emp, status);
   hideCtxMenu(); showSaved();
-  lvToast('💾 '+emp.name+' → '+STATUS_CFG[status].label);
+  const dateSuffix = statusDate ? ` (${statusDate})` : '';
+  lvToast('💾 '+emp.name+' → '+STATUS_CFG[status].label + dateSuffix);
   const _sc = document.getElementById('lv-scroll');
   const _st = _sc ? _sc.scrollTop : 0;
   lvRender(); lvRenderSB(); ppRender();
@@ -10015,6 +10115,140 @@ window.lvPTPurgeExpired = function(){
 // 페이지 로드 시 한번 실행 + 1시간마다 체크
 setTimeout(()=>{ if(window.lvPTPurgeExpired) window.lvPTPurgeExpired(); }, 1500);
 setInterval(()=>{ if(window.lvPTPurgeExpired) window.lvPTPurgeExpired(); }, 60*60*1000);
+</script>
+
+
+<!-- 예정일 입력 모달 -->
+<style>
+#status-date-modal, #leaving-confirm-modal {
+  position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);
+  display:none;align-items:center;justify-content:center;
+  font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;
+}
+#status-date-modal.open, #leaving-confirm-modal.open { display:flex; }
+.sdm-box, .lcm-box {
+  background:#fff;border-radius:14px;padding:24px 26px;
+  width:360px;max-width:calc(100vw - 32px);
+  box-shadow:0 24px 60px rgba(0,0,0,.18),0 6px 16px rgba(0,0,0,.08);
+  animation:sdmIn .18s ease-out;
+}
+@keyframes sdmIn { from{transform:scale(.96);opacity:0} to{transform:scale(1);opacity:1} }
+.sdm-title, .lcm-title { font-size:16px;font-weight:800;color:#1a1d23;margin-bottom:4px; display:flex;align-items:center;gap:6px; }
+.sdm-sub, .lcm-sub { font-size:12.5px;color:#7a8299;margin-bottom:16px;line-height:1.5; }
+.sdm-emp, .lcm-emp {
+  background:#f7f8ff;border:1px solid #e5e8fa;border-radius:8px;
+  padding:10px 12px;margin-bottom:16px;font-size:13px;color:#3a4053;
+}
+.sdm-emp strong, .lcm-emp strong { color:#5b6cf8;font-weight:700; }
+.sdm-input {
+  width:100%;padding:10px 12px;border:1.5px solid #dfe3ee;border-radius:8px;
+  font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;
+}
+.sdm-input:focus { border-color:#5b6cf8; }
+.sdm-hint { font-size:11px;color:#9aa0b3;margin-top:6px; }
+.sdm-btns, .lcm-btns { display:flex;gap:8px;margin-top:20px;justify-content:flex-end; }
+.sdm-btn, .lcm-btn {
+  padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;
+  border:1px solid #dfe3ee;background:#fff;color:#3a4053;cursor:pointer;
+  transition:all .15s;
+}
+.sdm-btn:hover, .lcm-btn:hover { border-color:#b0b7c9; }
+.sdm-btn.primary, .lcm-btn.primary {
+  background:#5b6cf8;color:#fff;border-color:#5b6cf8;
+}
+.sdm-btn.primary:hover, .lcm-btn.primary:hover { background:#4c5ce8; }
+.lcm-btn.danger {
+  background:#e84040;color:#fff;border-color:#e84040;
+}
+.lcm-btn.danger:hover { background:#d33030; }
+.lcm-warn {
+  background:#fff5f5;border:1px solid #fecaca;border-radius:8px;
+  padding:10px 12px;margin-bottom:14px;font-size:12px;color:#c72020;
+  display:flex;gap:8px;align-items:flex-start;
+}
+</style>
+<div id="status-date-modal">
+  <div class="sdm-box">
+    <div class="sdm-title" id="sdm-title">📅 예정일 지정</div>
+    <div class="sdm-sub" id="sdm-sub">해당 날짜가 도래하면 자동으로 처리됩니다.</div>
+    <div class="sdm-emp" id="sdm-emp"></div>
+    <input type="date" id="sdm-input" class="sdm-input">
+    <div class="sdm-hint">비우고 저장하면 예정일 없이 상태만 변경됩니다.</div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeSdm(null)">취소</button>
+      <button class="sdm-btn primary" onclick="submitSdm()">저장</button>
+    </div>
+  </div>
+</div>
+<div id="leaving-confirm-modal">
+  <div class="lcm-box">
+    <div class="lcm-title">⚠️ 퇴사예정 도래</div>
+    <div class="lcm-emp" id="lcm-emp"></div>
+    <div class="lcm-warn">
+      <span>ℹ️</span>
+      <span>이 직원의 퇴사 예정일이 오늘 이후입니다. 지금 삭제하면 배치현황에서 사라지고 이후 근무 기록도 남지 않습니다.</span>
+    </div>
+    <div class="lcm-btns">
+      <button class="lcm-btn" onclick="closeLcm(false)">나중에</button>
+      <button class="lcm-btn danger" onclick="closeLcm(true)">🗑 삭제</button>
+    </div>
+  </div>
+</div>
+<script>
+// [STATUS DATE MODAL] Promise 기반 예정일 입력
+let _sdmResolve = null;
+function openStatusDateModal(empName, statusKey, currentDate){
+  return new Promise(resolve => {
+    _sdmResolve = resolve;
+    const labelMap = { joining:'입사예정일', transfer:'이동예정일', leaving:'퇴사예정일' };
+    const titleMap = { joining:'📅 입사예정일 지정', transfer:'✈️ 이동예정일 지정', leaving:'🚪 퇴사예정일 지정' };
+    const subMap = {
+      joining:'예정일이 도래하면 자동으로 재직중 상태로 전환됩니다.',
+      transfer:'예정일이 도래하면 자동으로 재직중 상태로 전환됩니다.',
+      leaving:'예정일이 도래하면 배치현황 진입 시 삭제 확인이 뜹니다.'
+    };
+    document.getElementById('sdm-title').textContent = titleMap[statusKey] || '📅 예정일 지정';
+    document.getElementById('sdm-sub').textContent  = subMap[statusKey] || '';
+    document.getElementById('sdm-emp').innerHTML = `<strong>${empName}</strong> · ${labelMap[statusKey] || '예정일'}`;
+    const inp = document.getElementById('sdm-input');
+    inp.value = currentDate || new Date().toISOString().slice(0,10);
+    document.getElementById('status-date-modal').classList.add('open');
+    setTimeout(() => inp.focus(), 50);
+  });
+}
+function submitSdm(){
+  const v = document.getElementById('sdm-input').value.trim();
+  document.getElementById('status-date-modal').classList.remove('open');
+  if(_sdmResolve){ _sdmResolve(v || null); _sdmResolve = null; }
+}
+function closeSdm(val){
+  document.getElementById('status-date-modal').classList.remove('open');
+  if(_sdmResolve){ _sdmResolve(val); _sdmResolve = null; }
+}
+window.openStatusDateModal = openStatusDateModal;
+
+// [LEAVING CONFIRM MODAL] Promise 기반 퇴사 삭제 확인
+let _lcmResolve = null;
+function openLeavingConfirmModal(empName, dateStr){
+  return new Promise(resolve => {
+    _lcmResolve = resolve;
+    document.getElementById('lcm-emp').innerHTML = `<strong>${empName}</strong>${dateStr?` · 퇴사예정일 <span style="color:#e84040;font-weight:700">${dateStr}</span>`:''}`;
+    document.getElementById('leaving-confirm-modal').classList.add('open');
+  });
+}
+function closeLcm(val){
+  document.getElementById('leaving-confirm-modal').classList.remove('open');
+  if(_lcmResolve){ _lcmResolve(val); _lcmResolve = null; }
+}
+window.openLeavingConfirmModal = openLeavingConfirmModal;
+
+// ESC 키로 닫기
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('status-date-modal')?.classList.contains('open')) closeSdm(null);
+    if(document.getElementById('leaving-confirm-modal')?.classList.contains('open')) closeLcm(false);
+  }
+});
 </script>
 
 </body>
