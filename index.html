@@ -3111,6 +3111,7 @@ window.openMoveChannel = openMoveChannel;
           <div class="pdname" id="pdname"></div>
           <span id="pdempno" style="font-size:13px;font-weight:600;color:#5b6cf8;cursor:pointer" title="사번 편집" onclick="editEmpNoInline()"></span>
           <span id="pdgender" style="cursor:pointer" title="성별 편집" onclick="editGenderInline()"></span>
+          <span id="pdintern" style="cursor:pointer" title="인턴 계약 편집" onclick="editInternContractInline()"></span>
         </div>
         <div class="pdpos" id="pdpos"></div>
         <div class="pdtags" id="pdtags"></div>
@@ -4145,6 +4146,30 @@ async function editGenderInline(){
 }
 window.editEmpNoInline = editEmpNoInline;
 window.editGenderInline = editGenderInline;
+async function editInternContractInline(){
+  if(!curEmp) return;
+  const ed = (window.__fbEdits && window.__fbEdits[curEmp.id]) || {};
+  const contract = ed._internContract || {};
+  const curEnd = contract.endAt || '';
+  const res = await window.openInternExtendModal(curEmp.name, curEnd || new Date().toISOString().slice(0,10), {
+    mode: 'edit',
+    plannedResult: contract.plannedResult || ''
+  });
+  if(!res || !res.endAt) return;
+  const startAt = contract.startAt || new Date().toISOString().slice(0,10);
+  const newContract = {
+    ...contract,
+    startAt,
+    endAt: res.endAt,
+    extensions: contract.extensions || [],
+    plannedResult: res.plannedResult || ''
+  };
+  if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
+  window.__fbEdits[curEmp.id]._internContract = newContract;
+  try { if(window.fbSetEdit) window.fbSetEdit(curEmp.id, '_internContract', newContract); } catch(_){}
+  openP(curEmp);
+}
+window.editInternContractInline = editInternContractInline;
 
 function openP(emp){
   curEmp=emp;
@@ -4164,6 +4189,25 @@ function openP(emp){
     if(_gender === '남') _pdgenEl.innerHTML = '<span style="background:#e0eaff;color:#2563eb;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♂ 남</span>';
     else if(_gender === '여') _pdgenEl.innerHTML = '<span style="background:#fce7f3;color:#be185d;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♀ 여</span>';
     else _pdgenEl.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 성별</span>';
+  }
+  // 인턴 계약기간 배지
+  const _pdinternEl = document.getElementById('pdintern');
+  if(_pdinternEl){
+    const contract = _ed._internContract;
+    const pos = _ed.position || emp.position || '';
+    const isIntern = pos.includes('인턴');
+    if(isIntern && contract && contract.endAt){
+      const exts = (contract.extensions && contract.extensions.length) ? ` · 연장${contract.extensions.length}` : '';
+      const planned = contract.plannedResult || '';
+      let plannedBadge = '';
+      if(planned === '합격') plannedBadge = ' <span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:10px">합격예정</span>';
+      else if(planned === '불합격') plannedBadge = ' <span style="background:#fecaca;color:#991b1b;padding:1px 6px;border-radius:8px;font-size:10px">불합격예정</span>';
+      _pdinternEl.innerHTML = `<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px" title="시작 ${contract.startAt}${exts}">📋 ~${contract.endAt}</span>${plannedBadge}`;
+    } else if(isIntern){
+      _pdinternEl.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 계약기간</span>';
+    } else {
+      _pdinternEl.innerHTML = '';
+    }
   }
   document.getElementById('pdpos').textContent=emp.position||'';
   document.getElementById('pdtags').innerHTML=ctag(emp.channel)+` <span class="tag tgg">${emp.brand}</span><span class="tag tgg">${emp.tenure||''}</span>`;
@@ -7302,7 +7346,9 @@ function buildCard(storeKey,emps,secKey,accent){
       const av=emp.has_photo&&emp.photo_b64
         ?`<div class="lv-avatar"><img src="${emp.photo_b64}" alt="${emp.name}"></div>`
         :`<div class="lv-avatar" style="background:${ac}">${emp.name.slice(-1)}</div>`;
-      const chipCls=(st!=='active'?` lv-chip-${st}`:'')+(memo?' has-memo':'');
+      const _internContract = (window.__fbEdits && window.__fbEdits[emp.id] && window.__fbEdits[emp.id]._internContract) || null;
+      const _plannedFail = _internContract && _internContract.plannedResult === '불합격';
+      const chipCls=(st!=='active'?` lv-chip-${st}`:'')+(memo?' has-memo':'')+(_plannedFail?' lv-chip-planned-fail':'');
       // [TRANSFER] 이동예정 칩에는 출발 매장 정보 같이 표시
       let badge;
       if(st==='transfer'){
@@ -7732,6 +7778,17 @@ window.doAddEmp = async function(){
     });
     window.fbSetEdit(newId, 'status', 'active');
     window.fbSetEdit(newId, '_isNewEmp', true);
+    // 인턴 계약기간 저장
+    if(newEmp.position === '인턴'){
+      const s = (document.getElementById('ae-intern-start')?.value||'').trim();
+      const e = (document.getElementById('ae-intern-end')?.value||'').trim();
+      if(s && e){
+        const contract = { startAt:s, endAt:e, extensions:[] };
+        if(!window.__fbEdits[newId]) window.__fbEdits[newId] = {};
+        window.__fbEdits[newId]._internContract = contract;
+        window.fbSetEdit(newId, '_internContract', contract);
+      }
+    }
   }
   const l=getList(); renderBar(l); renderTbl(l);
   saveData();
@@ -7942,7 +7999,7 @@ window.SB_DATA = SB_DATA;
       </div>
       <div class="ae-field">
         <label>직책</label>
-        <select id="ae-position">
+        <select id="ae-position" onchange="aeToggleInternFields(this.value)">
           <option value="매니저">매니저</option>
           <option value="부매니저">부매니저</option>
           <option value="팀원" selected>팀원</option>
@@ -7980,6 +8037,15 @@ window.SB_DATA = SB_DATA;
           <option value="여">♀ 여</option>
           <option value="남">♂ 남</option>
         </select>
+      </div>
+      <div class="ae-field ae-full" id="ae-intern-contract-wrap" style="display:none">
+        <label>📋 인턴 계약기간</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="date" id="ae-intern-start" style="flex:1" title="시작">
+          <span style="color:var(--t3)">~</span>
+          <input type="date" id="ae-intern-end" style="flex:1" title="종료">
+        </div>
+        <div style="font-size:11px;color:#7a8299;margin-top:4px">종료일이 되면 합격/불합격/연장 확인 팝업이 자동으로 뜹니다.</div>
       </div>
       <div class="ae-field ae-full">
         <label>언어</label>
@@ -9839,6 +9905,12 @@ window.fbSetPT = async function(data) {
 #auth-logout-mini { position: fixed; top: 8px; right: 12px; z-index: 9999; font-size: 11px; color: #aab0be; background: rgba(255,255,255,.8); border: 1px solid #eaecf2; border-radius: 12px; padding: 4px 10px; cursor: pointer; display: none; }
 #auth-logout-mini:hover { color: #e84040; border-color: #e84040; }
 #auth-logout-mini.show { display: inline-block; }
+
+/* [인턴 불합격 예정] 빨간 테두리 강조 */
+.lv-chip.lv-chip-planned-fail {
+  border: 2px solid #e84040 !important;
+  background: #fff5f5 !important;
+}
 </style>
 <div id="auth-gate">
   <div class="auth-card">
@@ -10697,6 +10769,321 @@ window.EMP_SEED_MAP = {
   }
 })();
 </script>
+
+
+<script>
+// [INTERN CONTRACT] 인턴 계약기간 시스템
+window.aeToggleInternFields = function(position){
+  const wrap = document.getElementById('ae-intern-contract-wrap');
+  if(!wrap) return;
+  const isIntern = position === '인턴';
+  wrap.style.display = isIntern ? 'block' : 'none';
+  if(isIntern){
+    const s = document.getElementById('ae-intern-start');
+    const e = document.getElementById('ae-intern-end');
+    if(s && !s.value){
+      const today = new Date();
+      const yr=today.getFullYear(), mo=String(today.getMonth()+1).padStart(2,'0'), dy=String(today.getDate()).padStart(2,'0');
+      s.value = `${yr}-${mo}-${dy}`;
+      // 기본 3개월 후 종료
+      const end = new Date(today); end.setMonth(end.getMonth()+3);
+      const eyr=end.getFullYear(), emo=String(end.getMonth()+1).padStart(2,'0'), edy=String(end.getDate()).padStart(2,'0');
+      if(e) e.value = `${eyr}-${emo}-${edy}`;
+    }
+  }
+};
+
+// [INTERN AUTO-CHECK] 배치현황 진입 시 인턴 계약 만료 체크
+window._internCheckRan = false;
+window.checkInternContracts = async function(){
+  if(!window.__fbEdits || typeof EMPS === 'undefined') return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const dueList = [];
+  EMPS.forEach(emp => {
+    const ed = window.__fbEdits[emp.id] || {};
+    const contract = ed._internContract;
+    if(!contract || !contract.endAt || contract.result) return;
+    const pos = ed.position || emp.position || '';
+    if(!pos.includes('인턴')) return;
+    if(contract.endAt <= todayStr){
+      dueList.push({emp, contract});
+    }
+  });
+  for(const {emp, contract} of dueList){
+    let result = null;
+    // 사전 결정된 결과 → 확인 모달만 뜸 (자동 처리 확인)
+    if(contract.plannedResult){
+      const ok = await window.openInternAutoConfirmModal(emp.name, contract, contract.plannedResult);
+      if(!ok) continue;  // 나중에
+      result = contract.plannedResult;
+    } else {
+      // 사전 결정 없음 → 결과 선택 모달
+      result = await window.openInternResultModal(emp.name, contract);
+    }
+    if(result === null) continue;
+    if(result === '연장'){
+      const res = await window.openInternExtendModal(emp.name, contract.endAt, {mode:'extend'});
+      const newEnd = res && res.endAt;
+      if(newEnd){
+        const exts = Array.isArray(contract.extensions) ? contract.extensions : [];
+        exts.push({ startAt: contract.endAt, endAt: newEnd });
+        const newContract = { ...contract, endAt: newEnd, extensions: exts, plannedResult: '' };
+        window.__fbEdits[emp.id]._internContract = newContract;
+        try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_internContract', newContract); } catch(_){}
+        if(typeof lvToast==='function') lvToast(`📋 ${emp.name} 인턴 연장 · ~${newEnd}`);
+      }
+    } else if(result === '합격'){
+      // 직책을 팀원으로, 인턴 이력 근무매장에 남기고, contract 완료
+      const oldPos = emp.position;
+      emp.position = '팀원';
+      const newContract = { ...contract, result:'합격', completedAt: new Date().toISOString() };
+      if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+      window.__fbEdits[emp.id]._internContract = newContract;
+      window.__fbEdits[emp.id].position = '팀원';
+      try {
+        if(window.fbSetEdit){
+          window.fbSetEdit(emp.id, '_internContract', newContract);
+          window.fbSetEdit(emp.id, 'position', '팀원');
+        }
+      } catch(_){}
+      // 인턴 근무 이력 저장
+      try {
+        const h = (typeof getH==='function') ? getH() : {};
+        if(!Array.isArray(h[emp.id])) h[emp.id] = [];
+        const startYM = (contract.startAt||'').slice(0,7).replace('-','.');
+        const endYM = todayStr.slice(0,7).replace('-','.');
+        const extInfo = (contract.extensions && contract.extensions.length) ? ` (연장 ${contract.extensions.length}회)` : '';
+        h[emp.id].push({
+          store: emp.current_store || '',
+          period: `${startYM} ~ ${endYM} 인턴${extInfo}`,
+          role: '인턴',
+          startAt: contract.startAt,
+          endAt: todayStr,
+          recordedAt: new Date().toISOString(),
+          _internHist: true
+        });
+        if(typeof setH==='function') setH(emp.id, h[emp.id]);
+      } catch(_){}
+      if(typeof lvToast==='function') lvToast(`🎉 ${emp.name} 인턴 → 팀원 승격`);
+    } else if(result === '불합격'){
+      // 자동 삭제
+      markDeletedEmpId(emp.id);
+      emp.status = 'deleted';
+      if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+      window.__fbEdits[emp.id].status = 'deleted';
+      const newContract = { ...contract, result:'불합격', completedAt: new Date().toISOString() };
+      window.__fbEdits[emp.id]._internContract = newContract;
+      try {
+        if(window.fbSetEdit){
+          window.fbSetEdit(emp.id, 'status', 'deleted');
+          window.fbSetEdit(emp.id, '_internContract', newContract);
+        }
+      } catch(_){}
+      if(typeof lvToast==='function') lvToast(`❌ ${emp.name} 불합격 → 삭제`);
+    }
+  }
+  try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+  if(dueList.length && typeof lvRender==='function') lvRender();
+};
+
+// 배치현황 진입 시 자동 실행 (한 번만)
+(function _hookInternCheck(){
+  const orig = window.lvRender;
+  if(typeof orig === 'function' && !orig._internHooked){
+    window.lvRender = function(){
+      if(!window._internCheckRan){
+        window._internCheckRan = true;
+        setTimeout(() => { try { window.checkInternContracts(); } catch(_){} }, 800);
+      }
+      return orig.apply(this, arguments);
+    };
+    window.lvRender._internHooked = true;
+  } else {
+    setTimeout(_hookInternCheck, 400);
+  }
+})();
+</script>
+
+<!-- 인턴 사전 결정 자동 처리 확인 모달 -->
+<div id="intern-auto-confirm-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
+  <div class="sdm-box">
+    <div class="sdm-title" id="iac-title">📋 인턴 계약 만료</div>
+    <div class="sdm-sub" id="iac-sub">사전 결정된 결과대로 처리할까요?</div>
+    <div class="sdm-emp" id="iac-emp"></div>
+    <div id="iac-action-desc" style="padding:10px 12px;border-radius:8px;margin-bottom:14px;font-size:13px"></div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeIac(false)">나중에</button>
+      <button class="sdm-btn primary" id="iac-confirm-btn" onclick="closeIac(true)">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+let _iacResolve = null;
+window.openInternAutoConfirmModal = function(name, contract, plannedResult){
+  return new Promise(resolve => {
+    _iacResolve = resolve;
+    const emoji = plannedResult === '합격' ? '🎉' : plannedResult === '불합격' ? '❌' : '📋';
+    const label = plannedResult === '합격' ? '팀원으로 자동 승격' : plannedResult === '불합격' ? '자동 삭제' : '처리';
+    document.getElementById('iac-title').textContent = `${emoji} 인턴 계약 만료 (사전 결정)`;
+    document.getElementById('iac-sub').textContent = `계약 종료일이 도래했습니다. 사전 결정된 결과대로 처리할까요?`;
+    document.getElementById('iac-emp').innerHTML = `<strong>${name}</strong> · 종료일 ${contract.endAt||''}`;
+    const desc = document.getElementById('iac-action-desc');
+    const btn = document.getElementById('iac-confirm-btn');
+    if(plannedResult === '합격'){
+      desc.style.background = '#d1fae5';
+      desc.style.color = '#065f46';
+      desc.innerHTML = `🎉 <strong>합격</strong> 예정 → 직책이 <strong>팀원</strong>으로 자동 변경되고 인턴 기간이 근무이력에 저장됩니다.`;
+      btn.textContent = '팀원으로 승격';
+      btn.className = 'sdm-btn primary';
+      btn.style.background = '#2daa72';
+      btn.style.borderColor = '#2daa72';
+    } else if(plannedResult === '불합격'){
+      desc.style.background = '#fef2f2';
+      desc.style.color = '#991b1b';
+      desc.innerHTML = `❌ <strong>불합격</strong> 예정 → 이 직원이 <strong>삭제</strong>됩니다. 되돌릴 수 없습니다.`;
+      btn.textContent = '삭제';
+      btn.className = 'sdm-btn primary';
+      btn.style.background = '#e84040';
+      btn.style.borderColor = '#e84040';
+    }
+    document.getElementById('intern-auto-confirm-modal').style.display = 'flex';
+  });
+};
+window.closeIac = function(v){
+  document.getElementById('intern-auto-confirm-modal').style.display = 'none';
+  if(_iacResolve){ _iacResolve(v); _iacResolve = null; }
+};
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && document.getElementById('intern-auto-confirm-modal')?.style.display === 'flex') closeIac(false);
+});
+document.getElementById('intern-auto-confirm-modal')?.addEventListener('click', e => { if(e.target.id==='intern-auto-confirm-modal') closeIac(false); });
+</script>
+
+<!-- 인턴 결과 선택 모달 -->
+<div id="intern-result-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
+  <div class="sdm-box" style="width:400px;max-width:calc(100vw - 32px)">
+    <div class="sdm-title">📋 인턴 계약 만료</div>
+    <div class="sdm-sub">인턴 계약 종료일이 도래했습니다. 결과를 선택해주세요.</div>
+    <div class="sdm-emp" id="irm-emp"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0">
+      <button onclick="submitIrm('합격')" style="padding:14px;border-radius:10px;border:1.5px solid #d1fae5;background:#fff;color:#065f46;cursor:pointer;font-size:14px;font-weight:700;text-align:left;transition:all .15s" onmouseover="this.style.borderColor='#2daa72';this.style.background='#f0fdf4'" onmouseout="this.style.borderColor='#d1fae5';this.style.background='#fff'">
+        🎉 <span style="margin-left:6px">합격 (팀원으로 승격)</span>
+      </button>
+      <button onclick="submitIrm('연장')" style="padding:14px;border-radius:10px;border:1.5px solid #dbeafe;background:#fff;color:#1e40af;cursor:pointer;font-size:14px;font-weight:700;text-align:left;transition:all .15s" onmouseover="this.style.borderColor='#3b82f6';this.style.background='#eff6ff'" onmouseout="this.style.borderColor='#dbeafe';this.style.background='#fff'">
+        ⏰ <span style="margin-left:6px">연장 (인턴 기간 연장)</span>
+      </button>
+      <button onclick="submitIrm('불합격')" style="padding:14px;border-radius:10px;border:1.5px solid #fecaca;background:#fff;color:#991b1b;cursor:pointer;font-size:14px;font-weight:700;text-align:left;transition:all .15s" onmouseover="this.style.borderColor='#e84040';this.style.background='#fef2f2'" onmouseout="this.style.borderColor='#fecaca';this.style.background='#fff'">
+        ❌ <span style="margin-left:6px">불합격 (자동 삭제)</span>
+      </button>
+    </div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeIrm()">나중에</button>
+    </div>
+  </div>
+</div>
+
+<!-- 인턴 계약 편집 모달 (종료일 + 사전 결과 결정) -->
+<div id="intern-extend-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
+  <div class="sdm-box" style="width:420px;max-width:calc(100vw - 32px)">
+    <div class="sdm-title" id="iem-title">📋 인턴 계약 편집</div>
+    <div class="sdm-sub" id="iem-sub">종료일에 자동으로 결과가 처리됩니다.</div>
+    <div class="sdm-emp" id="iem-emp"></div>
+    <label style="display:block;margin-bottom:6px;font-size:12px;color:#5b6378;font-weight:600">종료일</label>
+    <input type="date" id="iem-date" class="sdm-input" style="margin-bottom:14px">
+    <label style="display:block;margin-bottom:6px;font-size:12px;color:#5b6378;font-weight:600">결과 사전 결정 (선택)</label>
+    <div style="display:flex;flex-direction:column;gap:6px" id="iem-result-choices">
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border,#eaecf2);border-radius:8px;cursor:pointer;font-size:13px" data-val="">
+        <input type="radio" name="iem-result" value=""> <span>결과 미정 (종료일에 확인 팝업)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d1fae5;border-radius:8px;cursor:pointer;font-size:13px" data-val="합격">
+        <input type="radio" name="iem-result" value="합격"> <span>🎉 합격 예정 → 종료일에 팀원 자동 승격</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;font-size:13px" data-val="불합격">
+        <input type="radio" name="iem-result" value="불합격"> <span>❌ 불합격 예정 → 종료일에 자동 삭제</span>
+      </label>
+    </div>
+    <div class="sdm-hint">사전 결정 없이 저장하면 종료일에 팝업이 떠서 결과를 선택합니다.</div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeIem(null)">취소</button>
+      <button class="sdm-btn primary" onclick="submitIem()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _irmResolve = null;
+window.openInternResultModal = function(name, contract){
+  return new Promise(resolve => {
+    _irmResolve = resolve;
+    const startAt = contract.startAt || '';
+    const endAt = contract.endAt || '';
+    const exts = (contract.extensions && contract.extensions.length) ? ` · 연장 ${contract.extensions.length}회` : '';
+    document.getElementById('irm-emp').innerHTML = `<strong>${name}</strong> · 계약기간 ${startAt} ~ <span style="color:#e84040;font-weight:700">${endAt}</span>${exts}`;
+    document.getElementById('intern-result-modal').style.display = 'flex';
+  });
+};
+window.submitIrm = function(val){
+  document.getElementById('intern-result-modal').style.display = 'none';
+  if(_irmResolve){ _irmResolve(val); _irmResolve = null; }
+};
+window.closeIrm = function(){
+  document.getElementById('intern-result-modal').style.display = 'none';
+  if(_irmResolve){ _irmResolve(null); _irmResolve = null; }
+};
+
+let _iemResolve = null;
+// mode: 'extend' (연장 - 종료일만) 또는 'edit' (편집 - 종료일 + 사전 결정)
+window.openInternExtendModal = function(name, currentEnd, opts){
+  return new Promise(resolve => {
+    _iemResolve = resolve;
+    opts = opts || {};
+    const mode = opts.mode || 'extend';
+    document.getElementById('iem-emp').innerHTML = `<strong>${name}</strong> · 현재 종료일 ${currentEnd || '없음'}`;
+    document.getElementById('iem-title').textContent = mode === 'edit' ? '📋 인턴 계약 편집' : '⏰ 인턴 기간 연장';
+    document.getElementById('iem-sub').textContent = mode === 'edit' ? '종료일 및 사전 결과를 지정할 수 있습니다.' : '연장 종료일이 도래하면 다시 합격/불합격 확인이 뜹니다.';
+    // 결과 선택은 편집 모드에서만
+    document.getElementById('iem-result-choices').style.display = (mode === 'edit') ? 'flex' : 'none';
+    const inp = document.getElementById('iem-date');
+    if(currentEnd){
+      try {
+        const d = new Date(currentEnd);
+        if(mode === 'extend') d.setMonth(d.getMonth() + 3);
+        inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      } catch(_){ inp.value = currentEnd; }
+    } else {
+      inp.value = new Date().toISOString().slice(0,10);
+    }
+    // 결과 라디오 초기화 (opts.plannedResult 있으면 선택)
+    const radios = document.querySelectorAll('input[name="iem-result"]');
+    radios.forEach(r => { r.checked = (r.value === (opts.plannedResult || '')); });
+    document.getElementById('intern-extend-modal').style.display = 'flex';
+    setTimeout(() => inp.focus(), 50);
+  });
+};
+window.submitIem = function(){
+  const v = document.getElementById('iem-date').value.trim();
+  if(!v){ alert('종료일을 선택해주세요.'); return; }
+  const resultRadio = document.querySelector('input[name="iem-result"]:checked');
+  const plannedResult = resultRadio ? resultRadio.value : '';
+  document.getElementById('intern-extend-modal').style.display = 'none';
+  if(_iemResolve){ _iemResolve({ endAt: v, plannedResult }); _iemResolve = null; }
+};
+window.closeIem = function(v){
+  document.getElementById('intern-extend-modal').style.display = 'none';
+  if(_iemResolve){ _iemResolve(v); _iemResolve = null; }
+};
+// ESC/배경
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('intern-result-modal')?.style.display === 'flex') closeIrm();
+    if(document.getElementById('intern-extend-modal')?.style.display === 'flex') closeIem(null);
+  }
+});
+document.getElementById('intern-result-modal')?.addEventListener('click', e => { if(e.target.id==='intern-result-modal') closeIrm(); });
+document.getElementById('intern-extend-modal')?.addEventListener('click', e => { if(e.target.id==='intern-extend-modal') closeIem(null); });
+</script>
+
 
 </body>
 </html>
