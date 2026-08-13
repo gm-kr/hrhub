@@ -4150,19 +4150,20 @@ async function editInternContractInline(){
   if(!curEmp) return;
   const ed = (window.__fbEdits && window.__fbEdits[curEmp.id]) || {};
   const contract = ed._internContract || {};
-  const curEnd = contract.endAt || '';
-  const res = await window.openInternExtendModal(curEmp.name, curEnd || new Date().toISOString().slice(0,10), {
+  const res = await window.openInternExtendModal(curEmp.name, contract.endAt || '', {
     mode: 'edit',
-    plannedResult: contract.plannedResult || ''
+    plannedResult: contract.plannedResult || '',
+    startAt: contract.startAt || ''
   });
   if(!res || !res.endAt) return;
-  const startAt = contract.startAt || new Date().toISOString().slice(0,10);
+  const startAt = res.startAt || contract.startAt || new Date().toISOString().slice(0,10);
   const newContract = {
     ...contract,
     startAt,
     endAt: res.endAt,
     extensions: contract.extensions || [],
-    plannedResult: res.plannedResult || ''
+    plannedResult: res.plannedResult || '',
+    plannedExtendEnd: res.plannedExtendEnd || ''
   };
   if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
   window.__fbEdits[curEmp.id]._internContract = newContract;
@@ -4201,6 +4202,7 @@ function openP(emp){
       const planned = contract.plannedResult || '';
       let plannedBadge = '';
       if(planned === '합격') plannedBadge = ' <span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:10px">합격예정</span>';
+      else if(planned === '연장') plannedBadge = ' <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:10px">연장예정</span>';
       else if(planned === '불합격') plannedBadge = ' <span style="background:#fecaca;color:#991b1b;padding:1px 6px;border-radius:8px;font-size:10px">불합격예정</span>';
       _pdinternEl.innerHTML = `<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px" title="시작 ${contract.startAt}${exts}">📋 ~${contract.endAt}</span>${plannedBadge}`;
     } else if(isIntern){
@@ -10785,8 +10787,8 @@ window.aeToggleInternFields = function(position){
       const today = new Date();
       const yr=today.getFullYear(), mo=String(today.getMonth()+1).padStart(2,'0'), dy=String(today.getDate()).padStart(2,'0');
       s.value = `${yr}-${mo}-${dy}`;
-      // 기본 3개월 후 종료
-      const end = new Date(today); end.setMonth(end.getMonth()+3);
+      // 기본 2개월 후 종료
+      const end = new Date(today); end.setMonth(end.getMonth()+2);
       const eyr=end.getFullYear(), emo=String(end.getMonth()+1).padStart(2,'0'), edy=String(end.getDate()).padStart(2,'0');
       if(e) e.value = `${eyr}-${emo}-${edy}`;
     }
@@ -10811,27 +10813,18 @@ window.checkInternContracts = async function(){
     }
   });
   for(const {emp, contract} of dueList){
-    let result = null;
-    // 사전 결정된 결과 → 확인 모달만 뜸 (자동 처리 확인)
-    if(contract.plannedResult){
-      const ok = await window.openInternAutoConfirmModal(emp.name, contract, contract.plannedResult);
-      if(!ok) continue;  // 나중에
-      result = contract.plannedResult;
-    } else {
-      // 사전 결정 없음 → 결과 선택 모달
-      result = await window.openInternResultModal(emp.name, contract);
-    }
-    if(result === null) continue;
+    // 사전 결정 없으면 아무것도 안 함 (사용자가 수기로 편집)
+    if(!contract.plannedResult) continue;
+    const result = contract.plannedResult;
     if(result === '연장'){
-      const res = await window.openInternExtendModal(emp.name, contract.endAt, {mode:'extend'});
-      const newEnd = res && res.endAt;
+      const newEnd = contract.plannedExtendEnd || '';
       if(newEnd){
         const exts = Array.isArray(contract.extensions) ? contract.extensions : [];
         exts.push({ startAt: contract.endAt, endAt: newEnd });
-        const newContract = { ...contract, endAt: newEnd, extensions: exts, plannedResult: '' };
+        const newContract = { ...contract, endAt: newEnd, extensions: exts, plannedResult: '', plannedExtendEnd: '' };
         window.__fbEdits[emp.id]._internContract = newContract;
         try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_internContract', newContract); } catch(_){}
-        if(typeof lvToast==='function') lvToast(`📋 ${emp.name} 인턴 연장 · ~${newEnd}`);
+        if(typeof lvToast==='function') lvToast(`⏰ ${emp.name} 인턴 자동 연장 · ~${newEnd}`);
       }
     } else if(result === '합격'){
       // 직책을 팀원으로, 인턴 이력 근무매장에 남기고, contract 완료
@@ -10962,7 +10955,8 @@ document.getElementById('intern-auto-confirm-modal')?.addEventListener('click', 
 
 <!-- 인턴 결과 선택 모달 -->
 <div id="intern-result-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
-  <div class="sdm-box" style="width:400px;max-width:calc(100vw - 32px)">
+  <div class="sdm-box" style="width:400px;max-width:calc(100vw - 32px);position:relative">
+    <button onclick="closeIrm()" title="닫기 (나중에 처리)" style="position:absolute;top:14px;right:14px;width:26px;height:26px;border:none;background:#f4f5f9;color:#7a8299;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
     <div class="sdm-title">📋 인턴 계약 만료</div>
     <div class="sdm-sub">인턴 계약 종료일이 도래했습니다. 결과를 선택해주세요.</div>
     <div class="sdm-emp" id="irm-emp"></div>
@@ -10989,6 +10983,10 @@ document.getElementById('intern-auto-confirm-modal')?.addEventListener('click', 
     <div class="sdm-title" id="iem-title">📋 인턴 계약 편집</div>
     <div class="sdm-sub" id="iem-sub">종료일에 자동으로 결과가 처리됩니다.</div>
     <div class="sdm-emp" id="iem-emp"></div>
+    <div id="iem-start-wrap" style="display:none">
+      <label style="display:block;margin-bottom:6px;font-size:12px;color:#5b6378;font-weight:600">시작일</label>
+      <input type="date" id="iem-start-date" class="sdm-input" style="margin-bottom:14px">
+    </div>
     <label style="display:block;margin-bottom:6px;font-size:12px;color:#5b6378;font-weight:600">종료일</label>
     <input type="date" id="iem-date" class="sdm-input" style="margin-bottom:14px">
     <label style="display:block;margin-bottom:6px;font-size:12px;color:#5b6378;font-weight:600">결과 사전 결정 (선택)</label>
@@ -10997,11 +10995,18 @@ document.getElementById('intern-auto-confirm-modal')?.addEventListener('click', 
         <input type="radio" name="iem-result" value=""> <span>결과 미정 (종료일에 확인 팝업)</span>
       </label>
       <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #d1fae5;border-radius:8px;cursor:pointer;font-size:13px" data-val="합격">
-        <input type="radio" name="iem-result" value="합격"> <span>🎉 합격 예정 → 종료일에 팀원 자동 승격</span>
+        <input type="radio" name="iem-result" value="합격" onchange="_iemToggleExtWrap()"> <span>🎉 합격 예정 → 종료일에 팀원 자동 승격</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #dbeafe;border-radius:8px;cursor:pointer;font-size:13px" data-val="연장">
+        <input type="radio" name="iem-result" value="연장" onchange="_iemToggleExtWrap()"> <span>⏰ 연장 예정 → 종료일에 자동 연장</span>
       </label>
       <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;font-size:13px" data-val="불합격">
-        <input type="radio" name="iem-result" value="불합격"> <span>❌ 불합격 예정 → 종료일에 자동 삭제</span>
+        <input type="radio" name="iem-result" value="불합격" onchange="_iemToggleExtWrap()"> <span>❌ 불합격 예정 → 종료일에 자동 삭제</span>
       </label>
+    </div>
+    <div id="iem-ext-wrap" style="display:none;margin-top:10px;padding:12px;background:#eff6ff;border:1px solid #dbeafe;border-radius:8px">
+      <label style="display:block;margin-bottom:6px;font-size:12px;color:#1e40af;font-weight:600">연장 종료일</label>
+      <input type="date" id="iem-ext-date" class="sdm-input">
     </div>
     <div class="sdm-hint">사전 결정 없이 저장하면 종료일에 팝업이 떠서 결과를 선택합니다.</div>
     <div class="sdm-btns">
@@ -11039,35 +11044,83 @@ window.openInternExtendModal = function(name, currentEnd, opts){
     _iemResolve = resolve;
     opts = opts || {};
     const mode = opts.mode || 'extend';
-    document.getElementById('iem-emp').innerHTML = `<strong>${name}</strong> · 현재 종료일 ${currentEnd || '없음'}`;
+    document.getElementById('iem-emp').innerHTML = `<strong>${name}</strong>` + (currentEnd ? ` · 현재 종료일 ${currentEnd}` : '');
     document.getElementById('iem-title').textContent = mode === 'edit' ? '📋 인턴 계약 편집' : '⏰ 인턴 기간 연장';
-    document.getElementById('iem-sub').textContent = mode === 'edit' ? '종료일 및 사전 결과를 지정할 수 있습니다.' : '연장 종료일이 도래하면 다시 합격/불합격 확인이 뜹니다.';
+    document.getElementById('iem-sub').textContent = mode === 'edit' ? '시작일·종료일·사전 결과를 지정할 수 있습니다.' : '연장 종료일이 도래하면 다시 합격/불합격 확인이 뜹니다.';
     // 결과 선택은 편집 모드에서만
     document.getElementById('iem-result-choices').style.display = (mode === 'edit') ? 'flex' : 'none';
+    // 시작일 필드는 편집 모드에서만
+    const startWrap = document.getElementById('iem-start-wrap');
+    if(startWrap) startWrap.style.display = (mode === 'edit') ? 'block' : 'none';
+    const startInp = document.getElementById('iem-start-date');
+    if(startInp && mode === 'edit'){
+      startInp.value = opts.startAt || new Date().toISOString().slice(0,10);
+    }
     const inp = document.getElementById('iem-date');
     if(currentEnd){
       try {
         const d = new Date(currentEnd);
-        if(mode === 'extend') d.setMonth(d.getMonth() + 3);
+        if(mode === 'extend') d.setMonth(d.getMonth() + 1);
         inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       } catch(_){ inp.value = currentEnd; }
+    } else if(mode === 'edit' && opts.startAt){
+      // 편집 모드 & 시작일 있음 → 시작일 + 2개월
+      try {
+        const d = new Date(opts.startAt);
+        d.setMonth(d.getMonth() + 2);
+        inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      } catch(_){ inp.value = new Date().toISOString().slice(0,10); }
     } else {
-      inp.value = new Date().toISOString().slice(0,10);
+      // 종료일 없음 → 오늘 + 2개월
+      const d = new Date(); d.setMonth(d.getMonth() + 2);
+      inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     }
-    // 결과 라디오 초기화 (opts.plannedResult 있으면 선택)
     const radios = document.querySelectorAll('input[name="iem-result"]');
     radios.forEach(r => { r.checked = (r.value === (opts.plannedResult || '')); });
+    // 연장 종료일 초기값
+    const extInp = document.getElementById('iem-ext-date');
+    if(extInp) extInp.value = opts.plannedExtendEnd || '';
+    // 연장 예정이면 wrap 표시
+    if(typeof window._iemToggleExtWrap === 'function') window._iemToggleExtWrap();
     document.getElementById('intern-extend-modal').style.display = 'flex';
     setTimeout(() => inp.focus(), 50);
   });
 };
+window._iemToggleExtWrap = function(){
+  const r = document.querySelector('input[name="iem-result"]:checked');
+  const wrap = document.getElementById('iem-ext-wrap');
+  if(!wrap) return;
+  if(r && r.value === '연장'){
+    wrap.style.display = 'block';
+    const inp = document.getElementById('iem-ext-date');
+    if(inp && !inp.value){
+      // 기본값: 현재 종료일 + 1개월
+      const cur = document.getElementById('iem-date').value;
+      try {
+        const d = cur ? new Date(cur) : new Date();
+        d.setMonth(d.getMonth() + 1);
+        inp.value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      } catch(_){}
+    }
+  } else {
+    wrap.style.display = 'none';
+  }
+};
 window.submitIem = function(){
   const v = document.getElementById('iem-date').value.trim();
   if(!v){ alert('종료일을 선택해주세요.'); return; }
+  const startWrap = document.getElementById('iem-start-wrap');
+  const startVisible = startWrap && startWrap.style.display !== 'none';
+  const startAt = startVisible ? (document.getElementById('iem-start-date')?.value || '').trim() : '';
   const resultRadio = document.querySelector('input[name="iem-result"]:checked');
   const plannedResult = resultRadio ? resultRadio.value : '';
+  let plannedExtendEnd = '';
+  if(plannedResult === '연장'){
+    plannedExtendEnd = (document.getElementById('iem-ext-date')?.value || '').trim();
+    if(!plannedExtendEnd){ alert('연장 종료일을 선택해주세요.'); return; }
+  }
   document.getElementById('intern-extend-modal').style.display = 'none';
-  if(_iemResolve){ _iemResolve({ endAt: v, plannedResult }); _iemResolve = null; }
+  if(_iemResolve){ _iemResolve({ startAt, endAt: v, plannedResult, plannedExtendEnd }); _iemResolve = null; }
 };
 window.closeIem = function(v){
   document.getElementById('intern-extend-modal').style.display = 'none';
