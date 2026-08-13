@@ -4293,29 +4293,16 @@ function _histSortKey(x){
 function moveHistUp(i){
   if(!curEmp) return;
   const h=gHist(curEmp);
-  if(i<0 || i>=h.length) return;
-  const hasTimeFn = x => x && typeof x === 'object' && (x.startYM || x.startAt || x.endAt ||
-    (x.period && /(\d{4})[.\-](\d{2})/.test(String(x.period))));
-  // 시간 없는 항목들의 원본 인덱스 목록
-  const noTimeIdxs = h.map((x,idx)=>({x,idx})).filter(r=>!hasTimeFn(r.x)).map(r=>r.idx);
-  const pos = noTimeIdxs.indexOf(i);
-  if(pos <= 0) return;
-  const swapWith = noTimeIdxs[pos-1];
-  [h[swapWith], h[i]] = [h[i], h[swapWith]];
+  if(i<=0 || i>=h.length) return;
+  [h[i-1], h[i]] = [h[i], h[i-1]];
   setH(curEmp.id, h);
   renderHist(curEmp);
 }
 function moveHistDown(i){
   if(!curEmp) return;
   const h=gHist(curEmp);
-  if(i<0 || i>=h.length) return;
-  const hasTimeFn = x => x && typeof x === 'object' && (x.startYM || x.startAt || x.endAt ||
-    (x.period && /(\d{4})[.\-](\d{2})/.test(String(x.period))));
-  const noTimeIdxs = h.map((x,idx)=>({x,idx})).filter(r=>!hasTimeFn(r.x)).map(r=>r.idx);
-  const pos = noTimeIdxs.indexOf(i);
-  if(pos < 0 || pos >= noTimeIdxs.length-1) return;
-  const swapWith = noTimeIdxs[pos+1];
-  [h[i], h[swapWith]] = [h[swapWith], h[i]];
+  if(i<0 || i>=h.length-1) return;
+  [h[i], h[i+1]] = [h[i+1], h[i]];
   setH(curEmp.id, h);
   renderHist(curEmp);
 }
@@ -4342,14 +4329,9 @@ function renderHist(emp){
     ? { _auto:true, store:cs, period:'진행중', role:emp.position||'' }
     : null;
 
-  // [혼합 정렬] 시간 정보 있는 이력은 자동 시간순, 시간 없는 이력은 원본 순서 유지 (사용자가 ▲▼로 조정)
-  const allItems = h.map((x, realIdx) => ({ x, realIdx }));
-  const hasTime = x => x && typeof x === 'object' && (x.startYM || x.startAt || x.endAt ||
-    (x.period && /(\d{4})[.\-](\d{2})/.test(String(x.period))));
-  const withTime = allItems.filter(r => hasTime(r.x));
-  const withoutTime = allItems.filter(r => !hasTime(r.x));
-  withTime.sort((a,b) => _histSortKey(a.x).localeCompare(_histSortKey(b.x)));
-  const indexed = [...withTime, ...withoutTime];
+  // 원본 배열 순서 그대로 유지 - 모든 항목 ▲▼로 자유롭게 이동 가능
+  // 📅 시간순 정렬 버튼으로 명시적 정렬만 실행
+  const indexed = h.map((x, realIdx) => ({ x, realIdx }));
   if(autoItem) indexed.push({ x: autoItem, realIdx: -1 });
 
   if(!indexed.length){
@@ -4372,20 +4354,10 @@ function renderHist(emp){
       : '🏪 <strong>'+(x.store||'')+'</strong>'
         + (x.period ? ' <span style="color:var(--t3);font-size:12px">'+x.period+'</span>' : '')
         + (x.role   ? ' · <span style="font-size:12px">'+x.role+'</span>'   : '');
-    const isTimed = hasTime(x);
-    // 시간 정보 있는 항목: ▲▼ 비활성 (자동 정렬됨, 조정 필요 없음)
-    // 시간 없는 항목: ▲▼ 활성 (사용자가 순서 조정 가능)
-    let upDisabled, downDisabled;
-    if(isTimed){
-      upDisabled = 'disabled style="opacity:.2;cursor:not-allowed;'+arrowStyle+'" title="시간순 자동 정렬"';
-      downDisabled = 'disabled style="opacity:.2;cursor:not-allowed;'+arrowStyle+'" title="시간순 자동 정렬"';
-    } else {
-      // 시간 없는 항목들끼리의 위치
-      const noTimeItems = withoutTime;
-      const posInNoTime = noTimeItems.findIndex(r => r.realIdx === realIdx);
-      upDisabled = posInNoTime === 0 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
-      downDisabled = posInNoTime >= noTimeItems.length-1 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
-    }
+    // 모든 실제 이력 항목 ▲▼ 활성 (시간 있든 없든 자유롭게 이동)
+    const posInReal = indexed.filter(r=>r.realIdx>=0).findIndex(r=>r.realIdx===realIdx);
+    const upDisabled  = posInReal === 0 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
+    const downDisabled= posInReal >= realCount-1 ? 'disabled style="opacity:.25;cursor:not-allowed;'+arrowStyle+'"' : 'style="'+arrowStyle+'"';
     return '<div class="histitem" style="align-items:center;display:flex">'
       + '<div style="flex:1;min-width:0">'+t+'</div>'
       + '<div style="display:flex;align-items:center;gap:2px;flex-shrink:0">'
