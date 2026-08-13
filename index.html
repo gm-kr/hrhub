@@ -3101,8 +3101,12 @@ window.openMoveChannel = openMoveChannel;
         <div class="pp" id="pp"></div>
         <button class="ppbtn">📷</button>
       </div>
-      <div style="flex:1">
-        <div class="pdname" id="pdname"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="pdname" id="pdname"></div>
+          <span id="pdempno" style="font-size:13px;font-weight:600;color:#5b6cf8;cursor:pointer" title="사번 편집" onclick="editEmpNoInline()"></span>
+          <span id="pdgender" style="cursor:pointer" title="성별 편집" onclick="editGenderInline()"></span>
+        </div>
         <div class="pdpos" id="pdpos"></div>
         <div class="pdtags" id="pdtags"></div>
       </div>
@@ -3170,6 +3174,7 @@ window.openMoveChannel = openMoveChannel;
         <span class="pv" id="pmetro" style="font-size:12px"></span>
         <span class="pv pedit-field" id="pmetro-edit" style="display:none"><input class="pedit-input" id="pmetro-inp" onblur="saveFieldEdit('metro',this.value)"></span>
       </div>
+
       <div class="prow"><span class="pk">🔄 채널 경험</span><span class="pv" id="pchexp"></span></div>
     </div>
     <div class="psect">
@@ -4106,10 +4111,55 @@ function deletePraiseReward(id){
   setPraiseRewards(getPraiseRewards().filter(r=>r.id!==id));
   renderPraiseDashboard();
 }
+// [INLINE EDIT] 사번/성별 클릭 편집 (커스텀 모달 사용)
+async function editEmpNoInline(){
+  if(!curEmp) return;
+  const cur = (window.__fbEdits && window.__fbEdits[curEmp.id] && window.__fbEdits[curEmp.id].empNo) || curEmp.empNo || '';
+  const val = await window.openEmpnoModal(curEmp.name, cur);
+  if(val === null) return;
+  saveFieldEdit('empNo', val);
+  const el = document.getElementById('pdempno');
+  if(el){
+    if(val) el.textContent = 'monster' + val;
+    else el.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 사번</span>';
+  }
+}
+async function editGenderInline(){
+  if(!curEmp) return;
+  const cur = (window.__fbEdits && window.__fbEdits[curEmp.id] && window.__fbEdits[curEmp.id].gender) || curEmp.gender || '';
+  const val = await window.openGenderModal(curEmp.name, cur);
+  if(val === null) return;
+  const clean = (val === '남' || val === '여') ? val : '';
+  saveFieldEdit('gender', clean);
+  const el = document.getElementById('pdgender');
+  if(el){
+    if(clean === '남') el.innerHTML = '<span style="background:#e0eaff;color:#2563eb;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♂ 남</span>';
+    else if(clean === '여') el.innerHTML = '<span style="background:#fce7f3;color:#be185d;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♀ 여</span>';
+    else el.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 성별</span>';
+  }
+}
+window.editEmpNoInline = editEmpNoInline;
+window.editGenderInline = editGenderInline;
+
 function openP(emp){
   curEmp=emp;
   document.querySelectorAll('.ei').forEach(el=>el.classList.toggle('on',el.dataset.id===emp.id));
   document.getElementById('pdname').textContent=emp.name;
+  // [사번/성별 인라인 표시]
+  const _ed = (window.__fbEdits && window.__fbEdits[emp.id]) || {};
+  const _empNo = _ed.empNo || emp.empNo || '';
+  const _gender = _ed.gender || emp.gender || '';
+  const _pdempEl = document.getElementById('pdempno');
+  if(_pdempEl){
+    if(_empNo) _pdempEl.textContent = 'monster' + _empNo;
+    else _pdempEl.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 사번</span>';
+  }
+  const _pdgenEl = document.getElementById('pdgender');
+  if(_pdgenEl){
+    if(_gender === '남') _pdgenEl.innerHTML = '<span style="background:#e0eaff;color:#2563eb;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♂ 남</span>';
+    else if(_gender === '여') _pdgenEl.innerHTML = '<span style="background:#fce7f3;color:#be185d;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px">♀ 여</span>';
+    else _pdgenEl.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 성별</span>';
+  }
   document.getElementById('pdpos').textContent=emp.position||'';
   document.getElementById('pdtags').innerHTML=ctag(emp.channel)+` <span class="tag tgg">${emp.brand}</span><span class="tag tgg">${emp.tenure||''}</span>`;
   const ph=getP();const src=ph[emp.id]||emp.photo_b64;
@@ -4127,6 +4177,7 @@ function openP(emp){
     const _metroVal = (window.__fbEdits && window.__fbEdits[emp.id] && window.__fbEdits[emp.id].metro) || emp.metro || '';
     _pmetroEl.textContent = _metroVal || '-';
   }
+
   document.getElementById('pchexp').textContent=emp.channel_exp||'-';
   const pbrandEl=document.getElementById('pbrand');
   if(pbrandEl) pbrandEl.textContent=emp.brand||'-';
@@ -4808,6 +4859,7 @@ function setPEditMode(on){
       'plang-inp': curEmp.language||'',
       'paddr-inp': curEmp.residence||'',
       'pmetro-inp': (window.__fbEdits && window.__fbEdits[curEmp.id] && window.__fbEdits[curEmp.id].metro) || curEmp.metro || '',
+
       'pposition-inp': curEmp.position||''
     };
     const sel_map={
@@ -4985,7 +5037,7 @@ function saveFieldEdit(field, val){
   curEmp[field]=val;
   const viewMap={
     'hire_date':'phire','current_store':'pstore','language':'plang',
-    'residence':'paddr','position':'pposition','channel':'pch','brand':'pbrand'
+    'residence':'paddr','metro':'pmetro','empNo':'pempno','gender':'pgender','position':'pposition','channel':'pch','brand':'pbrand'
   };
   const viewId=viewMap[field];
   if(viewId){
@@ -7573,7 +7625,7 @@ window.aeFilterStoreByChannel = function(channel){
 };
 window.openAddEmp = function(){
   // 입력 초기화
-  ['ae-name','ae-hire','ae-residence','ae-language'].forEach(id=>{
+  ['ae-name','ae-hire','ae-residence','ae-language','ae-empno','ae-gender'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const bd=document.getElementById('ae-brand'); if(bd) bd.value='GM';
@@ -7618,6 +7670,8 @@ window.doAddEmp = async function(){
   }
   const residence=(document.getElementById('ae-residence').value||'').trim();
   const language=(document.getElementById('ae-language').value||'').trim();
+  const empNo=(document.getElementById('ae-empno')?.value||'').trim().replace(/^monster/i,'').replace(/[^0-9]/g,'');
+  const gender=(document.getElementById('ae-gender')?.value||'').trim();
   const maxNum=EMPS.reduce((m,e)=>{
     const n=parseInt((e.id||'').replace('emp_',''),10);
     return isNaN(n)?m:Math.max(m,n);
@@ -7641,6 +7695,8 @@ window.doAddEmp = async function(){
     residence:residence||'',
     channel_exp:channel,
     channel:channel,
+    empNo:empNo||'',
+    gender:gender||'',
     store_history:[],
     has_photo:!!_aePhoto,
     photo_b64:_aePhoto||''
@@ -7664,7 +7720,7 @@ window.doAddEmp = async function(){
   }
   if(window.fbSetEdit){
     const fieldsToSave = ['name','brand','position','channel','current_store','store',
-      'hire_date','tenure','language','residence'];
+      'hire_date','tenure','language','residence','empNo','gender'];
     fieldsToSave.forEach(f => {
       if(newEmp[f] !== undefined && newEmp[f] !== '')
         window.fbSetEdit(newId, f, newEmp[f]);
@@ -7904,6 +7960,21 @@ window.SB_DATA = SB_DATA;
       <div class="ae-field">
         <label>거주지</label>
         <input id="ae-residence" placeholder="서울시 강남구">
+      </div>
+      <div class="ae-field">
+        <label>사번</label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="color:#5b6cf8;font-weight:700;font-size:13px">monster</span>
+          <input id="ae-empno" placeholder="예: 541" inputmode="numeric" style="flex:1">
+        </div>
+      </div>
+      <div class="ae-field">
+        <label>성별</label>
+        <select id="ae-gender">
+          <option value="">선택</option>
+          <option value="여">♀ 여</option>
+          <option value="남">♂ 남</option>
+        </select>
       </div>
       <div class="ae-field ae-full">
         <label>언어</label>
@@ -8334,7 +8405,7 @@ function updateLoginUserInfo(user) {
   el.innerHTML = `<span>${user.displayName||user.email}</span>`;
 }
 const EMP_EDIT_FIELDS = ['status','memo','current_store','channel','tenure',
-  'position','hire_date','language','residence','brand','name','kindness','sincerity','charm','growth'];
+  'position','hire_date','language','residence','brand','name','kindness','sincerity','charm','growth','empNo','gender','metro'];
 function applyEditsToEmps(edits) {
   if (typeof EMPS === 'undefined' || !edits) return;
   EMPS.forEach(e => {
@@ -10194,6 +10265,110 @@ setInterval(()=>{ if(window.lvPTPurgeExpired) window.lvPTPurgeExpired(); }, 60*6
     </div>
   </div>
 </div>
+<!-- 사번 입력 모달 -->
+<div id="empno-edit-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
+  <div class="sdm-box">
+    <div class="sdm-title">💳 사번 편집</div>
+    <div class="sdm-sub"><code style="background:#f4f5f9;padding:1px 5px;border-radius:4px;color:#5b6cf8">monster{사번}</code> 형식으로 표시됩니다.</div>
+    <div class="sdm-emp" id="empno-modal-emp"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="color:#5b6cf8;font-weight:700;font-size:14px">monster</span>
+      <input type="text" id="empno-modal-input" class="sdm-input" placeholder="예: 541" inputmode="numeric" style="flex:1">
+    </div>
+    <div class="sdm-hint">숫자만 입력하세요. 비우면 사번이 삭제됩니다.</div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeEmpnoModal(null)">취소</button>
+      <button class="sdm-btn primary" onclick="submitEmpnoModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 성별 선택 모달 -->
+<div id="gender-edit-modal" style="position:fixed;inset:0;z-index:9999998;background:rgba(15,18,30,.45);display:none;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif">
+  <div class="sdm-box">
+    <div class="sdm-title">👤 성별 선택</div>
+    <div class="sdm-sub">직원의 성별을 선택하세요.</div>
+    <div class="sdm-emp" id="gender-modal-emp"></div>
+    <div style="display:flex;gap:10px;margin:8px 0 4px">
+      <button class="gender-choice" data-val="여" onclick="submitGenderModal('여')" style="flex:1;padding:14px 12px;border-radius:10px;border:1.5px solid #fce7f3;background:#fff;color:#be185d;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s">
+        ♀ 여
+      </button>
+      <button class="gender-choice" data-val="남" onclick="submitGenderModal('남')" style="flex:1;padding:14px 12px;border-radius:10px;border:1.5px solid #e0eaff;background:#fff;color:#2563eb;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s">
+        ♂ 남
+      </button>
+    </div>
+    <div class="sdm-btns">
+      <button class="sdm-btn" onclick="closeGenderModal(null)">취소</button>
+      <button class="sdm-btn" style="color:#9aa0b3" onclick="submitGenderModal('')">✕ 성별 삭제</button>
+    </div>
+  </div>
+</div>
+<style>
+.gender-choice:hover { border-width:2px !important; transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.06); }
+.gender-choice.selected { background:#fff5f9 !important; }
+</style>
+<script>
+// [EMPNO MODAL]
+let _empnoModalResolve = null;
+function openEmpnoModal(empName, currentEmpNo){
+  return new Promise(resolve => {
+    _empnoModalResolve = resolve;
+    document.getElementById('empno-modal-emp').innerHTML = `<strong>${empName}</strong> · 사번`;
+    document.getElementById('empno-modal-input').value = currentEmpNo || '';
+    document.getElementById('empno-edit-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('empno-modal-input').focus(), 50);
+  });
+}
+function submitEmpnoModal(){
+  const v = (document.getElementById('empno-modal-input').value || '').trim();
+  // 숫자만 추출
+  const clean = v.replace(/^monster/i, '').replace(/[^0-9]/g,'').trim();
+  document.getElementById('empno-edit-modal').style.display = 'none';
+  if(_empnoModalResolve){ _empnoModalResolve(clean); _empnoModalResolve = null; }
+}
+function closeEmpnoModal(v){
+  document.getElementById('empno-edit-modal').style.display = 'none';
+  if(_empnoModalResolve){ _empnoModalResolve(v); _empnoModalResolve = null; }
+}
+window.openEmpnoModal = openEmpnoModal;
+
+// [GENDER MODAL]
+let _genderModalResolve = null;
+function openGenderModal(empName, currentGender){
+  return new Promise(resolve => {
+    _genderModalResolve = resolve;
+    document.getElementById('gender-modal-emp').innerHTML = `<strong>${empName}</strong> · 성별`;
+    // 현재값 하이라이트
+    document.querySelectorAll('.gender-choice').forEach(b => {
+      b.classList.toggle('selected', b.dataset.val === currentGender);
+    });
+    document.getElementById('gender-edit-modal').style.display = 'flex';
+  });
+}
+function submitGenderModal(val){
+  document.getElementById('gender-edit-modal').style.display = 'none';
+  if(_genderModalResolve){ _genderModalResolve(val); _genderModalResolve = null; }
+}
+function closeGenderModal(v){
+  document.getElementById('gender-edit-modal').style.display = 'none';
+  if(_genderModalResolve){ _genderModalResolve(v); _genderModalResolve = null; }
+}
+window.openGenderModal = openGenderModal;
+
+// ESC로 닫기
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('empno-edit-modal')?.style.display === 'flex') closeEmpnoModal(null);
+    if(document.getElementById('gender-edit-modal')?.style.display === 'flex') closeGenderModal(null);
+  }
+});
+// 배경 클릭으로 닫기
+document.getElementById('empno-edit-modal')?.addEventListener('click', e => { if(e.target.id==='empno-edit-modal') closeEmpnoModal(null); });
+document.getElementById('gender-edit-modal')?.addEventListener('click', e => { if(e.target.id==='gender-edit-modal') closeGenderModal(null); });
+// Enter로 사번 저장
+document.getElementById('empno-modal-input')?.addEventListener('keydown', e => { if(e.key==='Enter') submitEmpnoModal(); });
+</script>
+
 <script>
 // [STATUS DATE MODAL] Promise 기반 예정일 입력
 let _sdmResolve = null;
@@ -10249,6 +10424,273 @@ document.addEventListener('keydown', e => {
     if(document.getElementById('leaving-confirm-modal')?.classList.contains('open')) closeLcm(false);
   }
 });
+</script>
+
+
+<script>
+// [EMP INFO SEED] 사번 + 성별 자동 seed (매장 링크 seed와 유사한 패턴)
+// EMP_SEED_MAP: 이름 → {n: 사번, g: 성별} (222건)
+window.EMP_SEED_MAP = {
+  '가원현':{n:'541',g:'남'},
+  '강미성':{n:'823',g:'여'},
+  '강현정':{n:'581',g:'여'},
+  '고려진':{n:'978',g:'여'},
+  '고지혜':{n:'1307',g:'여'},
+  '권은정':{n:'1330',g:'여'},
+  '권희주':{n:'991',g:'여'},
+  '길남정':{n:'1196',g:'여'},
+  '김가영(1528)':{n:'1528',g:'여'},
+  '김가영(298)':{n:'298',g:'여'},
+  '김남헌':{n:'1088',g:'남'},
+  '김다혁':{n:'1585',g:'남'},
+  '김도연':{n:'204',g:'여'},
+  '김동연':{n:'1631',g:'남'},
+  '김미소':{n:'1203',g:'여'},
+  '김민경':{n:'1432',g:'여'},
+  '김민영':{n:'1091',g:'여'},
+  '김민주(618)':{n:'618',g:'여'},
+  '김민현':{n:'435',g:'여'},
+  '김상성':{n:'511',g:'남'},
+  '김선희':{n:'883',g:'여'},
+  '김성록':{n:'301',g:'남'},
+  '김성은':{n:'196',g:'여'},
+  '김수임':{n:'378',g:'여'},
+  '김수현':{n:'1580',g:'여'},
+  '김시은':{n:'422',g:'여'},
+  '김영대':{n:'115',g:'남'},
+  '김예슬(1112)':{n:'1112',g:'여'},
+  '김예슬(453)':{n:'453',g:'여'},
+  '김은경':{n:'1455',g:'여'},
+  '김은서':{n:'1698',g:'여'},
+  '김이다':{n:'954',g:'여'},
+  '김이룸':{n:'1602',g:'여'},
+  '김준기':{n:'455',g:'남'},
+  '김지용':{n:'421',g:'남'},
+  '김지원':{n:'1477',g:'여'},
+  '김지윤':{n:'870',g:'여'},
+  '김지은':{n:'569',g:'여'},
+  '김지인':{n:'1514',g:'여'},
+  '김지현':{n:'536',g:'여'},
+  '김창훈':{n:'274',g:'남'},
+  '김철환':{n:'234',g:'남'},
+  '김충겸':{n:'488',g:'남'},
+  '김태유':{n:'1505',g:'여'},
+  '김해솔':{n:'1427',g:'여'},
+  '김현수':{n:'1329',g:'남'},
+  '김현지':{n:'1331',g:'여'},
+  '김환희':{n:'1350',g:'여'},
+  '김효림':{n:'1636',g:'여'},
+  '김훈':{n:'459',g:'남'},
+  '나인호':{n:'1589',g:'남'},
+  '남상혁':{n:'179',g:'남'},
+  '남연서':{n:'1590',g:'여'},
+  '남혜진':{n:'945',g:'여'},
+  '노영서':{n:'1349',g:'여'},
+  '노윤정':{n:'443',g:'여'},
+  '노이은':{n:'1194',g:'여'},
+  '류건희':{n:'1555',g:'남'},
+  '류세영':{n:'1155',g:'여'},
+  '문보은':{n:'1241',g:'여'},
+  '문유라':{n:'1310',g:'여'},
+  '문종혁':{n:'334',g:'남'},
+  '문푸름':{n:'363',g:'여'},
+  '박규빈':{n:'537',g:'여'},
+  '박민규':{n:'1188',g:'남'},
+  '박민지':{n:'205',g:'여'},
+  '박상민':{n:'1131',g:'남'},
+  '박서현':{n:'1047',g:'여'},
+  '박선희':{n:'81',g:'여'},
+  '박성민':{n:'557',g:'여'},
+  '박세연':{n:'1456',g:'여'},
+  '박세희':{n:'1447',g:'여'},
+  '박소민':{n:'1341',g:'여'},
+  '박수진':{n:'1474',g:'여'},
+  '박승원':{n:'1308',g:'남'},
+  '박예림':{n:'1177',g:'여'},
+  '박우철':{n:'931',g:'남'},
+  '박은정':{n:'1220',g:'여'},
+  '박재훈':{n:'1141',g:'남'},
+  '박정은':{n:'1592',g:'여'},
+  '박주연':{n:'1635',g:'여'},
+  '박지원':{n:'461',g:'여'},
+  '박지현':{n:'1483',g:'여'},
+  '박지호':{n:'1247',g:'남'},
+  '박진우':{n:'190',g:'남'},
+  '박채연':{n:'338',g:'여'},
+  '박하빈':{n:'1187',g:'여'},
+  '박하율':{n:'1401',g:'여'},
+  '박현재':{n:'1536',g:'남'},
+  '박희연':{n:'874',g:'여'},
+  '서민지':{n:'1113',g:'여'},
+  '서수정':{n:'1206',g:'여'},
+  '서하나':{n:'1123',g:'여'},
+  '서하영':{n:'1552',g:'여'},
+  '서황빈':{n:'507',g:'남'},
+  '석지수':{n:'582',g:'여'},
+  '선재윤':{n:'1478',g:'여'},
+  '성지영':{n:'1106',g:'여'},
+  '손가희':{n:'404',g:'여'},
+  '송국일':{n:'955',g:'남'},
+  '송나현':{n:'1394',g:'여'},
+  '송시온':{n:'1428',g:'여'},
+  '송은정':{n:'1103',g:'여'},
+  '송정관':{n:'173',g:'남'},
+  '송주원':{n:'890',g:'남'},
+  '송지현':{n:'1075',g:'여'},
+  '신지윤':{n:'310',g:'여'},
+  '신혜진':{n:'545',g:'여'},
+  '심효림':{n:'1395',g:'여'},
+  '안산훈':{n:'1526',g:'남'},
+  '안소연':{n:'1487',g:'여'},
+  '안은채':{n:'932',g:'여'},
+  '안진희':{n:'1317',g:'여'},
+  '엄수연':{n:'1240',g:'여'},
+  '여주훈':{n:'1176',g:'남'},
+  '오소원':{n:'1434',g:'여'},
+  '오승재':{n:'944',g:'남'},
+  '오자민':{n:'442',g:'남'},
+  '오재은':{n:'1705',g:'여'},
+  '왕정원':{n:'161',g:'여'},
+  '우소영':{n:'1158',g:'여'},
+  '유민주':{n:'1451',g:'여'},
+  '유아연':{n:'1717',g:'여'},
+  '윤다솜':{n:'373',g:'여'},
+  '윤소해':{n:'315',g:'여'},
+  '윤재영':{n:'1599',g:'여'},
+  '윤진석':{n:'292',g:'남'},
+  '윤태현':{n:'1136',g:'남'},
+  '이가린':{n:'1707',g:'여'},
+  '이가언':{n:'1706',g:'여'},
+  '이다슬':{n:'1470',g:'여'},
+  '이다은':{n:'1729',g:'여'},
+  '이동주':{n:'1250',g:'여'},
+  '이동환':{n:'1593',g:'남'},
+  '이민후':{n:'1104',g:'남'},
+  '이보름':{n:'143',g:'여'},
+  '이상엽':{n:'1611',g:'남'},
+  '이석원':{n:'418',g:'남'},
+  '이선희':{n:'1370',g:'여'},
+  '이솔아':{n:'1251',g:'여'},
+  '이수빈':{n:'889',g:'여'},
+  '이슬비(318)':{n:'318',g:'여'},
+  '이슬비(341)':{n:'341',g:'여'},
+  '이승아':{n:'371',g:'여'},
+  '이영은':{n:'495',g:'남'},
+  '이예진':{n:'355',g:'여'},
+  '이원주':{n:'1048',g:'남'},
+  '이유진':{n:'207',g:'여'},
+  '이윤혁':{n:'1569',g:'남'},
+  '이재훈':{n:'1018',g:'남'},
+  '이종원':{n:'430',g:'남'},
+  '이준섭':{n:'933',g:'남'},
+  '이중완':{n:'1546',g:'남'},
+  '이지영':{n:'313',g:'여'},
+  '이지은':{n:'498',g:'여'},
+  '이지혜':{n:'1699',g:'여'},
+  '이채경':{n:'1042',g:'여'},
+  '이채영':{n:'980',g:'남'},
+  '이호진':{n:'1396',g:'남'},
+  '이희연':{n:'337',g:'여'},
+  '임보민':{n:'921',g:'여'},
+  '임선윤':{n:'1666',g:'여'},
+  '임수연':{n:'224',g:'여'},
+  '임재윤':{n:'504',g:'남'},
+  '임채운':{n:'335',g:'여'},
+  '임태균':{n:'1090',g:'남'},
+  '장민석':{n:'1248',g:'남'},
+  '장성원':{n:'244',g:'남'},
+  '장제희':{n:'1265',g:'남'},
+  '전소영':{n:'920',g:'여'},
+  '전유빈':{n:'1603',g:'여'},
+  '전윤지':{n:'1644',g:'여'},
+  '정다감':{n:'1484',g:'여'},
+  '정민철':{n:'1342',g:'남'},
+  '정성도':{n:'1348',g:'남'},
+  '정승아':{n:'1418',g:'여'},
+  '정연홍':{n:'1130',g:'여'},
+  '정유담':{n:'215',g:'여'},
+  '정은빈':{n:'1604',g:'여'},
+  '정은성':{n:'1038',g:'남'},
+  '정은우':{n:'1667',g:'여'},
+  '정인혁':{n:'925',g:'남'},
+  '정주언':{n:'789',g:'남'},
+  '정혜원':{n:'1074',g:'여'},
+  '조균희':{n:'1591',g:'남'},
+  '조수아':{n:'1617',g:'여'},
+  '조수정':{n:'451',g:'여'},
+  '조연지':{n:'405',g:'여'},
+  '조영재':{n:'401',g:'남'},
+  '조재운':{n:'122',g:'남'},
+  '조재현':{n:'279',g:'남'},
+  '조주영':{n:'221',g:'여'},
+  '조주현':{n:'1435',g:'여'},
+  '조하윤':{n:'1210',g:'여'},
+  '조현정':{n:'1600',g:'여'},
+  '조효영':{n:'1133',g:'여'},
+  '최병준':{n:'1318',g:'남'},
+  '최봄이':{n:'419',g:'여'},
+  '최솔':{n:'1400',g:'여'},
+  '최송이':{n:'1672',g:'여'},
+  '최예지':{n:'1711',g:'여'},
+  '최우성':{n:'406',g:'남'},
+  '최준혁':{n:'1556',g:'남'},
+  '최지원':{n:'1488',g:'여'},
+  '최진기':{n:'330',g:'남'},
+  '최현정':{n:'940',g:'여'},
+  '하미진':{n:'155',g:'여'},
+  '하수진':{n:'900',g:'여'},
+  '하유빈':{n:'1509',g:'여'},
+  '하윤수':{n:'416',g:'남'},
+  '한석':{n:'1059',g:'남'},
+  '한승훈':{n:'1510',g:'남'},
+  '한인선':{n:'118',g:'남'},
+  '함지현':{n:'1137',g:'여'},
+  '허지선':{n:'1222',g:'여'},
+  '현경란':{n:'1073',g:'여'},
+  '현의정':{n:'1506',g:'여'},
+  '홍성주':{n:'1479',g:'여'},
+  '홍현준':{n:'515',g:'남'},
+  '황은지':{n:'1224',g:'여'},
+  '황인걸':{n:'1361',g:'남'},
+  '황지영':{n:'1149',g:'여'}
+};
+
+(function _applyEmpSeed(){
+  const runSeed = () => {
+    if(typeof EMPS === 'undefined') { setTimeout(runSeed, 500); return; }
+    if(!window.__fbEdits) window.__fbEdits = {};
+    let changed = 0;
+    EMPS.forEach(emp => {
+      const seed = window.EMP_SEED_MAP && window.EMP_SEED_MAP[emp.name];
+      if(!seed) return;
+      if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+      const ed = window.__fbEdits[emp.id];
+      if(!ed.empNo){
+        ed.empNo = seed.n;
+        emp.empNo = seed.n;
+        if(window.fbSetEdit) window.fbSetEdit(emp.id, 'empNo', seed.n);
+        changed++;
+      }
+      if(!ed.gender){
+        ed.gender = seed.g;
+        emp.gender = seed.g;
+        if(window.fbSetEdit) window.fbSetEdit(emp.id, 'gender', seed.g);
+      }
+    });
+    if(changed > 0){
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      console.log('[EMP SEED] '+changed+'명 사번/성별 자동 등록');
+    }
+  };
+  // Firebase ready 후 실행 (부트스트랩이 seed 덮어쓰지 않게)
+  if(window.__fbReady) setTimeout(runSeed, 500);
+  else {
+    const tid = setInterval(() => {
+      if(window.__fbReady){ clearInterval(tid); setTimeout(runSeed, 500); }
+    }, 300);
+    setTimeout(() => { clearInterval(tid); runSeed(); }, 30000);
+  }
+})();
 </script>
 
 </body>
