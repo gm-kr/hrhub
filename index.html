@@ -5291,7 +5291,40 @@ function trigPhoto(){
 function handlePhoto(e){
   if(!curEmp)return;const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{const b=ev.target.result;setP(curEmp.id,b);const pp=document.getElementById('pp');pp.innerHTML=`<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;pp.className='pp';refresh();};
+  reader.onload=ev=>{
+    const rawB = ev.target.result;
+    // 800px 최대 크기로 압축 (JPEG 85%) — Firestore 1MB 제한 회피
+    const img = new Image();
+    img.onload = function(){
+      let w = img.width, h = img.height;
+      const MAX = 800;
+      if(w > MAX || h > MAX){
+        if(w > h){ h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const b = canvas.toDataURL('image/jpeg', 0.85);
+      const sizeKB = Math.round(b.length / 1024);
+      console.log('[Photo] 압축 완료:', curEmp.id, w+'x'+h, sizeKB+'KB');
+      setP(curEmp.id, b);
+      const pp = document.getElementById('pp');
+      pp.innerHTML = `<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      pp.className = 'pp';
+      refresh();
+    };
+    img.onerror = function(){
+      // 이미지 로드 실패시 원본 사용
+      setP(curEmp.id, rawB);
+      const pp = document.getElementById('pp');
+      pp.innerHTML = `<img src="${rawB}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      pp.className = 'pp';
+      refresh();
+    };
+    img.src = rawB;
+  };
   reader.readAsDataURL(file);
 }
 window.switchMain  = switchMain;
@@ -9370,12 +9403,16 @@ window.fbSetEmpPhoto = function(empId, base64){
     } catch(e){ console.error('[FB] empPhoto 저장 오류:', e.code, e.message); }
   }, 300);
 };
+// 최초 empPhotos 로드 시, 로컬에만 있는 사진은 Firebase에 자동 업로드 (마이그레이션)
+let _fbPhotoInitialLoaded = false;
 onSnapshot(collection(_db, 'empPhotos'), (snap) => {
+  const remoteIds = new Set();
   let changed = false;
   const affected = [];
   snap.docChanges().forEach(change => {
     if(change.type === 'removed') return;
     const id = change.doc.id;
+    remoteIds.add(id);
     const data = change.doc.data();
     if(!data || !data.photo) return;
     try {
@@ -9388,6 +9425,28 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
       }
     } catch(_){}
   });
+  // 초기 로드 후: 로컬에 있는데 Firebase엔 없는 사진 자동 업로드
+  if(!_fbPhotoInitialLoaded){
+    _fbPhotoInitialLoaded = true;
+    setTimeout(() => {
+      try {
+        const p = JSON.parse(localStorage.getItem('hrP')||'{}');
+        // snap.docs로 실제 Firebase에 있는 문서 ID 수집
+        const fbIds = new Set();
+        snap.docs.forEach(d => fbIds.add(d.id));
+        const toUpload = [];
+        Object.keys(p).forEach(id => {
+          if(p[id] && !fbIds.has(id)) toUpload.push(id);
+        });
+        if(toUpload.length > 0){
+          console.log('[FB] empPhoto 초기 마이그레이션:', toUpload.length + '개 자동 업로드');
+          toUpload.forEach((id, i) => {
+            setTimeout(() => { window.fbSetEmpPhoto(id, p[id]); }, i * 500);
+          });
+        }
+      } catch(e){ console.warn('[FB] empPhoto 마이그레이션 실패:', e); }
+    }, 2000);
+  }
   if(changed){
     console.log('[FB] empPhoto 수신:', affected);
     try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
