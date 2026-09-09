@@ -200,6 +200,49 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 }
 /* 모바일 모달일 때 오버레이 더 강하게 */
 .pov.mobile-modal-ov.on{ background:rgba(15,18,30,.55) !important; z-index:99998 !important; }
+/* [모바일 얼굴 강조] 상세 팝업 상단을 사진 중심으로 크게 재구성 */
+.pdrawer.mobile-modal .phd{ padding:22px 20px 16px !important; }
+.pdrawer.mobile-modal .phi{
+  flex-direction:column !important;
+  align-items:center !important;
+  gap:12px !important;
+  text-align:center !important;
+}
+.pdrawer.mobile-modal .ppw{
+  width:180px !important; height:180px !important;
+  margin:0 auto !important;
+}
+.pdrawer.mobile-modal .pp{
+  width:180px !important; height:180px !important;
+  border-radius:50% !important;
+  font-size:64px !important;
+  border:4px solid var(--acc-bg) !important;
+  box-shadow:0 8px 24px rgba(91,108,248,.25), 0 2px 8px rgba(0,0,0,.08) !important;
+}
+.pdrawer.mobile-modal .pp img{ border-radius:50% !important; }
+.pdrawer.mobile-modal .ppbtn{
+  width:34px !important; height:34px !important;
+  font-size:16px !important;
+  bottom:6px !important; right:6px !important;
+  border:3px solid #fff !important;
+  box-shadow:0 3px 10px rgba(0,0,0,.25) !important;
+}
+.pdrawer.mobile-modal .phi > div[style*="flex:1"]{
+  flex:none !important; width:100% !important;
+}
+.pdrawer.mobile-modal .pdname{
+  font-size:24px !important; font-weight:800 !important;
+  justify-content:center !important;
+}
+.pdrawer.mobile-modal .pdpos{
+  font-size:15px !important; margin-top:2px !important;
+}
+.pdrawer.mobile-modal .pdtags{
+  justify-content:center !important;
+  margin-top:8px !important;
+}
+.pdrawer.mobile-modal #peditBtn{ font-size:13px !important; padding:6px 12px !important; }
+.pdrawer.mobile-modal .pcl{ font-size:20px !important; }
 .pdrawer::-webkit-scrollbar{width:3px}
 .pdrawer::-webkit-scrollbar-thumb{background:var(--bd)}
 .phd{padding:20px 20px 14px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--card);z-index:10}
