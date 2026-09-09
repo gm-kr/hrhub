@@ -9353,6 +9353,62 @@ onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
   } catch(e) { console.error('invitation snap:', e); }
 });
 
+// [SHARE] 직원 사진 개별 저장 (empPhotos/<empId>) — 사진은 크기가 커서 각자 문서로
+const _fbPhotoTimers = {};
+window.fbSetEmpPhoto = function(empId, base64){
+  if(!empId || !base64) return;
+  clearTimeout(_fbPhotoTimers[empId]);
+  _fbPhotoTimers[empId] = setTimeout(async () => {
+    try {
+      if(!window.__fbUser || !window.__fbUser.email){ console.warn('[FB] empPhoto: 로그인 필요'); return; }
+      await setDoc(doc(_db, 'empPhotos', empId), {
+        photo: base64,
+        _updatedAt: serverTimestamp(),
+        _updatedBy: window.__fbUser.email
+      });
+      console.log('[FB] empPhoto 저장 완료:', empId);
+    } catch(e){ console.error('[FB] empPhoto 저장 오류:', e.code, e.message); }
+  }, 300);
+};
+onSnapshot(collection(_db, 'empPhotos'), (snap) => {
+  let changed = false;
+  const affected = [];
+  snap.docChanges().forEach(change => {
+    if(change.type === 'removed') return;
+    const id = change.doc.id;
+    const data = change.doc.data();
+    if(!data || !data.photo) return;
+    try {
+      const p = JSON.parse(localStorage.getItem('hrP')||'{}');
+      if(p[id] !== data.photo){
+        p[id] = data.photo;
+        localStorage.setItem('hrP', JSON.stringify(p));
+        changed = true;
+        affected.push(id);
+      }
+    } catch(_){}
+  });
+  if(changed){
+    console.log('[FB] empPhoto 수신:', affected);
+    try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
+    // 열려있는 직원 상세 사진도 갱신
+    try {
+      if(typeof curEmp !== 'undefined' && curEmp && affected.includes(curEmp.id)){
+        const p = JSON.parse(localStorage.getItem('hrP')||'{}');
+        const b = p[curEmp.id];
+        if(b){
+          document.querySelectorAll('#pdrawer .pp img, .pp img').forEach(img => { img.src = b; });
+          document.querySelectorAll('.pp').forEach(el => {
+            if(!el.querySelector('img')){
+              el.innerHTML = '<img src="'+b+'" alt="사진" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            }
+          });
+        }
+      }
+    } catch(_){}
+  }
+});
+
 // [SHARE] 근무이력 통합 저장 (모든 직원의 hrH)
 let _fbHistTimer = null;
 window.fbSetStoreHistory = function(){
