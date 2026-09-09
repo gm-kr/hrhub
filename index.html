@@ -7,6 +7,7 @@
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+  window.__isMobile = isMobile;
   if(isMobile){
     var vp = document.getElementById('vp');
     if(vp) vp.setAttribute('content', 'width=1400,initial-scale=' + (window.innerWidth/1400).toFixed(3) + ',minimum-scale=0.2,maximum-scale=5,user-scalable=yes');
@@ -178,6 +179,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .pov.on{opacity:1;pointer-events:auto}
 .pdrawer{position:fixed;right:0;top:44px;bottom:0;width:var(--pw);background:var(--card);border-left:1px solid var(--bd);transform:translateX(100%);transition:transform .2s cubic-bezier(.4,0,.2,1);z-index:301;overflow-y:auto;display:flex;flex-direction:column}
 .pdrawer.on{transform:translateX(0)}
+/* [모바일 팝업] 모바일에서 pdrawer를 화면 중앙 모달로 표시 */
+.pdrawer.mobile-modal{
+  position:fixed !important;
+  left:50% !important; right:auto !important;
+  top:50% !important; bottom:auto !important;
+  transform:translate(-50%, -50%) scale(.96) !important;
+  width:90vw !important; max-width:700px !important;
+  height:auto !important; max-height:88vh !important;
+  border:1px solid var(--bd) !important;
+  border-radius:16px !important;
+  box-shadow:0 30px 80px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.15) !important;
+  opacity:0;
+  transition:transform .18s cubic-bezier(.4,0,.2,1), opacity .18s ease !important;
+  z-index:99999 !important;
+}
+.pdrawer.mobile-modal.on{
+  transform:translate(-50%, -50%) scale(1) !important;
+  opacity:1 !important;
+}
+/* 모바일 모달일 때 오버레이 더 강하게 */
+.pov.mobile-modal-ov.on{ background:rgba(15,18,30,.55) !important; z-index:99998 !important; }
 .pdrawer::-webkit-scrollbar{width:3px}
 .pdrawer::-webkit-scrollbar-thumb{background:var(--bd)}
 .phd{padding:20px 20px 14px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--card);z-index:10}
@@ -4272,10 +4294,20 @@ function openP(emp){
   if(qualEl) qualEl.value=fb.qual||'';
   document.getElementById('pov').classList.add('on');
   document.getElementById('pdrawer').classList.add('on');
+  // [모바일] 화면 중앙 팝업으로 표시
+  if(window.__isMobile){
+    document.getElementById('pdrawer').classList.add('mobile-modal');
+    document.getElementById('pov').classList.add('mobile-modal-ov');
+  }
 }
 function closeP(){
   document.getElementById('pov').classList.remove('on');
   document.getElementById('pdrawer').classList.remove('on');
+  // 모바일 모달 클래스도 정리
+  setTimeout(() => {
+    document.getElementById('pdrawer')?.classList.remove('mobile-modal');
+    document.getElementById('pov')?.classList.remove('mobile-modal-ov');
+  }, 200);
   document.querySelectorAll('.ei').forEach(el=>el.classList.remove('on'));
   curEmp=null;
 }
