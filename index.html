@@ -182,15 +182,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 /* [모바일 팝업] 모바일에서 pdrawer를 화면 중앙 모달로 표시 */
 .pdrawer.mobile-modal{
   position:fixed !important;
-  left:50% !important; right:auto !important;
-  top:50% !important; bottom:auto !important;
-  transform:translate(-50%, -50%) scale(.96) !important;
-  width:90vw !important; max-width:700px !important;
-  height:auto !important; max-height:88vh !important;
+  right:auto !important; bottom:auto !important;
+  /* left, top, width, transform은 JS가 visualViewport 기준으로 동적 세팅 */
+  height:auto !important;
   border:1px solid var(--bd) !important;
   border-radius:16px !important;
   box-shadow:0 30px 80px rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.15) !important;
   opacity:0;
+  transform:translate(-50%, -50%) scale(.96);
   transition:transform .18s cubic-bezier(.4,0,.2,1), opacity .18s ease !important;
   z-index:99999 !important;
 }
@@ -4345,19 +4344,70 @@ function openP(emp){
   if(qualEl) qualEl.value=fb.qual||'';
   document.getElementById('pov').classList.add('on');
   document.getElementById('pdrawer').classList.add('on');
-  // [모바일] 화면 중앙 팝업으로 표시
+  // [모바일] 화면 중앙 팝업으로 표시 + 확대 상태에서 현재 보이는 뷰포트 기준으로 위치
   if(window.__isMobile){
     document.getElementById('pdrawer').classList.add('mobile-modal');
     document.getElementById('pov').classList.add('mobile-modal-ov');
+    _positionMobileModal();
+    _startMobileModalTracking();
   }
+}
+// [모바일 반응형 위치] visualViewport(pinch-zoom) 기준으로 모달 재위치
+function _positionMobileModal(){
+  const pd = document.getElementById('pdrawer');
+  if(!pd || !pd.classList.contains('mobile-modal')) return;
+  const vv = window.visualViewport;
+  if(!vv){
+    // fallback: 그냥 화면 중앙
+    pd.style.left = '50vw'; pd.style.top = '50vh';
+    pd.style.width = '90vw'; pd.style.maxHeight = '88vh';
+    return;
+  }
+  // 현재 보이는 뷰포트 중앙 좌표(레이아웃 기준 CSS px)
+  const cx = vv.offsetLeft + vv.width / 2;
+  const cy = vv.offsetTop + vv.height / 2;
+  // 모달 크기: 현재 보이는 뷰포트의 90% (최대 700 CSS px)
+  const w = Math.min(vv.width * 0.9, 700);
+  const maxH = vv.height * 0.88;
+  pd.style.left = cx + 'px';
+  pd.style.top = cy + 'px';
+  pd.style.width = w + 'px';
+  pd.style.maxHeight = maxH + 'px';
+  // 오버레이도 현재 보이는 뷰포트를 덮게
+  const pov = document.getElementById('pov');
+  if(pov && pov.classList.contains('mobile-modal-ov')){
+    pov.style.left = vv.offsetLeft + 'px';
+    pov.style.top = vv.offsetTop + 'px';
+    pov.style.width = vv.width + 'px';
+    pov.style.height = vv.height + 'px';
+  }
+}
+let _vvHandler = null;
+function _startMobileModalTracking(){
+  if(!window.visualViewport || _vvHandler) return;
+  _vvHandler = () => _positionMobileModal();
+  window.visualViewport.addEventListener('resize', _vvHandler);
+  window.visualViewport.addEventListener('scroll', _vvHandler);
+}
+function _stopMobileModalTracking(){
+  if(!window.visualViewport || !_vvHandler) return;
+  window.visualViewport.removeEventListener('resize', _vvHandler);
+  window.visualViewport.removeEventListener('scroll', _vvHandler);
+  _vvHandler = null;
 }
 function closeP(){
   document.getElementById('pov').classList.remove('on');
   document.getElementById('pdrawer').classList.remove('on');
+  _stopMobileModalTracking();
   // 모바일 모달 클래스도 정리
   setTimeout(() => {
-    document.getElementById('pdrawer')?.classList.remove('mobile-modal');
-    document.getElementById('pov')?.classList.remove('mobile-modal-ov');
+    const pd = document.getElementById('pdrawer');
+    const pov = document.getElementById('pov');
+    pd?.classList.remove('mobile-modal');
+    pov?.classList.remove('mobile-modal-ov');
+    // 인라인 스타일 정리
+    if(pd){ pd.style.left=''; pd.style.top=''; pd.style.width=''; pd.style.maxHeight=''; }
+    if(pov){ pov.style.left=''; pov.style.top=''; pov.style.width=''; pov.style.height=''; }
   }, 200);
   document.querySelectorAll('.ei').forEach(el=>el.classList.remove('on'));
   curEmp=null;
@@ -8319,7 +8369,7 @@ function knExportChanges(){
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 const firebaseConfig = {
   apiKey:            "AIzaSyCd-Uhjg4D9cpddxGj4YmvnpDyYHr10xOU",
@@ -8502,6 +8552,8 @@ window.__authLogout = async function(){
   _showAuthGate(true);
 };
 let _authInFlight = false;
+// 모바일 감지 (User Agent)
+const _isMobileUA = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent);
 async function _doGoogleLogin(){
   if(_authInFlight) return; // 이미 진행 중이면 중복 호출 무시
   _authInFlight = true;
@@ -8509,6 +8561,13 @@ async function _doGoogleLogin(){
   if(btn) btn.disabled = true;
   _setAuthStatus('로그인 진행 중...', '');
   try {
+    if(_isMobileUA){
+      // 모바일은 팝업이 잘 안 되므로 redirect 방식 사용
+      // → 페이지가 Google로 이동 후 다시 돌아옴 → getRedirectResult 처리
+      await signInWithRedirect(_auth, _googleProvider);
+      // 페이지 리다이렉트되므로 여기 이후 코드 실행 안 됨
+      return;
+    }
     await signInWithPopup(_auth, _googleProvider);
     // onAuthStateChanged 가 후속 처리(허용여부 판단)
   } catch(err) {
@@ -8519,7 +8578,7 @@ async function _doGoogleLogin(){
       _authInFlight = false;
       return;
     }
-    console.error('[AUTH] signInWithPopup error:', err);
+    console.error('[AUTH] signIn error:', err);
     let msg = err && err.message ? err.message : '알 수 없는 오류';
     if(code === 'auth/popup-blocked') msg = '팝업이 차단되었습니다. 브라우저 팝업 차단을 해제해주세요.';
     else if(code === 'auth/popup-closed-by-user') msg = '로그인 창이 닫혔습니다. 다시 시도해주세요.';
@@ -8531,6 +8590,21 @@ async function _doGoogleLogin(){
     _authInFlight = false;
   }
 }
+// 모바일 redirect 결과 처리: 페이지 로드시 Google에서 돌아온 결과 수신
+(async () => {
+  try {
+    const result = await getRedirectResult(_auth);
+    if(result && result.user){
+      console.log('[AUTH] redirect 로그인 성공:', result.user.email);
+      // onAuthStateChanged가 후속 처리
+    }
+  } catch(err) {
+    if(err && err.code){
+      console.error('[AUTH] getRedirectResult error:', err.code, err.message);
+      _setAuthStatus('로그인 실패: ' + (err.message||err.code), 'error');
+    }
+  }
+})();
 window.__authLogin = _doGoogleLogin;
 // 버튼 핸들러를 즉시 부착 (DOMContentLoaded 의존성 제거)
 function _attachAuthBtn(){
