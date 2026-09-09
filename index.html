@@ -3409,7 +3409,7 @@ function avEl(e,sz){
 }
 function ctag(ch){const m={'HAUS':'chHAUS','FS':'chFS','DS':'chDS','MALL':'chMALL','DFS':'chDFS','ATS':'chATS','NUF':'chNUF','PU':'chPU'};return`<span class="chtag ${m[ch]||'chdef'}">${ch||'기타'}</span>`}
 function getP(){try{return JSON.parse(localStorage.getItem('hrP')||'{}')}catch{return{}}}
-function setP(id,b){const p=getP();p[id]=b;localStorage.setItem('hrP',JSON.stringify(p))}
+function setP(id,b){const p=getP();p[id]=b;localStorage.setItem('hrP',JSON.stringify(p));try{if(window.fbSetEmpPhoto)window.fbSetEmpPhoto(id,b);}catch(_){}}
 function getH(){try{return JSON.parse(localStorage.getItem('hrH')||'{}')}catch{return{}}}
 function setH(id,a){
   const h=getH();
