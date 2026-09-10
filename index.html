@@ -6557,16 +6557,29 @@ function lvRenderSB(){
     const sb=brands.find(b=>b.brand===bk)||{};
     const base=getSbBaseValue(bk, sbNum(sb['기준'],0));
     const empsByBrand=lvModeEmployees().filter(e=>getEmpStatus(e)!=='deleted' && brandMatch(e,bk));
-    const activeEmps=empsByBrand.filter(e=>{
-      const st=getEmpStatus(e);
-      return st==='active' || st==='returning' || st==='support' || st==='transfer';
-    });
-    const leave=empsByBrand.filter(e=>getEmpStatus(e)==='leave').length;
-    const reg=activeEmps.filter(e=>lvPosKey(e.position)!=='IN').length;
-    const intern=activeEmps.filter(e=>lvPosKey(e.position)==='IN').length;
-    const joining=empsByBrand.filter(e=>getEmpStatus(e)==='joining').length;
-    const leaving=empsByBrand.filter(e=>getEmpStatus(e)==='leaving').length;
-    const cur=reg+intern+leave+joining-leaving;
+    // [사용자 정의 공식]
+    // 정직원 = 매니저+부매니저+팀원, 퇴사예정 포함, 무급휴직/입사예정 제외
+    // 인턴   = 인턴, 입사예정 제외 (퇴사예정은 포함)
+    // 입사예정 = status=joining (정직원+인턴 모두)
+    // 퇴사예정 = status=leaving
+    // 무급휴직 = status=leave
+    // 현인원 = 정직원 + 인턴 + 입사예정 + 무급휴직 − 퇴사예정
+    const isRegPos = (e) => lvPosKey(e.position) !== 'IN';   // 매니저/부매니저/팀원
+    const isInternPos = (e) => lvPosKey(e.position) === 'IN';
+    const reg = empsByBrand.filter(e => {
+      const st = getEmpStatus(e);
+      return isRegPos(e) && st !== 'leave' && st !== 'joining';
+    }).length;
+    const intern = empsByBrand.filter(e => {
+      const st = getEmpStatus(e);
+      return isInternPos(e) && st !== 'joining';
+    }).length;
+    const leave = empsByBrand.filter(e => getEmpStatus(e) === 'leave').length;
+    const joining = empsByBrand.filter(e => getEmpStatus(e) === 'joining').length;
+    const leaving = empsByBrand.filter(e => getEmpStatus(e) === 'leaving').length;
+    // 현인원 = 정직원(퇴사예정 포함) + 인턴(퇴사예정 포함) + 입사예정 + 무급휴직 − 퇴사예정
+    // (퇴사예정은 reg/intern에 이미 포함되므로 별도로 빼줌 → 현인원 총합에서는 제외되는 효과)
+    const cur = reg + intern + joining + leave - leaving;
     return {base,reg,intern,leave,joining,leaving,cur,gap:cur-base};
   }
   const bGM=calcBrand('GM'), bAT=calcBrand('AT'), bNUF=calcBrand('NUF');
@@ -6586,7 +6599,7 @@ function lvRenderSB(){
     const lC=b.leaving>0?`<span style="color:#e84040;font-weight:700">-${b.leaving}</span>`:`<span style="color:#ddd">-</span>`;
     return `<tr>
       <td class="brand-name"><span style="font-size:11px;background:#eef0fe;color:#5b6cf8;padding:2px 7px;border-radius:5px;font-weight:700">${tag}</span></td>
-      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)"></td><td title="재직중(active)+복직예정(returning)+지원근무(support)+이동예정(transfer) 정직원 수">${b.reg}</td><td title="재직중(active)+복직예정(returning)+지원근무(support)+이동예정(transfer) 인턴 수">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
+      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)"></td><td title="매니저+부매니저+팀원 (퇴사예정 포함, 무급휴직·입사예정 제외)">${b.reg}</td><td title="인턴 (퇴사예정 포함, 입사예정 제외)">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
       <td>${jC}</td><td>${lC}</td>
       <td class="col-formula"><b>${b.cur}</b></td>
       <td class="lv-sb-${gCls(b.gap)}">${gStr(b.gap)}</td><td>${r}%</td></tr>`;
@@ -6630,7 +6643,7 @@ function lvRenderSB(){
       </tbody></table>
     </div>
     <div class="lv-sb-formula-note">
-      📐 공식: <span>정직원(재직중+복직예정+지원근무+이동예정)</span>+<span>인턴(재직중+복직예정+지원근무+이동예정)</span>+<span>무급휴직</span>+<span>입사예정↑</span>−<span>퇴사예정↓</span>=<span>현인원</span>
+      📐 공식: <span>정직원(매니저+부매니저+팀원, 퇴사예정 포함)</span>+<span>인턴(퇴사예정 포함)</span>+<span>입사예정↑</span>+<span>무급휴직</span>−<span>퇴사예정↓</span>=<span>현인원</span>
        ·  기준인원은 브랜드별 입력칸에서 직접 수정 가능
     </div>`;
 }
@@ -7131,9 +7144,22 @@ function lvRender(){
       const header = document.createElement('div');
       header.className='lv-sec-header';
       const cnt=keys.reduce((s,k)=>s+stores[k].filter(isStoreCounted).length,0);
+      // [정직원/인턴 breakdown] 섹션 헤더 — SB 테이블 공식 그대로
+      // 정직원: position !== 인턴, 상태 !== 무급휴직/입사예정/삭제
+      // 인턴:   position === 인턴, 상태 !== 입사예정/삭제
+      let secReg = 0, secIntern = 0;
+      keys.forEach(k => {
+        stores[k].forEach(emp => {
+          const st = getEmpStatus(emp);
+          if(st === 'deleted' || st === 'joining') return;
+          const isIntern = lvPosKey(emp.position) === 'IN';
+          if(isIntern){ secIntern++; }
+          else if(st !== 'leave'){ secReg++; }
+        });
+      });
       header.innerHTML = `<div class="lv-sec-dot" style="background:${cfg.dot}"></div>
          <span class="lv-sec-title">${cfg.icon} ${cfg.label}</span>
-         <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명</span>`;
+         <span class="lv-sec-meta">${keys.length}개 매장 · ${cnt}명 <span style="color:#9aa0b3;font-weight:400">· 정직원 ${secReg}${secIntern?' · 인턴 '+secIntern:''}</span></span>`;
       frag.appendChild(header);
       const grid=document.createElement('div');
       grid.className='lv-grid'; grid.dataset.sec=secKey;
