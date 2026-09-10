@@ -1094,7 +1094,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body class="auth-locked"><nav class="nav">
+<body><nav class="nav">
   <div class="logo"><span class="logo-dot"></span>HR Hub</div>
   <div class="nsep"></div>
   <div class="tabs">
@@ -8441,8 +8441,6 @@ if(IS_LOCAL_DEV){
   const _hideGate = () => {
     const gate = document.getElementById('auth-gate');
     if(gate) gate.classList.add('hidden');
-    // [SECURITY] 로컬 개발모드에서도 body의 auth-locked 해제
-    try { document.body && document.body.classList.remove('auth-locked'); } catch(_){}
     if(!document.getElementById('dev-mode-tag')){
       const tag = document.createElement('div');
       tag.id = 'dev-mode-tag';
@@ -8486,11 +8484,6 @@ function _showAuthGate(show){
   if(mini) mini.classList.toggle('show', !show);
   const syncBtn = document.getElementById('auth-force-sync');
   if(syncBtn) syncBtn.style.display = show ? 'none' : 'inline-block';
-  // [SECURITY] body에 auth-locked 클래스로 앱 콘텐츠 강제 숨김
-  try {
-    if(show) document.body.classList.add('auth-locked');
-    else document.body.classList.remove('auth-locked');
-  } catch(_){}
 }
 function _renderRejectedUser(user){
   const block = document.getElementById('auth-user-block');
@@ -10190,10 +10183,6 @@ window.fbSetPT = async function(data) {
   font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
 }
 #auth-gate.hidden { display: none !important; }
-/* [SECURITY] 인증 전에는 앱 콘텐츠 자체를 숨김 — 게이트 오버레이 실패해도 유출 방지 */
-body.auth-locked > *:not(#auth-gate):not(script):not(style):not(link):not(meta) {
-  visibility: hidden !important;
-}
 .auth-card {
   background: #fff; border-radius: 18px; padding: 40px 36px;
   box-shadow: 0 24px 60px rgba(0,0,0,.12), 0 6px 16px rgba(0,0,0,.06);
