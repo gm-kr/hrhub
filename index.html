@@ -16,10 +16,45 @@
 </script>
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%23000000'/><text x='90' y='97' text-anchor='middle' dominant-baseline='central' font-family='Didot,Bodoni 72,Bodoni Moda,serif' font-weight='700' font-size='84' fill='%23ffffff'>HR</text></svg>">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.svg?v=3">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.svg?v=3">
-<link rel="icon" type="image/svg+xml" href="icon.svg?v=3">
+<!-- 아이콘은 아래 <script>에서 canvas로 PNG를 즉시 생성해 <head>에 inject됨 (외부 파일 불필요) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HR Hub">
+<script>
+// [HOME SCREEN ICON] iOS Safari는 SVG apple-touch-icon을 홈화면에 잘 안 붙임 → 페이지 로드 시 canvas로 PNG 생성해서 head에 injection
+// index.html 하나만 있으면 모든 사용자에게 동일 아이콘 적용됨
+(function(){
+  try {
+    var canvas = document.createElement('canvas');
+    canvas.width = 180; canvas.height = 180;
+    var ctx = canvas.getContext('2d');
+    // 검정 배경
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, 180, 180);
+    // HR 텍스트 (Didot 계열 세리프 — iOS 기본 폰트)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 90px "Didot","Bodoni 72","Bodoni Moda","Playfair Display","Times New Roman",serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('HR', 90, 96);
+    var pngUrl = canvas.toDataURL('image/png');
+    // <head>에 apple-touch-icon 링크 삽입 (여러 사이즈로)
+    ['apple-touch-icon','apple-touch-icon-precomposed'].forEach(function(rel){
+      [null,'180x180','152x152','120x120'].forEach(function(sz){
+        var l = document.createElement('link');
+        l.rel = rel;
+        if(sz) l.setAttribute('sizes', sz);
+        l.href = pngUrl;
+        document.head.appendChild(l);
+      });
+    });
+    // favicon도 함께
+    var fav = document.createElement('link');
+    fav.rel = 'icon'; fav.type = 'image/png'; fav.href = pngUrl;
+    document.head.appendChild(fav);
+  } catch(e){ console.warn('[icon] 생성 실패:', e); }
+})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
