@@ -6896,7 +6896,9 @@ setTimeout(()=>{ if(typeof _lvSyncMgrButtonsVisibility==='function') _lvSyncMgrB
 setTimeout(()=>{ if(typeof lvSyncMgrButton==='function') lvSyncMgrButton(); }, 100);
 
 function buildHcBar(storeKey, counted, total, pendingBreakdown){
-  const base=getStoreBase(storeKey); if(!base) return '';
+  let base=getStoreBase(storeKey);
+  // [FIX] 기준인원 미설정(0)이어도 클릭해서 설정할 수 있게 최소 1로 표시
+  if(!base) base = 0;
   // 보충 인원: 지원근무 + 입사예정 + 복직예정
   const boost = pendingBreakdown
     ? (pendingBreakdown.support||0)+(pendingBreakdown.joining||0)+(pendingBreakdown.returning||0)
@@ -6905,12 +6907,14 @@ function buildHcBar(storeKey, counted, total, pendingBreakdown){
   const diff = effective - base;
   // 상태: 보충까지 합쳐서 기준 충족 여부로 판단 (단순화)
   let barColor, tagCls, tagText;
-  if(effective > base){ barColor='#6c6ef7'; tagCls='over'; tagText='+'+diff; }
+  if(base === 0){ barColor='#9aa0b3'; tagCls=''; tagText='설정'; }
+  else if(effective > base){ barColor='#6c6ef7'; tagCls='over'; tagText='+'+diff; }
   else if(effective === base){ barColor='#2daa72'; tagCls='ok'; tagText='✓'; }
   else { barColor='#e84040'; tagCls='low'; tagText=diff; }
-  // 바 폭: 실효(effective) 기준으로 채우고, 보충은 옅은 톤으로 구분
-  const countedPct = Math.min(Math.round(counted/base*100), 100);
-  const effPct     = Math.min(Math.round(effective/base*100), 100);
+  // 바 폭: 실효(effective) 기준으로 채우고, 보충은 옅은 톤으로 구분 (base=0이면 나누기 방지)
+  const baseSafe   = base > 0 ? base : Math.max(counted, 1);
+  const countedPct = Math.min(Math.round(counted/baseSafe*100), 100);
+  const effPct     = Math.min(Math.round(effective/baseSafe*100), 100);
   const boostPct   = Math.max(0, effPct - countedPct);
   const numText = boost>0 ? `${counted}+${boost}` : `${counted}`;
   const ttlParts = pendingBreakdown
@@ -8134,7 +8138,7 @@ document.getElementById('add-emp-modal')?.addEventListener('click', function(e){
 });
 </script>
 <script>
-const SB_DATA = {"summary": {"목표인원": 275, "현인원_휴직포함": 273, "현인원_휴직제외": 266, "충원필요": 2, "brands": [{"brand": "GM", "기준": 255, "정직원": 236, "인턴": 10, "무급휴직": 7, "퇴사예정": 0, "현인원": 253, "충원": 2}, {"brand": "AT", "기준": 13, "정직원": 13, "인턴": 0, "무급휴직": 0, "퇴사예정": 0, "현인원": 13, "충원": 0}, {"brand": "NUF", "기준": 7, "정직원": 7, "인턴": 0, "무급휴직": 0, "퇴사예정": 0, "현인원": 7, "충원": 0}]}, "stores": {"GM_서울_하우스 노웨어_도산": 14, "GM_서울_하우스 노웨어_서울": 18, "GM_서울_FS_신사": 9, "GM_서울_FS_홍대": 9, "GM_서울_MALL_롯데_월드몰": 11, "GM_경기_MALL_신세계스타필드_하남": 9, "PU 성수 포켓 팝업": 8, "ATS_서울_FS_도산": 6, "ATS_서울_하우스 노웨어_서울": 7, "NUF_서울_하우스 노웨어_서울": 7, "GM_서울_DS_신세계_명동": 6, "GM_서울_DS_신세계_강남": 6, "GM_경기_DS_신세계_의정부": 4, "GM_경기_DS_신세계_사우스시티": 4, "GM_대전_DS_신세계_대전": 5, "GM_천안_DS_신세계_천안아산": 4, "GM_대구_DS_신세계_대구": 7, "GM_부산_DS_신세계_센텀": 8, "GM_서울_DS_롯데_명동": 8, "GM_서울_DS_롯데_잠실": 4, "GM_경기_DS_롯데_동탄": 4, "GM_부산_DS_롯데_서면": 6, "GM_서울_DS_갤러리아_압구정": 4, "GM_경기_DS_갤러리아_광교": 4, "GM_대전_DS_갤러리아_대전": 4, "GM_서울_DS_현대_여의도": 10, "GM_서울_DS_현대_무역": 4, "GM_서울_DS_현대_목동": 4, "GM_서울_DS_현대_압구정": 4, "GM_경기_DS_현대_판교": 4, "GM_대구_DS_현대_대구": 4, "GM_인천_DFS_현대_인천공항T1": 14, "GM_인천_DFS_신라_인천공항T2": 14, "GM_서울_DFS_롯데_명동": 8, "GM_서울_DFS_신세계_명동": 7, "GM_서울_DFS_신라_서울": 6, "GM_서울_DFS_롯데_월드몰": 4, "GM_제주_DFS_신라_제주": 6, "GM_제주_DFS_롯데_제주": 6, "육아휴직": 0}};
+const SB_DATA = {"summary": {"목표인원": 275, "현인원_휴직포함": 273, "현인원_휴직제외": 266, "충원필요": 2, "brands": [{"brand": "GM", "기준": 255, "정직원": 236, "인턴": 10, "무급휴직": 7, "퇴사예정": 0, "현인원": 253, "충원": 2}, {"brand": "AT", "기준": 13, "정직원": 13, "인턴": 0, "무급휴직": 0, "퇴사예정": 0, "현인원": 13, "충원": 0}, {"brand": "NUF", "기준": 7, "정직원": 7, "인턴": 0, "무급휴직": 0, "퇴사예정": 0, "현인원": 7, "충원": 0}]}, "stores": {"GM_서울_하우스 노웨어_도산": 14, "GM_서울_하우스 노웨어_서울": 18, "GM_서울_FS_신사": 9, "GM_서울_FS_홍대": 9, "GM_서울_MALL_롯데_월드몰": 11, "GM_경기_MALL_신세계스타필드_하남": 9, "PU 성수 포켓 팝업": 8, "ATS_서울_FS_도산": 6, "ATS_서울_하우스 노웨어_서울": 7, "NUF_서울_하우스 노웨어_서울": 7, "GM_서울_DS_신세계_명동": 6, "GM_서울_DS_신세계_강남": 6, "GM_경기_DS_신세계_의정부": 4, "GM_경기_DS_신세계_사우스시티": 4, "GM_대전_DS_신세계_대전": 5, "GM_천안_DS_신세계_천안아산": 4, "GM_대구_DS_신세계_대구": 7, "GM_부산_DS_신세계_센텀": 8, "GM_서울_DS_롯데_명동": 8, "GM_서울_DS_롯데_잠실": 4, "GM_경기_DS_롯데_동탄": 4, "GM_부산_DS_롯데_서면": 6, "GM_서울_DS_갤러리아_압구정": 4, "GM_경기_DS_갤러리아_광교": 4, "GM_대전_DS_갤러리아_대전": 4, "GM_서울_DS_현대_여의도": 10, "GM_서울_DS_현대_무역": 4, "GM_서울_DS_현대_목동": 4, "GM_서울_DS_현대_압구정": 4, "GM_경기_DS_현대_판교": 4, "GM_대구_DS_현대_대구": 4, "GM_인천_DFS_현대_인천공항T1": 14, "GM_인천_DFS_신라_인천공항T2": 14, "GM_서울_DFS_롯데_명동": 8, "GM_서울_DFS_신세계_명동": 7, "GM_서울_DFS_신라_서울": 6, "GM_서울_DFS_롯데_월드몰": 4, "GM_제주_DFS_신라_제주": 6, "GM_제주_DFS_롯데_제주": 6, "GM_광주_DS_신세계_광주": 6, "육아휴직": 0}};
 window.SB_DATA = SB_DATA;
 </script>
 <div id="add-store-modal">
