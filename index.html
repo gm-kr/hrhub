@@ -9398,8 +9398,14 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
       }
     }
     // 배치현황 화면이 열려있으면 즉시 재렌더
-    if(needRerender && typeof window.lvRender === 'function'){
-      try { window.lvRender(); } catch(_){}
+    // [SAFARI FIX] 매장 순서(lvOrder)가 Firebase에서 도착했을 때 반드시 lvRender 호출
+    // — 최초 로드에서 alphabetical fallback으로 그려진 화면을 갱신
+    if(needRerender){
+      const _doRender = () => { try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){} };
+      _doRender();
+      // Safari는 render 타이밍이 불안정하니 지연 재시도까지 걸어둠
+      setTimeout(_doRender, 300);
+      setTimeout(_doRender, 1500);
     }
   } catch(e) { console.error('shared snap:', e); }
 });
