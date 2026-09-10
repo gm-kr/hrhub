@@ -5691,6 +5691,16 @@ function lvSaveDraftMove(empId,storeKey){
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function lvSetMode(mode){
+  // [PW] 운영팀 테스트 진입 시 비밀번호 요구 (세션 단위로 1회만)
+  if(mode === 'draft' && !window.__lvDraftAuthed){
+    const pw = prompt('🔒 운영팀 테스트 모드 진입\n\n비밀번호를 입력하세요:');
+    if(pw === null) return;  // 취소
+    if(pw !== '1004'){
+      alert('❌ 비밀번호가 틀렸습니다.');
+      return;
+    }
+    window.__lvDraftAuthed = true;  // 이번 세션 통과 표시
+  }
   lvMode=mode==='actual'?'actual':'draft';
   localStorage.setItem('layoutMode',lvMode);
   const showDraft=lvMode==='draft';
