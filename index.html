@@ -2511,11 +2511,37 @@ function cleanupStoreReferences(){
 let __lslCache = null;
 function __lslInvalidate(){ __lslCache = null; }
 const DELETED_STORES_KEY='lvDeletedStores';
-function getDeletedStores(){try{return JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]');}catch{return[];}}
+function getDeletedStores(){
+  let d;
+  try{ d = JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]'); }catch{ d=[]; }
+  // [SELF-HEAL] 성수 포켓 alias 중 하나라도 있으면 나머지도 자동 등록 (자꾸 되살아나는 문제 방지)
+  try {
+    const pocketAliases = ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓'];
+    const hasAny = pocketAliases.some(a => d.includes(a));
+    if(hasAny){
+      let changed = false;
+      pocketAliases.forEach(a => { if(!d.includes(a)){ d.push(a); changed = true; } });
+      if(changed) localStorage.setItem(DELETED_STORES_KEY, JSON.stringify(d));
+    }
+  } catch(_){}
+  return d;
+}
+// 성수 포켓 팝업 등 여러 alias를 가진 매장을 모두 삭제 목록에 등록
+const _STORE_ALIASES = {
+  'GM_서울_PU_포켓':      ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓'],
+  'PU 성수 포켓 팝업':    ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓'],
+  'PU_성수_Pocket_팝업':  ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓'],
+  '포켓':                 ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓']
+};
 function addDeletedStore(id){
   const d=getDeletedStores();
-  if(!d.includes(id)){
-    d.push(id);
+  // 이 매장의 모든 alias도 함께 등록 (baseline reset/normalize로 되살아나는 것 방지)
+  const aliases = _STORE_ALIASES[id] || [id];
+  let changed = false;
+  aliases.forEach(a => {
+    if(!d.includes(a)){ d.push(a); changed = true; }
+  });
+  if(changed){
     localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
     try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   }
