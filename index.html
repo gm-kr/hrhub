@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v031</span><script>window.__APP_VERSION=31;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v032</span><script>window.__APP_VERSION=32;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5472,27 +5472,38 @@ window.showPhotoCtxMenu = function(e){
       menu.remove();
       if(act === 'paste'){
         try {
+          console.log('[Paste] 붙여넣기 시작');
           if(!navigator.clipboard || !navigator.clipboard.read){
             alert('이 브라우저는 붙여넣기 API를 지원하지 않아요.\nCtrl+V로 붙여넣거나 "파일 선택"을 사용해주세요.');
             return;
           }
           const items = await navigator.clipboard.read();
+          console.log('[Paste] 클립보드 items:', items.length);
           let handled = false;
           for(const it of items){
+            console.log('[Paste] types:', it.types);
+            // image/* 뿐만 아니라 웹 사진 복사시 다양한 타입 있음
             const imgType = it.types.find(t => t.startsWith('image/'));
             if(imgType){
               const blob = await it.getType(imgType);
+              console.log('[Paste] blob 획득:', imgType, blob.size);
+              // Firebase 저장 결과 로그
+              const _origSetP = window.setP;
               _processPhotoFile(blob);
               handled = true;
+              alert('✓ 사진 붙여넣기 완료 (' + Math.round(blob.size/1024) + 'KB)');
               break;
             }
           }
-          if(!handled) alert('클립보드에 이미지가 없어요. 슬랙 등에서 이미지 복사 후 다시 시도해주세요.');
+          if(!handled){
+            alert('❌ 클립보드에 이미지가 없어요.\n\n확인:\n1. 슬랙 등에서 이미지 우클릭 → 이미지 복사\n2. 복사한 게 정말 "이미지"인지 확인 (링크 아님)');
+          }
         } catch(err){
+          console.error('[Paste] 오류:', err);
           if(err.name === 'NotAllowedError'){
-            alert('브라우저가 클립보드 접근을 차단했어요.\n주소창 근처 자물쇠 아이콘 → 클립보드 허용 후 다시 시도.');
+            alert('❌ 브라우저가 클립보드 접근을 차단했어요.\n주소창 근처 자물쇠 아이콘 → 사이트 설정 → 클립보드 허용 후 다시 시도.');
           } else {
-            alert('붙여넣기 실패: ' + err.message + '\nCtrl+V로 시도해주세요.');
+            alert('❌ 붙여넣기 실패: ' + (err.message||err.name) + '\n\nCtrl+V로 시도하거나 파일 선택을 이용해주세요.');
           }
         }
       } else if(act === 'file'){
