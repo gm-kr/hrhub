@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v019</span><script>window.__APP_VERSION=19;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v020</span><script>window.__APP_VERSION=20;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6875,15 +6875,8 @@ function getPTData(storeKey) {
     savePTStore(store);
     return normalizePTData(store[storeKey]);
   }
-  // [FIX] 하드코딩 PT_EXCEL_INIT fallback 제거 - 한번이라도 hrPT_v1 저장된 적 있으면 (누가 삭제 했을 수도 있음) hardcoded 초기값 사용 금지
-  // hrPT_v1이 아예 없을 때만(생 첫 접속) 초기값 사용
-  const rawStore = localStorage.getItem(PT_LS_KEY);
-  if(rawStore === null){
-    // 완전 첫 접속 - 초기값 사용
-    const init = PT_EXCEL_INIT[storeKey] || PT_EXCEL_INIT[legacyKey];
-    if (init) return normalizePTData({ ptBase: init.ptBase, names: [...init.names] });
-  }
-  // 로컬 스토어에 없으면 빈 값 반환 (다른 사용자가 지웠으므로 되살리지 않음)
+  // [PERMANENT FIX] 하드코딩 PT_EXCEL_INIT fallback 완전 제거
+  // → Firebase가 유일한 진실. 없으면 빈 값 표시. 편집자가 등록해야 나타남.
   return normalizePTData({ ptBase: 0, names: [] });
 }
 
