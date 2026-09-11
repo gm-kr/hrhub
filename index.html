@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v016</span><script>window.__APP_VERSION=16;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v018</span><script>window.__APP_VERSION=18;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9225,6 +9225,7 @@ function persistEditsCache() {
 }
 window.fbSetEdit = function(empId, field, value) {
   if (!empId) return;
+  // hrEdits는 필드별 merge 저장이라 race 위험 낮음 → 가드 없이 즉시 저장
   if (!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
   window.__fbEdits[empId][field] = value;
   // Keep a local durable cache in sync immediately so refresh/tab switches won't lose recent edits.
@@ -9410,8 +9411,13 @@ window.addEventListener('beforeunload', () => {
   } catch(_){}
 });
 window.fbSetStoreList = async function(list) {
-  // 인증 안 되면 보관 후 인증 시 자동 푸시 — 다른 사용자에게 못 보내는 문제 방지
+  // 인증 안 되면 보관 후 인증 시 자동 푸시
   if(!window.__fbUser || !window.__fbUser.email){
+    try { localStorage.setItem('__pendingStoreList', JSON.stringify(list||[])); } catch(_){}
+    return;
+  }
+  // [GUARD] Firebase 초기 로드 전 push 차단 — 옛 로컬로 덮어쓰기 방지
+  if(window._fbCanWrite && !window._fbCanWrite('storeList')){
     try { localStorage.setItem('__pendingStoreList', JSON.stringify(list||[])); } catch(_){}
     return;
   }
@@ -9431,6 +9437,7 @@ window.fbSetCriteria = async function(criteriaArr) {
 };
 let _lastStoreListJson = '';
 onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
+  window.__fbInit.storeList = true;  // [INIT]
   if (!snap.exists()) return;
   const data = snap.data();
   if (!data.list) return;
@@ -9544,6 +9551,26 @@ window.addEventListener('pageshow', (e) => {
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
 window.__lastSharedSnap = window.__lastSharedSnap || {};
 window.__sharedInitLoaded = window.__sharedInitLoaded || false;  // Firebase 초기 로드 완료 플래그
+// [UNIVERSAL GUARD] 모든 컬렉션에 대해 초기 Firebase 로드 전 push 차단
+// → 신뢰할 수 있는 상태를 받기 전엔 절대 쓰지 않음 (본인 캐시가 Firebase 덮어쓰는 문제 원천 차단)
+window.__fbInit = window.__fbInit || { edits:false, storeList:false, praise:false, invitation:false, storeHistory:false, empPhotos:false, criteria:false };
+window._fbCanWrite = function(colName){
+  if(!window.__fbUser || !window.__fbUser.email) return false;
+  if(colName && !window.__fbInit[colName]){
+    console.warn('[FB] '+colName+' 초기 로드 전 push 차단 (본인 캐시 덮어쓰기 방지)');
+    return false;
+  }
+  return true;
+};
+// [SAFETY] 각 컬렉션 5초 안에 스냅샷 안 오면 자동으로 잠금 해제 (앱 잠금 방지)
+setTimeout(() => {
+  Object.keys(window.__fbInit).forEach(k => {
+    if(!window.__fbInit[k]){
+      console.warn('[FB] '+k+' 5초 응답 없음 - push 잠금 자동 해제');
+      window.__fbInit[k] = true;
+    }
+  });
+}, 5000);
 window.fbSetShared = function(){
   clearTimeout(_fbSharedTimer);
   _fbSharedTimer = setTimeout(async () => {
@@ -9738,6 +9765,7 @@ window.fbSetPraise = function(){
   clearTimeout(_fbPraiseTimer);
   _fbPraiseTimer = setTimeout(async () => {
     try {
+      if(window._fbCanWrite && !window._fbCanWrite('praise')) return;  // [GUARD]
       const records = (function(){ try{ return JSON.parse(localStorage.getItem('praiseRecords')||'[]'); }catch(_){ return []; }})();
       const rewards = (function(){ try{ return JSON.parse(localStorage.getItem('praiseRewards')||'[]'); }catch(_){ return []; }})();
       await setDoc(doc(_db, COL_PRAISE, 'data'), {
@@ -9750,6 +9778,7 @@ window.fbSetPraise = function(){
   }, 100);
 };
 onSnapshot(doc(_db, COL_PRAISE, 'data'), (snap) => {
+  window.__fbInit.praise = true;  // [INIT]
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
@@ -9776,10 +9805,9 @@ window.fbSetInvitation = function(){
   clearTimeout(_fbInvTimer);
   _fbInvTimer = setTimeout(async () => {
     try {
-      // ES module은 classic script의 let 변수 접근 불가 → localStorage에서 직접 읽음
+      if(window._fbCanWrite && !window._fbCanWrite('invitation')) return;  // [GUARD]
       const managersJson  = localStorage.getItem('inv_managers')   || '[]';
       const candidatesJson= localStorage.getItem('inv_candidates') || '{}';
-      // 빈 객체/빈 배열로 Firebase 덮어쓰지 않도록 가드 (initial load 전 호출 방지)
       if(managersJson === '[]' && candidatesJson === '{}') return;
       await setDoc(doc(_db, COL_INVITATION, 'data'), {
         managers: managersJson,
@@ -9791,6 +9819,7 @@ window.fbSetInvitation = function(){
   }, 100);
 };
 onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
+  window.__fbInit.invitation = true;  // [INIT]
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
@@ -9904,6 +9933,7 @@ window.fbSetStoreHistory = function(){
   clearTimeout(_fbHistTimer);
   _fbHistTimer = setTimeout(async () => {
     try {
+      if(window._fbCanWrite && !window._fbCanWrite('storeHistory')) return;  // [GUARD]
       const h = (function(){ try{ return JSON.parse(localStorage.getItem('hrH')||'{}'); }catch(_){ return {}; }})();
       await setDoc(doc(_db, COL_STOREHIST, 'data'), {
         data: JSON.stringify(h),
@@ -9914,6 +9944,7 @@ window.fbSetStoreHistory = function(){
   }, 400);
 };
 onSnapshot(doc(_db, COL_STOREHIST, 'data'), (snap) => {
+  window.__fbInit.storeHistory = true;  // [INIT]
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
@@ -10388,16 +10419,21 @@ let _fbPTTimer = null;
 
 window.__ptInitLoaded = false;
 window.fbSetPT = async function(data) {
-  // 인증 없으면 저장 불가
   if(!window.__fbUser || !window.__fbUser.email){
     console.warn('[PT] 인증 안 됨, 저장 취소');
+    return;
+  }
+  // [SAFETY] Firebase 스냅샷 도착 전엔 push 차단 (오래된 로컬로 Firebase 덮어쓰기 방지)
+  //  → 이건 정말 중요. 없으면 3개 기기가 서로 자기 로컬로 Firebase 덮어씀
+  if(!window.__ptInitLoaded){
+    alert('⏳ 아직 최신 파트타이머 정보를 불러오는 중입니다.\n잠시 후 다시 시도해주세요.');
     return;
   }
   clearTimeout(_fbPTTimer);
   _fbPTTimer = setTimeout(async () => {
     try {
       await setDoc(doc(_db, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 10 });
-      console.log('[PT] Firebase 저장 완료');
+      console.log('[PT] Firebase 저장 완료 by', window.__fbUser.email);
     } catch(e) { console.warn('[FB] 파트타이머 저장 오류:', e.code, e.message); }
   }, 300);
 };
@@ -10405,6 +10441,8 @@ window.fbSetPT = async function(data) {
 // PT onSnapshot 리스너
 (function startPTListener() {
   try {
+    // [SAFETY] Firebase 5초 응답 없어도 push 허용 (앱 잠금 방지)
+    setTimeout(() => { if(!window.__ptInitLoaded){ console.warn('[PT] Firebase 5초 응답 없음 - push 잠금 해제'); window.__ptInitLoaded = true; } }, 5000);
     onSnapshot(doc(_db, COL_PT, 'ptData'), snap => {
       window.__ptInitLoaded = true;
       if (!snap.exists()) return;
