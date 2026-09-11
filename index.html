@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v025</span><script>window.__APP_VERSION=25;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v026</span><script>window.__APP_VERSION=26;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3245,9 +3245,9 @@ window.openMoveChannel = openMoveChannel;
 <div class="pdrawer" id="pdrawer">
   <div class="phd">
     <div class="phi">
-      <div class="ppw" onclick="trigPhoto()" title="클릭하여 사진 변경">
+      <div class="ppw" onclick="trigPhoto()" oncontextmenu="return showPhotoCtxMenu(event)" title="클릭: 사진 보기 · 우클릭: 붙여넣기/파일 선택">
         <div class="pp" id="pp"></div>
-        <button class="ppbtn" onclick="event.stopPropagation();document.getElementById('avinput').click()" title="사진 변경">📷</button>
+        <button class="ppbtn" onclick="event.stopPropagation();showPhotoCtxMenu(event)" title="사진 변경 옵션">📷</button>
       </div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -5444,6 +5444,75 @@ function _processPhotoFile(file){
   };
   reader.readAsDataURL(file);
 }
+
+// [PHOTO CTX MENU] 사진 우클릭 시 붙여넣기/파일선택 메뉴
+window.showPhotoCtxMenu = function(e){
+  if(!curEmp) return true;
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  // 기존 메뉴 제거
+  const old = document.getElementById('photo-ctx-menu');
+  if(old) old.remove();
+  const menu = document.createElement('div');
+  menu.id = 'photo-ctx-menu';
+  const x = (e && e.clientX) || 100;
+  const y = (e && e.clientY) || 100;
+  menu.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:2147483647;background:#fff;border:1px solid #dfe3ee;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:6px 0;min-width:180px;font-family:-apple-system,"Pretendard",sans-serif;font-size:14px`;
+  menu.innerHTML = `
+    <div class="pcm-item" data-act="paste" style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:8px">📋 붙여넣기 <span style="font-size:11px;color:#9aa0b3;margin-left:auto">Ctrl+V</span></div>
+    <div class="pcm-item" data-act="file"  style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:8px">📁 파일 선택</div>
+    <div class="pcm-item" data-act="view"  style="padding:10px 16px;cursor:pointer;display:flex;align-items:center;gap:8px">🔍 크게 보기</div>
+  `;
+  document.body.appendChild(menu);
+  // hover 효과
+  menu.querySelectorAll('.pcm-item').forEach(el => {
+    el.onmouseenter = () => el.style.background = '#f5f6fa';
+    el.onmouseleave = () => el.style.background = '';
+    el.onclick = async () => {
+      const act = el.dataset.act;
+      menu.remove();
+      if(act === 'paste'){
+        try {
+          if(!navigator.clipboard || !navigator.clipboard.read){
+            alert('이 브라우저는 붙여넣기 API를 지원하지 않아요.\nCtrl+V로 붙여넣거나 "파일 선택"을 사용해주세요.');
+            return;
+          }
+          const items = await navigator.clipboard.read();
+          let handled = false;
+          for(const it of items){
+            const imgType = it.types.find(t => t.startsWith('image/'));
+            if(imgType){
+              const blob = await it.getType(imgType);
+              _processPhotoFile(blob);
+              handled = true;
+              break;
+            }
+          }
+          if(!handled) alert('클립보드에 이미지가 없어요. 슬랙 등에서 이미지 복사 후 다시 시도해주세요.');
+        } catch(err){
+          if(err.name === 'NotAllowedError'){
+            alert('브라우저가 클립보드 접근을 차단했어요.\n주소창 근처 자물쇠 아이콘 → 클립보드 허용 후 다시 시도.');
+          } else {
+            alert('붙여넣기 실패: ' + err.message + '\nCtrl+V로 시도해주세요.');
+          }
+        }
+      } else if(act === 'file'){
+        document.getElementById('avinput').click();
+      } else if(act === 'view'){
+        const ph = getP();
+        const src = ph[curEmp.id] || curEmp.photo_b64;
+        if(src) window.openPhotoLightbox(src);
+      }
+    };
+  });
+  // 메뉴 밖 클릭 시 닫기
+  setTimeout(() => {
+    document.addEventListener('click', function _closeMenu(){
+      menu.remove();
+      document.removeEventListener('click', _closeMenu);
+    });
+  }, 0);
+  return false;
+};
 
 // [CLIPBOARD] 상세 패널 어디서든 Ctrl+V / Cmd+V 로 사진 붙여넣기 지원
 document.addEventListener('paste', function(e){
