@@ -9303,7 +9303,14 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
   const data = snap.data();
   if (!data.list) return;
   try {
-    const json = JSON.stringify(data.list);
+    // [MERGE FIX] 원격 리스트 + baseline UNION → 신세계 광주 등 baseline에만 있는 매장이 사라지는 문제 해결
+    let effectiveList = data.list;
+    try {
+      if(typeof mergeStoreLists === 'function' && typeof getBaselineStoreList === 'function'){
+        effectiveList = mergeStoreLists(data.list, getBaselineStoreList());
+      }
+    } catch(_){}
+    const json = JSON.stringify(effectiveList);
     if(json === _lastStoreListJson) return; // 같은 데이터면 무시 (재귀 방지)
     _lastStoreListJson = json;
     localStorage.setItem('store_list_v2', json);
@@ -9315,6 +9322,10 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     // 배치현황도 매장 순서가 달라지므로 같이 재렌더
     try { if(typeof window.lvRender === 'function') window.lvRender(); } catch(_){}
     try { if(typeof window.lvRenderSB === 'function') window.lvRenderSB(); } catch(_){}
+    // baseline 병합 결과가 원격과 다르면 되돌려 저장 (다른 클라이언트도 baseline 매장 확보)
+    if(json !== JSON.stringify(data.list)){
+      try { if(typeof window.fbSetStoreList==='function') window.fbSetStoreList(effectiveList); } catch(_){}
+    }
   } catch(e) { console.error('[FB] storeList snap:', e); }
 });
 // [SHARE] 매장 기준인원·매니저 슬롯·중요매장 순위 통합 저장
@@ -9376,6 +9387,28 @@ window.addEventListener('pagehide',    () => { try { window.__flushAllPending();
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
     try { window.__flushAllPending(); } catch(_){}
+  } else {
+    // [FRESH FIX] 탭이 다시 활성화될 때 즉시 재렌더 → Safari 백그라운드 서스펜드 후 오래된 화면 방지
+    try {
+      if(typeof window.lvRender === 'function') window.lvRender();
+      if(typeof window.lvRenderSB === 'function') window.lvRenderSB();
+      if(typeof renderSidebar === 'function') renderSidebar();
+      if(typeof refresh === 'function') refresh();
+    } catch(_){}
+  }
+});
+// [FRESH FIX] 페이지 포커스/새로고침 감지 — 모바일 Safari 특히
+window.addEventListener('focus', () => {
+  try {
+    if(typeof window.lvRender === 'function') window.lvRender();
+    if(typeof window.lvRenderSB === 'function') window.lvRenderSB();
+  } catch(_){}
+});
+window.addEventListener('pageshow', (e) => {
+  // pageshow.persisted = true는 bfcache에서 복원된 것 → 데이터 오래됨 → 강제 새로고침
+  if(e.persisted){
+    console.log('[SYNC] bfcache 복원 감지 → 강제 새로고침');
+    location.reload();
   }
 });
 
@@ -9466,18 +9499,41 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
       } catch(_){}
     }
     if(typeof data.deletedStores === 'string'){
-      if(localStorage.getItem('lvDeletedStores') !== data.deletedStores){
-        localStorage.setItem('lvDeletedStores', data.deletedStores);
-        needRerender = true;
-      }
+      // [MERGE FIX] 로컬 삭제와 원격 삭제 UNION (last-write-wins 방지)
+      // → 한 사람이 삭제한 매장이 다른 사람의 오래된 상태 push로 되살아나는 문제 해결
+      try {
+        const remote = JSON.parse(data.deletedStores) || [];
+        const local  = JSON.parse(localStorage.getItem('lvDeletedStores')||'[]');
+        const merged = Array.from(new Set([...local, ...remote]));
+        const mergedStr = JSON.stringify(merged);
+        if(localStorage.getItem('lvDeletedStores') !== mergedStr){
+          localStorage.setItem('lvDeletedStores', mergedStr);
+          needRerender = true;
+        }
+        // 병합 결과가 원격과 다르면 다시 push (자기 로컬만 있던 삭제도 공유)
+        if(mergedStr !== data.deletedStores){
+          window.__lastSharedSnap.deletedStores = mergedStr;
+          try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+        }
+      } catch(_){}
     }
     if(typeof data.deletedEmps === 'string'){
-      if(localStorage.getItem('hrDeletedEmpIds_v1') !== data.deletedEmps){
-        localStorage.setItem('hrDeletedEmpIds_v1', data.deletedEmps);
-        needRerender = true;
-        // 삭제 직원 목록 변경 시 HR 테이블도 재렌더
-        try { if(typeof getList==='function' && typeof renderTbl==='function'){ const l=getList(); renderTbl(l); } } catch(_){}
-      }
+      // [MERGE FIX] 삭제 직원도 UNION
+      try {
+        const remote = JSON.parse(data.deletedEmps) || [];
+        const local  = JSON.parse(localStorage.getItem('hrDeletedEmpIds_v1')||'[]');
+        const merged = Array.from(new Set([...local, ...remote]));
+        const mergedStr = JSON.stringify(merged);
+        if(localStorage.getItem('hrDeletedEmpIds_v1') !== mergedStr){
+          localStorage.setItem('hrDeletedEmpIds_v1', mergedStr);
+          needRerender = true;
+          try { if(typeof getList==='function' && typeof renderTbl==='function'){ const l=getList(); renderTbl(l); } } catch(_){}
+        }
+        if(mergedStr !== data.deletedEmps){
+          window.__lastSharedSnap.deletedEmps = mergedStr;
+          try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+        }
+      } catch(_){}
     }
     if(typeof data.sbBase === 'string'){
       if(localStorage.getItem('lvSbBaseOverrides') !== data.sbBase){
