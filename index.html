@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v020</span><script>window.__APP_VERSION=20;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v021</span><script>window.__APP_VERSION=21;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -10422,12 +10422,7 @@ window.fbSetPT = async function(data) {
     console.warn('[PT] 인증 안 됨, 저장 취소');
     return;
   }
-  // [SAFETY] Firebase 스냅샷 도착 전엔 push 차단 (오래된 로컬로 Firebase 덮어쓰기 방지)
-  //  → 이건 정말 중요. 없으면 3개 기기가 서로 자기 로컬로 Firebase 덮어씀
-  if(!window.__ptInitLoaded){
-    alert('⏳ 아직 최신 파트타이머 정보를 불러오는 중입니다.\n잠시 후 다시 시도해주세요.');
-    return;
-  }
+  // __ptInitLoaded 가드 제거 — 사용자 명시적 편집은 항상 push (실시간 반영 우선)
   clearTimeout(_fbPTTimer);
   _fbPTTimer = setTimeout(async () => {
     try {
@@ -10447,22 +10442,16 @@ window.fbSetPT = async function(data) {
       if (!snap.exists()) return;
       const d = snap.data();
       if (!d || !d.data) return;
-      // [VERSION GUARD] 옛 클라이언트 push 무시
-      const incomingVer = Number(d._clientVersion || 0);
-      const myVer = window.__APP_VERSION || 10;
-      if(incomingVer > 0 && incomingVer < myVer){
-        console.warn('[PT] 옛 클라이언트(v'+incomingVer+') push 무시');
-        setTimeout(() => { try { if(window.fbSetPT){ const local=JSON.parse(localStorage.getItem('hrPT_v1')||'{}'); window.fbSetPT(local); } } catch(_){} }, 500);
-        return;
-      }
+      // 버전 체크 제거 — 모든 push 무조건 수신 (실시간 반영 우선)
       try {
         const remote = JSON.parse(d.data);
         const local = localStorage.getItem('hrPT_v1') || '{}';
         if (JSON.stringify(remote) !== local) {
           localStorage.setItem('hrPT_v1', JSON.stringify(remote));
+          console.log('[PT] 원격 → 로컬 갱신 완료');
           if (window.lvRender) window.lvRender();
         }
-      } catch(e) {}
+      } catch(e) { console.warn('[PT] snap 처리 오류:', e); }
     });
     // 안전장치 제거 — Firebase 안 오면 push 영구 차단 (오래된 로컬로 덮어쓰기 방지)
   } catch(e) { console.warn('[FB] PT 리스너 오류:', e); }
