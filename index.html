@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v026</span><script>window.__APP_VERSION=26;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v028</span><script>window.__APP_VERSION=28;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9663,22 +9663,65 @@ window.__flushAllPending = function(){
 // 페이지 종료/숨김 이벤트에서 강제 flush
 window.addEventListener('beforeunload', () => { try { window.__flushAllPending(); } catch(_){} });
 window.addEventListener('pagehide',    () => { try { window.__flushAllPending(); } catch(_){} });
+// [STANDALONE] iOS 홈화면 바로가기(standalone) 감지 — Safari 브라우저와 구분해서 처리
+window.__isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+window.__lastHideAt = 0;
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
     try { window.__flushAllPending(); } catch(_){}
+    window.__lastHideAt = Date.now();
   } else {
-    // [FRESH FIX] 탭 재활성화 시 init flag 리셋 → Firebase 최신 스냅샷 재수신 후에만 push 재허용
     window.__sharedInitLoaded = false;
-    // 안전장치 제거 — Firebase 오면 자동으로 true 됨. 안 오면 push 계속 차단.
+    const hiddenMs = window.__lastHideAt ? Date.now() - window.__lastHideAt : 0;
+    // [STANDALONE FIX] 홈화면 바로가기에서 30초 이상 백그라운드였다가 돌아오면 강제 새로고침
+    // (iOS는 standalone 모드에서 앱을 suspend해서 Firebase 연결 끊김)
+    if(window.__isStandalone && hiddenMs > 30000){
+      console.log('[SYNC] standalone 모드 - '+Math.round(hiddenMs/1000)+'초 백그라운드 → 강제 새로고침');
+      location.reload();
+    }
   }
 });
 window.addEventListener('pageshow', (e) => {
-  // pageshow.persisted = true는 bfcache에서 복원된 것 → 데이터 오래됨 → 강제 새로고침
   if(e.persisted){
     console.log('[SYNC] bfcache 복원 감지 → 강제 새로고침');
     location.reload();
   }
 });
+// [STANDALONE] 홈화면 바로가기는 30분마다 자동 새로고침 (긴 시간 열어놔도 데이터 최신 유지)
+if(window.__isStandalone){
+  setInterval(() => {
+    if(document.visibilityState === 'visible'){
+      console.log('[SYNC] standalone 30분 주기 새로고침');
+      location.reload();
+    }
+  }, 30 * 60 * 1000);
+  // [STANDALONE POLL] 열려있는 동안 15초마다 Firebase 강제 재-fetch (onSnapshot 끊겨도 커버)
+  setInterval(async () => {
+    if(document.visibilityState !== 'visible') return;
+    if(!window.__fbDb || !window.__fbDoc) return;
+    try {
+      // 최소 한 컬렉션(sharedSettings)만 명시적으로 재-fetch → onSnapshot 재작동 유도
+      const { getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const snap = await getDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
+      if(snap.exists()){
+        const data = snap.data();
+        // 로컬과 비교 후 다르면 갱신 (변경 시 lvRender)
+        let changed = false;
+        if(typeof data.layoutDraft === 'string' && localStorage.getItem('layoutDraftData') !== data.layoutDraft){
+          localStorage.setItem('layoutDraftData', data.layoutDraft); changed = true;
+        }
+        if(typeof data.sbBase === 'string' && localStorage.getItem('lvSbBaseOverrides') !== data.sbBase){
+          localStorage.setItem('lvSbBaseOverrides', data.sbBase); changed = true;
+        }
+        if(changed){
+          console.log('[STANDALONE POLL] 변경 감지 → 재렌더');
+          try { if(typeof lvRender==='function') lvRender(); } catch(_){}
+          try { if(typeof lvRenderSB==='function') lvRenderSB(); } catch(_){}
+        }
+      }
+    } catch(e){ console.warn('[STANDALONE POLL] 실패:', e); }
+  }, 15000);
+}
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
 window.__lastSharedSnap = window.__lastSharedSnap || {};
