@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v003</span></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v004</span></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5745,16 +5745,62 @@ function lvSaveDraftMove(empId,storeKey){
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
+// [DRAFT PW] 커스텀 비밀번호 모달 (iPad/모바일 Safari 완벽 호환)
+function _lvAskDraftPassword(){
+  return new Promise(resolve => {
+    // 기존 모달 있으면 제거
+    const old = document.getElementById('lv-draft-pw-modal');
+    if(old) old.remove();
+    const modal = document.createElement('div');
+    modal.id = 'lv-draft-pw-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(15,18,30,.55);display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:26px 26px 20px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.18)">
+        <div style="font-size:17px;font-weight:700;margin-bottom:6px;color:#2a2f42">🔒 운영팀 테스트 모드</div>
+        <div style="font-size:13px;color:#7a8299;margin-bottom:16px">비밀번호를 입력하세요</div>
+        <input id="lv-draft-pw-input" type="password" inputmode="numeric" autocomplete="off" placeholder="비밀번호" style="width:100%;padding:12px 14px;font-size:16px;border:1px solid #dfe3ee;border-radius:8px;outline:none;box-sizing:border-box" />
+        <div id="lv-draft-pw-err" style="display:none;color:#e84040;font-size:12px;margin-top:6px">❌ 비밀번호가 틀렸습니다</div>
+        <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+          <button id="lv-draft-pw-cancel" style="padding:10px 18px;border:1px solid #dfe3ee;background:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:#5b6378">취소</button>
+          <button id="lv-draft-pw-ok" style="padding:10px 18px;border:none;background:#5b6cf8;color:#fff;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">확인</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const input = document.getElementById('lv-draft-pw-input');
+    const err = document.getElementById('lv-draft-pw-err');
+    setTimeout(() => input.focus(), 50);
+    const submit = () => {
+      const v = (input.value||'').trim();
+      if(v === '1004'){
+        modal.remove();
+        resolve(true);
+      } else {
+        err.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    };
+    const cancel = () => { modal.remove(); resolve(false); };
+    document.getElementById('lv-draft-pw-ok').onclick = submit;
+    document.getElementById('lv-draft-pw-cancel').onclick = cancel;
+    input.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ e.preventDefault(); submit(); }
+      if(e.key === 'Escape'){ cancel(); }
+    });
+    modal.addEventListener('click', e => { if(e.target === modal) cancel(); });
+  });
+}
+
 function lvSetMode(mode){
   // [PW] 운영팀 테스트 진입 시 비밀번호 요구 (세션 단위로 1회만)
   if(mode === 'draft' && !window.__lvDraftAuthed){
-    const pw = prompt('🔒 운영팀 테스트 모드 진입\n\n비밀번호를 입력하세요:');
-    if(pw === null) return;  // 취소
-    if(pw !== '1004'){
-      alert('❌ 비밀번호가 틀렸습니다.');
-      return;
-    }
-    window.__lvDraftAuthed = true;  // 이번 세션 통과 표시
+    // iPad/모바일 Safari에서도 확실히 작동하는 커스텀 모달 사용
+    return _lvAskDraftPassword().then(ok => {
+      if(!ok) return;
+      window.__lvDraftAuthed = true;
+      lvSetMode(mode);  // 재귀 호출 (이미 authed 상태로)
+    });
   }
   lvMode=mode==='actual'?'actual':'draft';
   localStorage.setItem('layoutMode',lvMode);
@@ -8811,15 +8857,14 @@ onAuthStateChanged(_auth, (user)=>{
   };
   try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
   _showAuthGate(false);
-  // [FRESH DEVICE FIX] 새 기기(localStorage 없음)에서 Firebase 데이터 도착 전 baseline이 잘못 표시되는 문제
-  // → 로딩 오버레이로 상호작용 차단, sharedSettings onSnapshot이 오면 제거됨
-  if(!window.__sharedInitLoaded && !document.getElementById('fb-loading-overlay')){
+  // [FRESH DEVICE FIX] 새 기기(localStorage 없음)만 로딩 오버레이 표시 — 재접속에선 오버레이 안 뜸(빠름)
+  const _hasCache = !!(localStorage.getItem('__fbEditsCache') || localStorage.getItem('lvSbBaseOverrides'));
+  if(!window.__sharedInitLoaded && !_hasCache && !document.getElementById('fb-loading-overlay')){
     const ov = document.createElement('div');
     ov.id = 'fb-loading-overlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(247,246,243,.92);z-index:999998;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
     ov.innerHTML = '<div style="font-size:36px;margin-bottom:16px">☁️</div><div style="font-size:16px;font-weight:600;color:#2a2f42;margin-bottom:8px">최신 데이터 불러오는 중...</div><div style="font-size:13px;color:#7a8299">잠시만 기다려주세요</div>';
     document.body.appendChild(ov);
-    // 안전장치: 15초 지나도 안 오면 강제 해제 (Firebase 실패해도 사용 가능)
     setTimeout(() => { const o = document.getElementById('fb-loading-overlay'); if(o) o.remove(); window.__sharedInitLoaded = true; }, 15000);
   }
 });
@@ -9433,25 +9478,11 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
     try { window.__flushAllPending(); } catch(_){}
   } else {
-    // [FRESH FIX] 탭 재활성화 시:
-    // 1. init flag 리셋 → Firebase 최신 스냅샷 재수신 전까지 push 차단 (오래된 로컬 덮어쓰기 방지)
-    // 2. Firebase onSnapshot 재발생 대기 (10초 안에 안 오면 자동으로 push 허용)
+    // [FRESH FIX] 탭 재활성화 시 init flag 리셋 → Firebase 최신 스냅샷 재수신 전까지 push 차단
     window.__sharedInitLoaded = false;
     setTimeout(() => { window.__sharedInitLoaded = true; }, 10000);
-    try {
-      if(typeof window.lvRender === 'function') window.lvRender();
-      if(typeof window.lvRenderSB === 'function') window.lvRenderSB();
-      if(typeof renderSidebar === 'function') renderSidebar();
-      if(typeof refresh === 'function') refresh();
-    } catch(_){}
+    // 재렌더는 하지 않음 — Firebase onSnapshot이 fire하면 자동으로 재렌더됨 (성능 최적화)
   }
-});
-// [FRESH FIX] 페이지 포커스/새로고침 감지 — 모바일 Safari 특히
-window.addEventListener('focus', () => {
-  try {
-    if(typeof window.lvRender === 'function') window.lvRender();
-    if(typeof window.lvRenderSB === 'function') window.lvRenderSB();
-  } catch(_){}
 });
 window.addEventListener('pageshow', (e) => {
   // pageshow.persisted = true는 bfcache에서 복원된 것 → 데이터 오래됨 → 강제 새로고침
