@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v051</span><script>window.__APP_VERSION=51;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v052</span><script>window.__APP_VERSION=52;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2809,7 +2809,7 @@ function saveStoreLinks(map){
     if(window.__fbDb && window.__fbSetDoc && window.__fbUser && window.__fbUser.email){
       window.__fbSetDoc(
         window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'),
-        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 51 },
+        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 52 },
         { merge: true }
       ).then(() => console.log('[storeLinks] 강제 push 완료')).catch(e => console.warn('[storeLinks] push 오류:', e));
       if(window.__lastSharedSnap) window.__lastSharedSnap.storeLinks = json;
@@ -9172,6 +9172,11 @@ onAuthStateChanged(_auth, (user)=>{
   };
   try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
   _showAuthGate(false);
+  // [STANDALONE] 인증 확정 즉시 강제 pull (interval 다음 tick 기다리지 않음)
+  if(window.__isStandalone && typeof window._standalonePullAll === 'function'){
+    setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 200);
+    setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 1500);
+  }
   // [ALWAYS LOAD FRESH] 매 접속마다 Firebase 최신 데이터 도착까지 로딩 화면 (깜빡임 없이 최신만 표시)
   if(!document.getElementById('fb-loading-overlay')){
     const ov = document.createElement('div');
@@ -9845,12 +9850,18 @@ if(window.__isStandalone){
   window.fbSetStoreEval    = _noop('fbSetStoreEval');
   window.fbSetCriteria     = _noop('fbSetCriteria');
   window._fbCanWrite       = function(){ return false; };
-  // 안내 배지
+  // 안내 배지 + 실시간 동기화 상태 + 강제 새로고침 버튼
   setTimeout(() => {
     if(document.body){
       const badge = document.createElement('div');
-      badge.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:999999;background:#fff7e8;color:#a87900;border:1px solid #f5d078;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,"Pretendard",sans-serif';
-      badge.textContent = '📖 읽기 전용 · 편집은 Safari에서';
+      badge.id = 'standalone-sync-badge';
+      badge.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:999999;background:#fff7e8;color:#a87900;border:1px solid #f5d078;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,"Pretendard",sans-serif;cursor:pointer';
+      badge.innerHTML = '📖 읽기 전용 · <span id="sync-status">동기화 중…</span> · <span style="color:#5b6cf8;text-decoration:underline">🔄 새로고침</span>';
+      badge.onclick = () => {
+        badge.querySelector('#sync-status').textContent = '새로고침 중…';
+        try { window._standalonePullAll && window._standalonePullAll(); } catch(_){}
+        setTimeout(() => location.reload(), 400);
+      };
       document.body.appendChild(badge);
     }
   }, 1500);
@@ -9985,75 +9996,164 @@ if(window.__isMobile || window.__isStandalone){
   document.addEventListener('touchstart', _pollThrottled, { passive: true });
   document.addEventListener('click', _pollThrottled, { passive: true });
 }
-// [STANDALONE EAGER FETCH] 홈화면앱은 onSnapshot이 iOS ITP 등으로 불안정할 수 있음
-// → 인증 완료 즉시 강제 fetch로 storeLinks + empPhotos를 확실히 최신화
+// [STANDALONE PULL ALL] 홈화면앱은 onSnapshot이 iOS ITP 등으로 불안정 → 3초마다 전체 강제 fetch
+// (sharedSettings + empPhotos + hrEdits + storeList + partTimers)
 if(window.__isStandalone){
-  const _standaloneEagerFetch = async function(){
-    if(!window.__fbUser || !window.__fbUser.email) return false;
-    if(!window.__fbDb || !window.__fbGetDoc || !window.__fbGetDocs) return false;
-    console.log('[STANDALONE EAGER] Firebase 강제 fetch 시작');
+  const _setStatus = (txt) => {
+    try { const el = document.getElementById('sync-status'); if(el) el.textContent = txt; } catch(_){}
+  };
+  window._standalonePullAll = async function(){
+    if(!window.__fbUser || !window.__fbUser.email){ _setStatus('로그인 대기'); return false; }
+    if(!window.__fbDb || !window.__fbGetDoc || !window.__fbGetDocs){ _setStatus('Firebase 초기화 대기'); return false; }
+    _setStatus('불러오는 중…');
+    let anyChanged = false;
+    let photoCount = 0, editCount = 0;
     try {
-      // 1) sharedSettings (storeLinks 포함 전체)
-      const s = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
-      if(s.exists()){
-        const data = s.data();
-        ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','sbBase','storeLinks'].forEach(k => {
-          if(typeof data[k] === 'string'){
-            const map = {
-              storeBase:'lvStoreBaseOverrides', mgrImpSlots:'lvMgrImpSlots',
-              mgrImpOrder:'lvMgrImpStoreOrder', layoutDraft:'layoutDraftData',
-              deletedStores:'lvDeletedStores', deletedEmps:'hrDeletedEmpIds_v1',
-              sbBase:'lvSbBaseOverrides', storeLinks:'lvStoreLinks'
-            };
-            try { localStorage.setItem(map[k], data[k]); } catch(_){}
+      // 1) sharedSettings (storeLinks, layoutDraft, deletedStores, storeBase, sbBase, lvOrder …)
+      try {
+        const s = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
+        if(s.exists()){
+          const data = s.data();
+          const map = {
+            storeBase:'lvStoreBaseOverrides', mgrImpSlots:'lvMgrImpSlots',
+            mgrImpOrder:'lvMgrImpStoreOrder', layoutDraft:'layoutDraftData',
+            deletedStores:'lvDeletedStores', deletedEmps:'hrDeletedEmpIds_v1',
+            sbBase:'lvSbBaseOverrides', storeLinks:'lvStoreLinks'
+          };
+          Object.keys(map).forEach(k => {
+            if(typeof data[k] === 'string' && localStorage.getItem(map[k]) !== data[k]){
+              try { localStorage.setItem(map[k], data[k]); anyChanged = true; } catch(_){}
+            }
+          });
+          if(typeof data.lvOrder === 'string'){
+            try {
+              const parsed = JSON.parse(data.lvOrder);
+              Object.keys(parsed).forEach(k => {
+                if(localStorage.getItem('lvOrder_'+k) !== parsed[k]){
+                  try { localStorage.setItem('lvOrder_'+k, parsed[k]); anyChanged = true; } catch(_){}
+                }
+              });
+            } catch(_){}
+          }
+        }
+      } catch(e){ console.warn('[PULL] sharedSettings 실패:', e.code||e.message); }
+      // 2) empPhotos (전체)
+      try {
+        const photoSnap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'empPhotos'));
+        window.__photoMemCache = window.__photoMemCache || {};
+        photoSnap.forEach(docSnap => {
+          const d = docSnap.data();
+          if(d && d.photo){
+            if(window.__photoMemCache[docSnap.id] !== d.photo){
+              window.__photoMemCache[docSnap.id] = d.photo;
+              anyChanged = true;
+              try {
+                if(typeof EMPS !== 'undefined'){
+                  const emp = EMPS.find(e => e.id === docSnap.id);
+                  if(emp){ emp.photo_b64 = d.photo; emp.has_photo = true; }
+                }
+              } catch(_){}
+            }
+            photoCount++;
           }
         });
-        if(typeof data.lvOrder === 'string'){
-          try {
-            const parsed = JSON.parse(data.lvOrder);
-            Object.keys(parsed).forEach(k => { try { localStorage.setItem('lvOrder_'+k, parsed[k]); } catch(_){} });
-          } catch(_){}
-        }
-        console.log('[STANDALONE EAGER] sharedSettings 로드 완료 (storeLinks 포함)');
-      }
-      // 2) empPhotos (전체 매니저 사진)
-      const photoSnap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'empPhotos'));
-      window.__photoMemCache = window.__photoMemCache || {};
-      let photoCount = 0;
-      photoSnap.forEach(docSnap => {
-        const d = docSnap.data();
-        if(d && d.photo){
-          window.__photoMemCache[docSnap.id] = d.photo;
-          photoCount++;
+      } catch(e){ console.warn('[PULL] empPhotos 실패:', e.code||e.message); }
+      // 3) hrEdits (드래그·상태변경 실시간 반영)
+      try {
+        const editSnap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'hrEdits'));
+        window.__fbEdits = window.__fbEdits || {};
+        editSnap.forEach(docSnap => {
+          const id = docSnap.id;
+          const data = docSnap.data();
+          if(!data) return;
+          const prev = window.__fbEdits[id] || {};
+          const merged = { ...prev, ...data };
+          window.__fbEdits[id] = merged;
+          editCount++;
           try {
             if(typeof EMPS !== 'undefined'){
-              const emp = EMPS.find(e => e.id === docSnap.id);
-              if(emp){ emp.photo_b64 = d.photo; emp.has_photo = true; }
+              const emp = EMPS.find(e => e.id === id);
+              if(emp){
+                ['status','memo','current_store','channel','tenure','position','hire_date','language','residence','brand','name','kindness','sincerity','charm','growth','empNo','gender','metro','_prev_store'].forEach(f => {
+                  if(data[f] !== undefined && emp[f] !== data[f]){ emp[f] = data[f]; anyChanged = true; }
+                });
+              } else if(data._isNewEmp){
+                EMPS.push({
+                  id, name: data.name||'', brand: data.brand||'GM',
+                  position: data.position||'직원', channel: data.channel||'',
+                  channel_exp: data.channel||'', current_store: data.current_store||'',
+                  hire_date: data.hire_date||'', tenure: data.tenure||'신입',
+                  language: data.language||'', residence: data.residence||'',
+                  store_history: [], status: data.status||'active'
+                });
+                anyChanged = true;
+              }
             }
           } catch(_){}
+        });
+        try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      } catch(e){ console.warn('[PULL] hrEdits 실패:', e.code||e.message); }
+      // 4) storeList (매장 추가/삭제 반영)
+      try {
+        const slSnap = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'storeList', 'data'));
+        if(slSnap.exists()){
+          const d = slSnap.data();
+          if(d && Array.isArray(d.list)){
+            const json = JSON.stringify(d.list);
+            if(localStorage.getItem('store_list_v2') !== json){
+              try { localStorage.setItem('store_list_v2', json); anyChanged = true; } catch(_){}
+              try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
+            }
+          }
         }
-      });
-      console.log('[STANDALONE EAGER] empPhotos 로드 완료:', photoCount, '개');
-      // 3) 강제 재렌더
-      try { window.lvRender && window.lvRender(); } catch(_){}
-      try { window.lvRenderSB && window.lvRenderSB(); } catch(_){}
-      try { window.refresh && window.refresh(); } catch(_){}
-      setTimeout(() => { try { window.lvRender && window.lvRender(); window.refresh && window.refresh(); } catch(_){} }, 500);
+      } catch(e){ console.warn('[PULL] storeList 실패:', e.code||e.message); }
+      // 5) partTimers
+      try {
+        const p = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
+        if(p.exists()){
+          const d = p.data();
+          if(d && d.data && d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
+            try { localStorage.setItem('hrPT_v1', d.data); anyChanged = true; } catch(_){}
+          }
+        }
+      } catch(e){ console.warn('[PULL] PT 실패:', e.code||e.message); }
+      // 재렌더
+      if(anyChanged){
+        try { window.lvRender && window.lvRender(); } catch(_){}
+        try { window.lvRenderSB && window.lvRenderSB(); } catch(_){}
+        try { window.refresh && window.refresh(); } catch(_){}
+        setTimeout(() => { try { window.lvRender && window.lvRender(); window.refresh && window.refresh(); } catch(_){} }, 300);
+      }
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      const ss = String(now.getSeconds()).padStart(2,'0');
+      _setStatus('✓ '+hh+':'+mm+':'+ss+' (사진 '+photoCount+' · 직원 '+editCount+')');
       return true;
     } catch(e){
-      console.warn('[STANDALONE EAGER] fetch 실패:', e.code||e.message);
+      _setStatus('❌ ' + (e.code||e.message||'실패'));
+      console.warn('[PULL] 전체 실패:', e);
       return false;
     }
   };
-  window._standaloneEagerFetch = _standaloneEagerFetch;
-  // Firebase 인증 준비될 때까지 대기 후 실행 (최대 10초, 500ms 간격)
-  let _sfTries = 0;
-  const _sfTimer = setInterval(async () => {
-    _sfTries++;
-    if(_sfTries > 20){ clearInterval(_sfTimer); return; }
-    const ok = await _standaloneEagerFetch();
-    if(ok){ clearInterval(_sfTimer); }
+  // 3초마다 무한 재시도 (인증/모듈 준비될 때까지 계속)
+  setInterval(window._standalonePullAll, 3000);
+  // 페이지 로드 후 즉시 1회 시도 (500ms 간격 × 5회 = 2.5초)
+  let _initTries = 0;
+  const _initTimer = setInterval(async () => {
+    _initTries++;
+    if(_initTries > 5){ clearInterval(_initTimer); return; }
+    const ok = await window._standalonePullAll();
+    if(ok){ clearInterval(_initTimer); }
   }, 500);
+  // 터치 시 즉시 동기화
+  document.addEventListener('touchstart', () => {
+    const _last = window.__lastPullAt || 0;
+    if(Date.now() - _last > 1500){
+      window.__lastPullAt = Date.now();
+      window._standalonePullAll();
+    }
+  }, { passive: true });
 }
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
