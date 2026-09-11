@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v040</span><script>window.__APP_VERSION=40;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v042</span><script>window.__APP_VERSION=42;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9104,19 +9104,30 @@ onAuthStateChanged(_auth, (user)=>{
   };
   try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
   _showAuthGate(false);
-  // [FRESH DEVICE FIX] 캐시 없는 완전 새 기기만 로딩 오버레이 (재접속자는 스킵 - 성능)
-  const _hasCache = !!(localStorage.getItem('__fbEditsCache') || localStorage.getItem('lvSbBaseOverrides') || localStorage.getItem('hrPT_v1'));
-  if(!window.__sharedInitLoaded && !_hasCache && !document.getElementById('fb-loading-overlay')){
+  // [ALWAYS LOAD FRESH] 매 접속마다 Firebase 최신 데이터 도착까지 로딩 화면 (깜빡임 없이 최신만 표시)
+  if(!document.getElementById('fb-loading-overlay')){
     const ov = document.createElement('div');
     ov.id = 'fb-loading-overlay';
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(247,246,243,.92);z-index:999998;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
-    ov.innerHTML = '<div style="font-size:36px;margin-bottom:16px">☁️</div><div style="font-size:16px;font-weight:600;color:#2a2f42;margin-bottom:8px">최신 데이터 불러오는 중...</div><div style="font-size:13px;color:#7a8299">잠시만 기다려주세요</div>';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(247,246,243,.98);z-index:999998;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
+    ov.innerHTML = '<div style="font-size:40px;margin-bottom:16px">☁️</div><div style="font-size:16px;font-weight:600;color:#2a2f42;margin-bottom:8px">최신 데이터 불러오는 중...</div><div style="font-size:13px;color:#7a8299">최대 3초</div>';
     document.body.appendChild(ov);
-    // 5초 안전장치 — 오버레이 생성 시점 기준으로 5초 후 자동 해제
-    setTimeout(() => {
+    // 3초 후 자동 해제 (더 오래 기다리면 UX 나쁨)
+    const _removeOverlay = () => {
       const o = document.getElementById('fb-loading-overlay');
-      if(o){ o.remove(); window.__sharedInitLoaded = true; console.warn('[SHARED] 오버레이 5초 안전장치 자동 해제'); }
-    }, 5000);
+      if(o) o.remove();
+      window.__sharedInitLoaded = true;
+      // 로딩 종료 후 강제 재렌더 (최신 데이터 반영)
+      try { lvRender && lvRender(); } catch(_){}
+      try { refresh && refresh(); } catch(_){}
+    };
+    setTimeout(_removeOverlay, 3000);
+    // shared + empPhotos 둘 다 도착하면 3초 안 기다리고 즉시 종료
+    window.__loadCheckInterval = setInterval(() => {
+      if(window.__sharedInitLoaded && window.__photoMemCache && Object.keys(window.__photoMemCache).length > 0){
+        clearInterval(window.__loadCheckInterval);
+        _removeOverlay();
+      }
+    }, 200);
   }
 });
 const COL_EDITS    = 'hrEdits';
@@ -10219,7 +10230,19 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
   }
   if(changed){
     console.log('[FB] empPhoto 수신:', affected);
+    // 여러 방식으로 강제 재렌더 (배치현황 카드, 직원목록, 상세패널 모두)
     try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
+    try { if(typeof refresh==='function') refresh(); } catch(_){}
+    // 배치현황 매장 카드의 chip 아바타를 직접 강제 갱신 (재렌더 없이 img src 교체)
+    try {
+      affected.forEach(id => {
+        const b = window.__photoMemCache[id];
+        if(!b) return;
+        document.querySelectorAll('.lv-avatar[data-id="'+id+'"] img, .emp-chip[data-id="'+id+'"] img, [data-emp="'+id+'"] img').forEach(img => {
+          if(img.src !== b) img.src = b;
+        });
+      });
+    } catch(_){}
     // 열려있는 직원 상세 사진도 갱신
     try {
       if(typeof curEmp !== 'undefined' && curEmp && affected.includes(curEmp.id)){
