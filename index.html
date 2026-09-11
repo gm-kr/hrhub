@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v037</span><script>window.__APP_VERSION=37;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v039</span><script>window.__APP_VERSION=39;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3485,17 +3485,45 @@ function setP(id,b){
   try {
     localStorage.setItem('hrP',JSON.stringify(p));
   } catch(e){
-    // [QUOTA FIX] localStorage 꽉 참 → 옛 사진 정리 후 재시도
-    console.warn('[Photo] localStorage 꽉 참 - 오래된 사진 정리 시도');
-    try {
-      // 이번 새 사진만 남기고 다른 옛 사진 삭제
-      const trimmed = { [id]: b };
-      localStorage.setItem('hrP', JSON.stringify(trimmed));
-      console.log('[Photo] hrP 리셋 완료 - Firebase에서 다른 사진 다시 받아옴');
-    } catch(e2){ console.error('[Photo] localStorage 저장 실패 (완전 초과):', e2); }
+    // [QUOTA FIX] localStorage 꽉 참 → 사진 하나씩 삭제 후 재시도 + 메모리 캐시 fallback
+    console.warn('[Photo] localStorage 꽉 참 - 정리 시도');
+    // 메모리 캐시로 fallback (localStorage 못 저장해도 세션 내 표시 유지)
+    window.__photoMemCache = window.__photoMemCache || {};
+    window.__photoMemCache[id] = b;
+    // 옛 사진 삭제 시도
+    const keys = Object.keys(p).filter(k => k !== id);
+    let saved = false;
+    for(let i=0; i<20 && keys.length > 0; i++){
+      const rmKey = keys.splice(Math.floor(Math.random() * keys.length), 1)[0];
+      delete p[rmKey];
+      try {
+        localStorage.setItem('hrP', JSON.stringify(p));
+        console.log('[Photo] 옛 사진 '+(i+1)+'개 삭제 후 저장 성공');
+        saved = true;
+        break;
+      } catch(_){}
+    }
+    if(!saved){
+      try {
+        localStorage.setItem('hrP', JSON.stringify({[id]:b}));
+        console.warn('[Photo] 모든 캐시 비우고 이번 사진만 저장 - Firebase는 정상');
+      } catch(e2){ console.error('[Photo] 완전 저장 실패 - 메모리 캐시만 사용:', e2); }
+    }
   }
   try{if(window.fbSetEmpPhoto)window.fbSetEmpPhoto(id,b);}catch(_){}
 }
+// getP()를 메모리 캐시 fallback으로 보강
+const _origGetP = window.getP || function(){try{return JSON.parse(localStorage.getItem('hrP')||'{}')}catch{return{}}};
+window.getP = function(){
+  const local = _origGetP();
+  // 메모리 캐시가 있으면 병합 (localStorage에 저장 실패한 사진들)
+  if(window.__photoMemCache){
+    Object.keys(window.__photoMemCache).forEach(k => {
+      if(!local[k]) local[k] = window.__photoMemCache[k];
+    });
+  }
+  return local;
+};
 function getH(){try{return JSON.parse(localStorage.getItem('hrH')||'{}')}catch{return{}}}
 function setH(id,a){
   const h=getH();
