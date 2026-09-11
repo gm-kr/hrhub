@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v053</span><script>window.__APP_VERSION=53;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v054</span><script>window.__APP_VERSION=54;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2809,7 +2809,7 @@ function saveStoreLinks(map){
     if(window.__fbDb && window.__fbSetDoc && window.__fbUser && window.__fbUser.email){
       window.__fbSetDoc(
         window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'),
-        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 53 },
+        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 54 },
         { merge: true }
       ).then(() => console.log('[storeLinks] 강제 push 완료')).catch(e => console.warn('[storeLinks] push 오류:', e));
       if(window.__lastSharedSnap) window.__lastSharedSnap.storeLinks = json;
@@ -9817,7 +9817,30 @@ window.__flushAllPending = function(){
 window.addEventListener('beforeunload', () => { try { window.__flushAllPending(); } catch(_){} });
 window.addEventListener('pagehide',    () => { try { window.__flushAllPending(); } catch(_){} });
 // [STANDALONE] iOS 홈화면 바로가기(standalone) 감지 — Safari 브라우저와 구분해서 처리
-window.__isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+// [DETECT] iOS 홈화면 바로가기 감지 - 여러 조건으로 확실히 잡음
+window.__isStandaloneReasons = [];
+(function _detectStandalone(){
+  const r = [];
+  if(window.navigator.standalone === true) r.push('navigator.standalone=true');
+  try { if(window.matchMedia('(display-mode: standalone)').matches) r.push('display-mode:standalone'); } catch(_){}
+  try { if(window.matchMedia('(display-mode: fullscreen)').matches) r.push('display-mode:fullscreen'); } catch(_){}
+  try { if(window.matchMedia('(display-mode: minimal-ui)').matches) r.push('display-mode:minimal-ui'); } catch(_){}
+  // iOS 홈화면 바로가기의 특징: referrer가 비어있음 + user-scalable 없음 (Safari와 차이)
+  // iOS는 navigator.standalone이 표준이지만, 만약 위 조건들 다 실패해도 아이폰이면 무조건 홈화면앱으로 취급 옵션
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if(isIOS && r.length === 0){
+    // 마지막 fallback: 아이폰 사파리에선 URL바가 있고 없고에 따라 innerHeight 차이 큼. 홈화면앱은 URL바 없음
+    // 그러나 이건 rotation/스크롤로 변하므로 신뢰도 낮음 → 로그만 남김
+    r.push('iOS-fallback:'+window.innerHeight+'x'+window.innerWidth);
+  }
+  window.__isStandaloneReasons = r;
+  window.__isStandalone = r.length > 0 && !(r.length === 1 && r[0].startsWith('iOS-fallback'));
+  // 진단용: URL에 ?standalone=1 붙이면 강제로 standalone 모드
+  if(new URLSearchParams(location.search).get('standalone') === '1'){
+    window.__isStandalone = true;
+    r.push('URL-force');
+  }
+})();
 window.__lastHideAt = 0;
 // [STANDALONE] 홈화면 바로가기 = 완전 읽기 전용, 모든 캐시 초기화 (사진 포함)
 if(window.__isStandalone){
@@ -9850,13 +9873,18 @@ if(window.__isStandalone){
   window.fbSetStoreEval    = _noop('fbSetStoreEval');
   window.fbSetCriteria     = _noop('fbSetCriteria');
   window._fbCanWrite       = function(){ return false; };
-  // 진단 패널 (탭하면 상세 상태 표시)
+}
+// [DIAG] 진단 패널 — iOS/모바일이거나 ?diag=1 있으면 항상 표시 (standalone 감지 여부 확인용)
+const _isIOSforDiag = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream;
+const _forceDiag = new URLSearchParams(location.search).get('diag') === '1';
+if(_isIOSforDiag || window.__isStandalone || _forceDiag){
   setTimeout(() => {
     if(!document.body) return;
+    if(document.getElementById('standalone-diag')) return;
     const panel = document.createElement('div');
     panel.id = 'standalone-diag';
-    panel.style.cssText = 'position:fixed;top:6px;left:6px;right:6px;z-index:999999;background:#0f172a;color:#e2e8f0;border:1px solid #334155;padding:8px 10px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;max-height:180px;overflow:auto';
-    panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="color:#60a5fa">📖 진단</b><span onclick="location.reload()" style="color:#fbbf24;cursor:pointer;text-decoration:underline">새로고침</span></div><div id="diag-body">초기화 중…</div>';
+    panel.style.cssText = 'position:fixed;top:6px;left:6px;right:6px;z-index:999999;background:#0f172a;color:#e2e8f0;border:1px solid #334155;padding:8px 10px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;max-height:200px;overflow:auto';
+    panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="color:#60a5fa">📖 진단 v054</b><span style="display:flex;gap:8px"><span onclick="try{window._standalonePullAll&&window._standalonePullAll()}catch(_){}" style="color:#34d399;cursor:pointer;text-decoration:underline">Pull</span><span onclick="location.reload()" style="color:#fbbf24;cursor:pointer;text-decoration:underline">새로고침</span><span onclick="document.getElementById(\'standalone-diag\').style.display=\'none\'" style="color:#f87171;cursor:pointer">✕</span></span></div><div id="diag-body">초기화 중…</div>';
     document.body.appendChild(panel);
     window._standaloneDiag = function(){
       const el = document.getElementById('diag-body');
@@ -9868,7 +9896,11 @@ if(window.__isStandalone){
       const empsCount = (typeof EMPS !== 'undefined') ? EMPS.length : 'undef';
       const lastPull = window.__lastPullResult || '아직 없음';
       const editsCount = (window.__fbEdits && Object.keys(window.__fbEdits).length) || 0;
+      const detected = window.__isStandalone ? '✓ standalone' : '❌ Safari(일반)';
+      const reasons = (window.__isStandaloneReasons||[]).join(', ') || '없음';
       el.innerHTML =
+        '홈화면앱 감지: '+detected+'<br>'+
+        '감지근거: '+reasons+'<br>'+
         'Auth: '+auth+'<br>'+
         'FB Module: '+fbMod+'<br>'+
         '__isStandalone: '+window.__isStandalone+'<br>'+
