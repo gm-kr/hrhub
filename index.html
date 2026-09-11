@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v052</span><script>window.__APP_VERSION=52;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v053</span><script>window.__APP_VERSION=53;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2809,7 +2809,7 @@ function saveStoreLinks(map){
     if(window.__fbDb && window.__fbSetDoc && window.__fbUser && window.__fbUser.email){
       window.__fbSetDoc(
         window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'),
-        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 52 },
+        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 53 },
         { merge: true }
       ).then(() => console.log('[storeLinks] 강제 push 완료')).catch(e => console.warn('[storeLinks] push 오류:', e));
       if(window.__lastSharedSnap) window.__lastSharedSnap.storeLinks = json;
@@ -9850,21 +9850,37 @@ if(window.__isStandalone){
   window.fbSetStoreEval    = _noop('fbSetStoreEval');
   window.fbSetCriteria     = _noop('fbSetCriteria');
   window._fbCanWrite       = function(){ return false; };
-  // 안내 배지 + 실시간 동기화 상태 + 강제 새로고침 버튼
+  // 진단 패널 (탭하면 상세 상태 표시)
   setTimeout(() => {
-    if(document.body){
-      const badge = document.createElement('div');
-      badge.id = 'standalone-sync-badge';
-      badge.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:999999;background:#fff7e8;color:#a87900;border:1px solid #f5d078;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,"Pretendard",sans-serif;cursor:pointer';
-      badge.innerHTML = '📖 읽기 전용 · <span id="sync-status">동기화 중…</span> · <span style="color:#5b6cf8;text-decoration:underline">🔄 새로고침</span>';
-      badge.onclick = () => {
-        badge.querySelector('#sync-status').textContent = '새로고침 중…';
-        try { window._standalonePullAll && window._standalonePullAll(); } catch(_){}
-        setTimeout(() => location.reload(), 400);
-      };
-      document.body.appendChild(badge);
-    }
-  }, 1500);
+    if(!document.body) return;
+    const panel = document.createElement('div');
+    panel.id = 'standalone-diag';
+    panel.style.cssText = 'position:fixed;top:6px;left:6px;right:6px;z-index:999999;background:#0f172a;color:#e2e8f0;border:1px solid #334155;padding:8px 10px;border-radius:8px;font-size:10px;font-weight:500;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;max-height:180px;overflow:auto';
+    panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="color:#60a5fa">📖 진단</b><span onclick="location.reload()" style="color:#fbbf24;cursor:pointer;text-decoration:underline">새로고침</span></div><div id="diag-body">초기화 중…</div>';
+    document.body.appendChild(panel);
+    window._standaloneDiag = function(){
+      const el = document.getElementById('diag-body');
+      if(!el) return;
+      const auth = (window.__fbUser && window.__fbUser.email) ? ('✓ '+window.__fbUser.email) : '❌ 로그인 안됨';
+      const fbMod = (window.__fbDb && window.__fbGetDoc && window.__fbGetDocs) ? '✓ 준비됨' : '⏳ 로딩중';
+      const linksMap = (function(){ try { return JSON.parse(localStorage.getItem('lvStoreLinks')||'{}'); } catch(_){ return {}; }})();
+      const photoMem = (window.__photoMemCache && Object.keys(window.__photoMemCache).length) || 0;
+      const empsCount = (typeof EMPS !== 'undefined') ? EMPS.length : 'undef';
+      const lastPull = window.__lastPullResult || '아직 없음';
+      const editsCount = (window.__fbEdits && Object.keys(window.__fbEdits).length) || 0;
+      el.innerHTML =
+        'Auth: '+auth+'<br>'+
+        'FB Module: '+fbMod+'<br>'+
+        '__isStandalone: '+window.__isStandalone+'<br>'+
+        'lvStoreLinks 개수: '+Object.keys(linksMap).length+'<br>'+
+        '__photoMemCache: '+photoMem+'개<br>'+
+        '__fbEdits: '+editsCount+'개<br>'+
+        'EMPS: '+empsCount+'<br>'+
+        '마지막 pull: '+lastPull;
+    };
+    setInterval(window._standaloneDiag, 1500);
+    window._standaloneDiag();
+  }, 800);
 }
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
@@ -10000,7 +10016,9 @@ if(window.__isMobile || window.__isStandalone){
 // (sharedSettings + empPhotos + hrEdits + storeList + partTimers)
 if(window.__isStandalone){
   const _setStatus = (txt) => {
+    window.__lastPullResult = txt;
     try { const el = document.getElementById('sync-status'); if(el) el.textContent = txt; } catch(_){}
+    try { if(typeof window._standaloneDiag==='function') window._standaloneDiag(); } catch(_){}
   };
   window._standalonePullAll = async function(){
     if(!window.__fbUser || !window.__fbUser.email){ _setStatus('로그인 대기'); return false; }
