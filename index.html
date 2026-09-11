@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -8781,14 +8781,15 @@ window.__authLogout = async function(){
   _showAuthGate(true);
 };
 let _authInFlight = false;
-// [AUTH] Safari(iOS/macOS)는 signInWithRedirect에서 ITP 이슈로 세션 유실 → popup 사용
-// Android Chrome은 popup이 종종 안 열려서 redirect 사용
+// [AUTH] iPhone/iPad/Android use redirect to avoid popup blocking and iframe cookie limits.
+// Desktop tries popup first, then falls back to redirect when popup login is blocked.
 const _ua = navigator.userAgent;
 const _isSafari = /Safari/i.test(_ua) && !/Chrome|CriOS|FxiOS|EdgiOS/i.test(_ua);
 const _isIOS = /iPhone|iPad|iPod/i.test(_ua);
+const _isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
 const _isAndroid = /Android/i.test(_ua);
-// redirect가 필요한 경우: 안드로이드 크롬 계열만
-const _useRedirect = _isAndroid && !_isSafari;
+const _isMobileAuth = _isIOS || _isIPadOS || _isAndroid;
+const _useRedirect = _isMobileAuth;
 async function _doGoogleLogin(){
   if(_authInFlight) return; // 이미 진행 중이면 중복 호출 무시
   _authInFlight = true;
@@ -8799,11 +8800,9 @@ async function _doGoogleLogin(){
   _showAuthGate(true);
   try {
     if(_useRedirect){
-      // Android Chrome: redirect 방식 (팝업 차단 회피)
       await signInWithRedirect(_auth, _googleProvider);
       return;
     }
-    // Safari(iOS/Mac 포함), 데스크톱 Chrome 등: popup
     await signInWithPopup(_auth, _googleProvider);
     // onAuthStateChanged 가 후속 처리(허용여부 판단)
   } catch(err) {
@@ -8813,6 +8812,14 @@ async function _doGoogleLogin(){
     if(code === 'auth/cancelled-popup-request'){
       _authInFlight = false;
       return;
+    }
+    if(!_useRedirect && (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/operation-not-supported-in-this-environment')){
+      try {
+        await signInWithRedirect(_auth, _googleProvider);
+        return;
+      } catch(redirectErr) {
+        err = redirectErr;
+      }
     }
     console.error('[AUTH] signIn error:', err);
     let msg = err && err.message ? err.message : '알 수 없는 오류';
@@ -11857,3 +11864,4 @@ document.addEventListener('keydown', e => {
 
 </body>
 </html>
+
