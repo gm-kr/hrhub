@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v007</span></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v008</span></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -8712,6 +8712,11 @@ window.__authForceSync = async function(){
     if(window.fbSetInvitation) window.fbSetInvitation();
     if(window.fbSetStoreHistory) window.fbSetStoreHistory();
     if(window.fbSetShared) window.fbSetShared();
+    // 2-1. 파트타이머 강제 push (init guard 우회) — 강제 동기화 버튼은 확실히 push해야 함
+    try {
+      const ptRaw = localStorage.getItem('hrPT_v1') || '{}';
+      await setDoc(doc(_db, 'partTimers', 'ptData'), { data: ptRaw, _updatedAt: serverTimestamp(), _updatedBy: (window.__fbUser&&window.__fbUser.email)||'' });
+    } catch(e){ console.warn('[FORCE SYNC] PT 저장 오류:', e); }
     // 3. 스토어 진단 - localStorage의 eval_* 키들을 Firebase에 push
     let evalCount = 0;
     const storeEvalMap = {};
@@ -8729,7 +8734,7 @@ window.__authForceSync = async function(){
         await setDoc(doc(_db, 'storeEvals', storeId), { ...storeEvalMap[storeId], _updatedAt: serverTimestamp() }, { merge: true });
       } catch(e) { console.warn('sync storeEval', storeId, e); }
     }
-    alert(`✓ 동기화 완료\n• 직원 편집: ${success}건${failed?` (실패 ${failed}건)`:''}\n• 칭찬/포상/인비테이션/근무이력/공유설정: 자동 push 완료\n• 스토어 진단: ${Object.keys(storeEvalMap).length}개 매장, ${evalCount}개 필드\n\n다른 계정에서 새로고침하면 즉시 보입니다.`);
+    alert(`✓ 동기화 완료\n• 직원 편집: ${success}건${failed?` (실패 ${failed}건)`:''}\n• 칭찬/포상/인비테이션/근무이력/공유설정: 자동 push 완료\n• 파트타이머: 강제 push 완료\n• 스토어 진단: ${Object.keys(storeEvalMap).length}개 매장, ${evalCount}개 필드\n\n다른 계정에서 새로고침하면 즉시 보입니다.`);
   } catch(e) {
     alert('동기화 실패: ' + (e.message||e));
     console.error('[FORCE SYNC]', e);
