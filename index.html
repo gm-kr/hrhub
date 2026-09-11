@@ -2580,7 +2580,15 @@ function loadStoreList() {
     result = getBaselineStoreList();
   }
   const _deleted = getDeletedStores();
-  if(_deleted.length) result = result.filter(s => !_deleted.includes(s.id));
+  if(_deleted.length){
+    const delSet = new Set(_deleted);
+    result = result.filter(s => {
+      if(!s) return false;
+      // id / name / canonical key 어느 하나라도 삭제 목록에 있으면 제외
+      const keys = [s.id, s.name, (typeof canonicalStoreKey==='function' ? canonicalStoreKey(s) : null)].filter(Boolean);
+      return !keys.some(k => delSet.has(k));
+    });
+  }
   __lslCache = result;
   // 다음 마이크로태스크에 캐시 해제
   Promise.resolve().then(__lslInvalidate);
@@ -9304,10 +9312,18 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
   if (!data.list) return;
   try {
     // [MERGE FIX] 원격 리스트 + baseline UNION → 신세계 광주 등 baseline에만 있는 매장이 사라지는 문제 해결
+    // 단, 삭제된 매장(deletedStores)은 baseline에 있어도 다시 살리지 않음 → 포켓 살아나는 문제 해결
     let effectiveList = data.list;
     try {
       if(typeof mergeStoreLists === 'function' && typeof getBaselineStoreList === 'function'){
-        effectiveList = mergeStoreLists(data.list, getBaselineStoreList());
+        const merged = mergeStoreLists(data.list, getBaselineStoreList());
+        const delSet = new Set((typeof getDeletedStores==='function' ? getDeletedStores() : []));
+        effectiveList = merged.filter(s => {
+          if(!s) return false;
+          // canonicalStoreKey/alias 모두 체크
+          const keys = [s.id, s.name, (typeof canonicalStoreKey==='function' ? canonicalStoreKey(s) : null)].filter(Boolean);
+          return !keys.some(k => delSet.has(k));
+        });
       }
     } catch(_){}
     const json = JSON.stringify(effectiveList);
@@ -9414,11 +9430,17 @@ window.addEventListener('pageshow', (e) => {
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
 window.__lastSharedSnap = window.__lastSharedSnap || {};
+window.__sharedInitLoaded = window.__sharedInitLoaded || false;  // Firebase 초기 로드 완료 플래그
 window.fbSetShared = function(){
   clearTimeout(_fbSharedTimer);
   _fbSharedTimer = setTimeout(async () => {
     try {
       if(!window.__fbUser || !window.__fbUser.email) return;
+      // [GUARD] Firebase 초기 로드 전엔 push 안 함 → 오래된 로컬 캐시가 최신 Firebase 값 덮어쓰는 문제 방지
+      if(!window.__sharedInitLoaded){
+        console.log('[SHARED] 초기 Firebase 로드 전 push 취소 (오래된 로컬로 덮어쓰기 방지)');
+        return;
+      }
       const cur = {
         storeBase:    localStorage.getItem('lvStoreBaseOverrides') || '{}',
         mgrImpSlots:  localStorage.getItem('lvMgrImpSlots')        || '[]',
@@ -9461,6 +9483,8 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks'].forEach(k=>{
       if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
     });
+    // [GUARD] 초기 로드 완료 표시 → 이제부터 로컬 편집 push 가능 (초기 로드 전 push는 오래된 로컬로 덮어쓰기 방지)
+    window.__sharedInitLoaded = true;
     let needRerender = false;
     if(typeof data.storeBase === 'string'){
       if(localStorage.getItem('lvStoreBaseOverrides') !== data.storeBase){
