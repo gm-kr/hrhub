@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v011</span><script>window.__APP_VERSION=11;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v012</span><script>window.__APP_VERSION=12;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5745,8 +5745,21 @@ function lvSaveDraftMove(empId,storeKey){
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
-// [DRAFT PW] 커스텀 비밀번호 모달 (iPad/iPhone Safari 완벽 호환 — visualViewport 기준)
+// [DRAFT PW] 비밀번호 확인 — iOS 아이폰은 네이티브 prompt() 사용 (뷰포트 문제 완전 회피)
 function _lvAskDraftPassword(){
+  const ua = navigator.userAgent;
+  const isIPhone = /iPhone|iPod/.test(ua);
+  if(isIPhone){
+    // iPhone: 네이티브 prompt (뷰포트 트릭 우회, 확실히 뜸)
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const pw = window.prompt('🔒 운영팀 테스트 모드\n\n비밀번호를 입력하세요:');
+        if(pw === null){ resolve(false); return; }
+        if(String(pw).trim() === '1004'){ resolve(true); }
+        else { alert('❌ 비밀번호가 틀렸습니다.'); resolve(false); }
+      }, 50);
+    });
+  }
   return new Promise(resolve => {
     const old = document.getElementById('lv-draft-pw-modal');
     if(old) old.remove();
