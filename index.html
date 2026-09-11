@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v008</span></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v009</span></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5745,31 +5745,44 @@ function lvSaveDraftMove(empId,storeKey){
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
-// [DRAFT PW] 커스텀 비밀번호 모달 (iPad/모바일 Safari 완벽 호환)
+// [DRAFT PW] 커스텀 비밀번호 모달 (iPad/iPhone Safari 완벽 호환 — visualViewport 기준)
 function _lvAskDraftPassword(){
   return new Promise(resolve => {
-    // 기존 모달 있으면 제거
     const old = document.getElementById('lv-draft-pw-modal');
     if(old) old.remove();
+    // 모바일 뷰포트 트릭 때문에 화면 밖에 뜨는 것 방지: visualViewport 기준으로 위치·크기 계산
+    const vv = window.visualViewport;
+    const isMobile = window.__isMobile;
+    const vpW = vv ? vv.width  : window.innerWidth;
+    const vpH = vv ? vv.height : window.innerHeight;
+    const vpX = vv ? vv.offsetLeft : 0;
+    const vpY = vv ? vv.offsetTop  : 0;
+    const modalW = Math.min(vpW * 0.9, 500);
+    // 모바일에선 뷰포트 트릭 때문에 CSS 픽셀이 스케일됨 → 폰트/패딩도 크게 잡아야 눈에 보임
+    const scale = isMobile ? (1400 / (window.innerWidth || 1400)) : 1;
+    const fs = 17 * scale;
+    const fsSmall = 14 * scale;
+    const fsInput = 20 * scale;
+    const pad = 26 * scale;
     const modal = document.createElement('div');
     modal.id = 'lv-draft-pw-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(15,18,30,.55);display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
+    modal.style.cssText = `position:fixed;left:${vpX}px;top:${vpY}px;width:${vpW}px;height:${vpH}px;z-index:2147483646;background:rgba(15,18,30,.55);display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;`;
     modal.innerHTML = `
-      <div style="background:#fff;border-radius:14px;padding:26px 26px 20px;width:340px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.18)">
-        <div style="font-size:17px;font-weight:700;margin-bottom:6px;color:#2a2f42">🔒 운영팀 테스트 모드</div>
-        <div style="font-size:13px;color:#7a8299;margin-bottom:16px">비밀번호를 입력하세요</div>
-        <input id="lv-draft-pw-input" type="password" inputmode="numeric" autocomplete="off" placeholder="비밀번호" style="width:100%;padding:12px 14px;font-size:16px;border:1px solid #dfe3ee;border-radius:8px;outline:none;box-sizing:border-box" />
-        <div id="lv-draft-pw-err" style="display:none;color:#e84040;font-size:12px;margin-top:6px">❌ 비밀번호가 틀렸습니다</div>
-        <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
-          <button id="lv-draft-pw-cancel" style="padding:10px 18px;border:1px solid #dfe3ee;background:#fff;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:#5b6378">취소</button>
-          <button id="lv-draft-pw-ok" style="padding:10px 18px;border:none;background:#5b6cf8;color:#fff;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">확인</button>
+      <div style="background:#fff;border-radius:14px;padding:${pad}px ${pad}px ${pad*0.75}px;width:${modalW}px;box-shadow:0 20px 60px rgba(0,0,0,.18);box-sizing:border-box">
+        <div style="font-size:${fs}px;font-weight:700;margin-bottom:${8*scale}px;color:#2a2f42">🔒 운영팀 테스트 모드</div>
+        <div style="font-size:${fsSmall}px;color:#7a8299;margin-bottom:${18*scale}px">비밀번호를 입력하세요</div>
+        <input id="lv-draft-pw-input" type="tel" inputmode="numeric" autocomplete="off" placeholder="비밀번호" style="width:100%;padding:${14*scale}px ${16*scale}px;font-size:${fsInput}px;border:2px solid #dfe3ee;border-radius:8px;outline:none;box-sizing:border-box" />
+        <div id="lv-draft-pw-err" style="display:none;color:#e84040;font-size:${fsSmall}px;margin-top:${8*scale}px">❌ 비밀번호가 틀렸습니다</div>
+        <div style="display:flex;gap:${10*scale}px;margin-top:${20*scale}px;justify-content:flex-end">
+          <button id="lv-draft-pw-cancel" style="padding:${12*scale}px ${22*scale}px;border:1px solid #dfe3ee;background:#fff;border-radius:8px;font-size:${fsSmall}px;font-weight:600;cursor:pointer;color:#5b6378">취소</button>
+          <button id="lv-draft-pw-ok" style="padding:${12*scale}px ${22*scale}px;border:none;background:#5b6cf8;color:#fff;border-radius:8px;font-size:${fsSmall}px;font-weight:700;cursor:pointer">확인</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
     const input = document.getElementById('lv-draft-pw-input');
     const err = document.getElementById('lv-draft-pw-err');
-    setTimeout(() => input.focus(), 50);
+    setTimeout(() => input.focus(), 100);
     const submit = () => {
       const v = (input.value||'').trim();
       if(v === '1004'){
