@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v001</span></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v002</span></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2829,6 +2829,23 @@ function editStoreLink(){
 }
 window.editStoreLink = editStoreLink;
 window.getStoreLink = getStoreLink;
+// [INLINE EDIT] 배치현황 매장 카드에서 직접 링크 편집 (컨텍스트 메뉴 없이)
+window.lvEditStoreLinkInline = function(storeId){
+  if(!storeId) return;
+  const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
+  const s = list.find(x=>x.id===storeId);
+  const name = s ? (s.displayName || s.name || storeId) : storeId;
+  const current = getStoreLink(storeId);
+  const url = window.prompt('🔗 "' + name + '" 매장 링크 URL\n(비우면 삭제됩니다):\n\n예: SharePoint 엑셀 URL 등', current);
+  if(url === null) return;
+  const map = getStoreLinks();
+  const trimmed = (url||'').trim();
+  if(trimmed) map[storeId] = trimmed;
+  else delete map[storeId];
+  saveStoreLinks(map);
+  if(typeof lvRender==='function') lvRender();
+  if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨 (모두에게 공유)' : '🔗 링크 삭제됨');
+};
 // [STORE LINK SEED] Firebase 인증/부트스트랩 완료 후 실행 (덮어쓰기 방지)
 function _runStoreLinkSeed(){
   try {
@@ -7725,10 +7742,11 @@ function buildCard(storeKey,emps,secKey,accent){
       <div style="flex:1;min-width:0">
         ${(function(){
           const _url = (typeof getStoreLink==='function') ? getStoreLink(storeKey) : '';
+          const editBtn = `<span onclick="event.stopPropagation();event.preventDefault();window.lvEditStoreLinkInline('${storeKey.replace(/'/g,"\\'")}')" title="링크 편집/추가" style="font-size:11px;opacity:.5;cursor:pointer;padding:0 3px;color:#5b6cf8;user-select:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">✎</span>`;
           if(_url){
-            return `<a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;overflow:visible" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>`;
+            return `<div style="display:inline-flex;align-items:center;gap:2px"><a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;overflow:visible" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>${editBtn}</div>`;
           }
-          return `<div class="lv-store-name">${nm}</div>`;
+          return `<div style="display:inline-flex;align-items:center;gap:2px"><div class="lv-store-name">${nm}</div>${editBtn}</div>`;
         })()}
         ${rg?`<div class="lv-store-region">${rg}</div>`:''}
       </div>
@@ -9404,7 +9422,11 @@ document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
     try { window.__flushAllPending(); } catch(_){}
   } else {
-    // [FRESH FIX] 탭이 다시 활성화될 때 즉시 재렌더 → Safari 백그라운드 서스펜드 후 오래된 화면 방지
+    // [FRESH FIX] 탭 재활성화 시:
+    // 1. init flag 리셋 → Firebase 최신 스냅샷 재수신 전까지 push 차단 (오래된 로컬 덮어쓰기 방지)
+    // 2. Firebase onSnapshot 재발생 대기 (10초 안에 안 오면 자동으로 push 허용)
+    window.__sharedInitLoaded = false;
+    setTimeout(() => { window.__sharedInitLoaded = true; }, 10000);
     try {
       if(typeof window.lvRender === 'function') window.lvRender();
       if(typeof window.lvRenderSB === 'function') window.lvRenderSB();
