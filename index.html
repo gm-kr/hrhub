@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v006</span></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v007</span></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -10321,11 +10321,18 @@ window.invRender = invRender;
 const COL_PT = 'partTimers';
 let _fbPTTimer = null;
 
+window.__ptInitLoaded = false;  // Firebase 초기 로드 완료 플래그
 window.fbSetPT = async function(data) {
+  // 초기 Firebase 로드 전 push 차단 (오래된 로컬로 덮어쓰기 방지)
+  if(!window.__ptInitLoaded){
+    console.log('[PT] 초기 Firebase 로드 전 push 취소');
+    return;
+  }
   clearTimeout(_fbPTTimer);
   _fbPTTimer = setTimeout(async () => {
     try {
-      await setDoc(doc(_db, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: serverTimestamp() });
+      if(!window.__fbUser || !window.__fbUser.email) return;
+      await setDoc(doc(_db, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email });
     } catch(e) { console.warn('[FB] 파트타이머 저장 오류:', e.code, e.message); }
   }, 500);
 };
@@ -10334,12 +10341,13 @@ window.fbSetPT = async function(data) {
 (function startPTListener() {
   try {
     onSnapshot(doc(_db, COL_PT, 'ptData'), snap => {
+      // 초기 로드 완료 표시 (스냅샷 도착)
+      window.__ptInitLoaded = true;
       if (!snap.exists()) return;
       const d = snap.data();
       if (!d || !d.data) return;
       try {
         const remote = JSON.parse(d.data);
-        // 로컬과 다를 때만 업데이트
         const local = localStorage.getItem('hrPT_v1') || '{}';
         if (JSON.stringify(remote) !== local) {
           localStorage.setItem('hrPT_v1', JSON.stringify(remote));
@@ -10347,6 +10355,8 @@ window.fbSetPT = async function(data) {
         }
       } catch(e) {}
     });
+    // 안전장치: 15초 안에 스냅샷 안 오면 push 허용 (Firebase 실패해도 앱 사용 가능)
+    setTimeout(() => { window.__ptInitLoaded = true; }, 15000);
   } catch(e) { console.warn('[FB] PT 리스너 오류:', e); }
 })();
 
