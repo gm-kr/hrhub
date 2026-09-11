@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v049</span><script>window.__APP_VERSION=49;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v050</span><script>window.__APP_VERSION=50;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2809,7 +2809,7 @@ function saveStoreLinks(map){
     if(window.__fbDb && window.__fbSetDoc && window.__fbUser && window.__fbUser.email){
       window.__fbSetDoc(
         window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'),
-        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 49 },
+        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 50 },
         { merge: true }
       ).then(() => console.log('[storeLinks] 강제 push 완료')).catch(e => console.warn('[storeLinks] push 오류:', e));
       if(window.__lastSharedSnap) window.__lastSharedSnap.storeLinks = json;
@@ -2818,26 +2818,57 @@ function saveStoreLinks(map){
     }
   } catch(_){}
 }
+// [ROBUST LOOKUP] storeId 정확히 매치되지 않아도 alias/display name/canonical로 재시도
 function getStoreLink(storeId){
-  return (getStoreLinks()[storeId]) || '';
+  const map = getStoreLinks();
+  if(!storeId) return '';
+  // 1) 정확 매치
+  if(map[storeId]) return map[storeId];
+  // 2) trim 매치
+  const trimmed = String(storeId).trim();
+  if(trimmed !== storeId && map[trimmed]) return map[trimmed];
+  // 3) alias map으로 canonical 찾기
+  try {
+    const aliasMap = (typeof buildStoreAliasMap==='function') ? buildStoreAliasMap() : {};
+    const canonical = aliasMap[trimmed];
+    if(canonical && map[canonical]) return map[canonical];
+    // 4) 매장 리스트에서 이 storeId의 관련 이름들 시도
+    const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
+    const s = list.find(x => x && (x.id===storeId || x.raw===storeId || x.name===storeId));
+    if(s){
+      if(map[s.id]) return map[s.id];
+      if(s.name && map[s.name]) return map[s.name];
+      if(s.raw && map[s.raw]) return map[s.raw];
+      if(s.displayName && map[s.displayName]) return map[s.displayName];
+    }
+    // 5) 역매핑: map의 key 중 이 storeId와 같은 canonical인 것 찾기
+    const myCanon = canonical || trimmed;
+    for(const k in map){
+      if(!map[k]) continue;
+      const kCanon = aliasMap[String(k).trim()] || String(k).trim();
+      if(kCanon === myCanon) return map[k];
+    }
+  } catch(_){}
+  return '';
 }
 function editStoreLink(){
   const id = _ctxTargetId;
   closeCtxMenu();
   if(!id) return;
+  // lvEditStoreLinkInline과 동일한 alias-safe 저장 로직 재사용
+  if(typeof window.lvEditStoreLinkInline === 'function'){
+    window.lvEditStoreLinkInline(id);
+    return;
+  }
   const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
   const s = list.find(x=>x.id===id);
   const name = s ? (s.displayName || s.name || id) : id;
   const current = getStoreLink(id);
   const url = window.prompt('🔗 "' + name + '" 매장의 링크 URL을 입력하세요\n(비우면 삭제됩니다):\n\n예: SharePoint 엑셀 URL 등', current);
-  if(url === null) return; // 취소
+  if(url === null) return;
   const map = getStoreLinks();
   const trimmed = (url||'').trim();
-  if(trimmed){
-    map[id] = trimmed;
-  } else {
-    delete map[id];
-  }
+  if(trimmed) map[id] = trimmed; else delete map[id];
   saveStoreLinks(map);
   if(typeof lvRender==='function') lvRender();
   if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨' : '🔗 링크 삭제됨');
@@ -2845,18 +2876,40 @@ function editStoreLink(){
 window.editStoreLink = editStoreLink;
 window.getStoreLink = getStoreLink;
 // [INLINE EDIT] 배치현황 매장 카드에서 직접 링크 편집 (컨텍스트 메뉴 없이)
+// [FIX] 저장/삭제 시 storeId 뿐 아니라 canonical alias, 매장 raw/name 도 함께 정리
+//   → 한 매장의 여러 alias 중 아무 것이나 조회해도 링크가 잡히도록 (연결 안 되는 매장 방지)
 window.lvEditStoreLinkInline = function(storeId){
   if(!storeId) return;
   const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
-  const s = list.find(x=>x.id===storeId);
+  const s = list.find(x=>x && (x.id===storeId || x.raw===storeId || x.name===storeId));
   const name = s ? (s.displayName || s.name || storeId) : storeId;
   const current = getStoreLink(storeId);
   const url = window.prompt('🔗 "' + name + '" 매장 링크 URL\n(비우면 삭제됩니다):\n\n예: SharePoint 엑셀 URL 등', current);
   if(url === null) return;
   const map = getStoreLinks();
   const trimmed = (url||'').trim();
-  if(trimmed) map[storeId] = trimmed;
-  else delete map[storeId];
+  // 이 매장의 모든 alias 키 수집
+  const keys = new Set([storeId]);
+  if(s){
+    if(s.id) keys.add(s.id);
+    if(s.raw) keys.add(s.raw);
+    if(s.name) keys.add(s.name);
+    if(s.displayName) keys.add(s.displayName);
+  }
+  try {
+    const aliasMap = (typeof buildStoreAliasMap==='function') ? buildStoreAliasMap() : {};
+    const canon = aliasMap[String(storeId).trim()];
+    if(canon) keys.add(canon);
+    // 이 canonical에 매핑되는 모든 alias 키도 등록
+    if(canon){
+      Object.keys(aliasMap).forEach(k => { if(aliasMap[k] === canon) keys.add(k); });
+    }
+  } catch(_){}
+  if(trimmed){
+    keys.forEach(k => { if(k) map[k] = trimmed; });
+  } else {
+    keys.forEach(k => { delete map[k]; });
+  }
   saveStoreLinks(map);
   if(typeof lvRender==='function') lvRender();
   if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨 (모두에게 공유)' : '🔗 링크 삭제됨');
