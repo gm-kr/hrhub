@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v032</span><script>window.__APP_VERSION=32;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v034</span><script>window.__APP_VERSION=34;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5412,6 +5412,7 @@ function trigPhoto(){
 // [CLIPBOARD] File 객체를 받아서 사진 처리 (파일 선택 + 클립보드 붙여넣기 공용)
 function _processPhotoFile(file){
   if(!curEmp || !file) return;
+  const empId = curEmp.id;  // 붙여넣기 중 curEmp 바뀔 수 있어 캡처
   const reader = new FileReader();
   reader.onload = ev => {
     const rawB = ev.target.result;
@@ -5427,11 +5428,24 @@ function _processPhotoFile(file){
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       const b = canvas.toDataURL('image/jpeg', 0.85);
-      console.log('[Photo] 압축 완료:', curEmp.id, w+'x'+h, Math.round(b.length/1024)+'KB');
-      setP(curEmp.id, b);
+      console.log('[Photo] 압축 완료:', empId, w+'x'+h, Math.round(b.length/1024)+'KB');
+      setP(empId, b);
+      // EMPS 배열에도 즉시 반영 (다른 렌더에서 emp.photo_b64로 접근하는 경우 대응)
+      try {
+        if(typeof EMPS !== 'undefined'){
+          const _e = EMPS.find(x => x.id === empId);
+          if(_e){ _e.photo_b64 = b; _e.has_photo = true; }
+        }
+      } catch(_){}
+      // 드로어 pp 강제 갱신
       const pp = document.getElementById('pp');
-      if(pp){ pp.innerHTML = `<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; pp.className = 'pp'; }
-      refresh();
+      if(pp){
+        pp.innerHTML = `<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+        pp.className = 'pp';
+      }
+      // 리스트/카드 사진 재렌더 (chip 아바타 등)
+      try { refresh(); } catch(_){}
+      try { if(typeof lvRender==='function') lvRender(); } catch(_){}
       if(typeof lvToast==='function') lvToast('✓ 사진 저장 완료');
     };
     img.onerror = function(){
@@ -9677,28 +9691,22 @@ window.addEventListener('pagehide',    () => { try { window.__flushAllPending();
 // [STANDALONE] iOS 홈화면 바로가기(standalone) 감지 — Safari 브라우저와 구분해서 처리
 window.__isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 window.__lastHideAt = 0;
-// [STANDALONE HARD BLOCK] 홈화면 앱은 옛 캐시가 Firebase 덮어씌우는 위험 커서 모든 push 자체 차단
-// → 편집은 Safari 브라우저에서만 가능, standalone은 읽기 전용
+// [STANDALONE HARD BLOCK] 대용량 공유 데이터만 차단, 개인 편집(사진/직원편집)은 허용
+// → 매장 삭제/배치 등이 옛 캐시로 덮여쓰는 참사만 방지
 if(window.__isStandalone){
-  console.warn('[STANDALONE] 홈화면 바로가기 감지 - 편집(push) 완전 차단, 읽기 전용');
-  window.__ptInitLoaded = false;  // PT push 계속 차단
-  // 모든 fb write 함수를 no-op으로 만들기
-  const origSetEdit = window.fbSetEdit;
-  window.fbSetEdit = function(){ console.warn('[STANDALONE] fbSetEdit 차단'); };
-  window.fbSetPT = function(){ console.warn('[STANDALONE] fbSetPT 차단'); };
-  window.fbSetShared = function(){ console.warn('[STANDALONE] fbSetShared 차단'); };
-  window.fbSetPraise = function(){ console.warn('[STANDALONE] fbSetPraise 차단'); };
-  window.fbSetInvitation = function(){ console.warn('[STANDALONE] fbSetInvitation 차단'); };
-  window.fbSetStoreHistory = function(){ console.warn('[STANDALONE] fbSetStoreHistory 차단'); };
+  console.warn('[STANDALONE] 홈화면 바로가기 - 공유 대용량 데이터 push 차단 (개인 편집은 허용)');
+  // 대용량/공유 데이터만 차단
+  window.fbSetPT = function(){ console.warn('[STANDALONE] fbSetPT 차단 (홈화면앱에서 PT 편집 금지)'); };
+  window.fbSetShared = function(){ console.warn('[STANDALONE] fbSetShared 차단 (매장/기준인원 등)'); };
   window.fbSetStoreList = function(){ console.warn('[STANDALONE] fbSetStoreList 차단'); };
-  window.fbSetEmpPhoto = function(){ console.warn('[STANDALONE] fbSetEmpPhoto 차단'); };
-  window._fbCanWrite = function(){ return false; };
-  // 화면 상단에 안내 배지 표시
+  window.fbSetStoreHistory = function(){ console.warn('[STANDALONE] fbSetStoreHistory 차단'); };
+  // 개인 편집(사진, 직원 필드)은 허용 → fbSetEdit, fbSetEmpPhoto는 원본 유지
+  // 안내 배지
   setTimeout(() => {
     if(document.body){
       const badge = document.createElement('div');
       badge.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:999999;background:#fff7e8;color:#a87900;border:1px solid #f5d078;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,"Pretendard",sans-serif';
-      badge.textContent = '📖 읽기 전용 (편집은 Safari에서)';
+      badge.textContent = '📖 매장/PT 편집은 Safari에서';
       document.body.appendChild(badge);
     }
   }, 1500);
