@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v014</span><script>window.__APP_VERSION=14;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v016</span><script>window.__APP_VERSION=16;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -8789,7 +8789,9 @@ const _isIOS = /iPhone|iPad|iPod/i.test(_ua);
 const _isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
 const _isAndroid = /Android/i.test(_ua);
 const _isMobileAuth = _isIOS || _isIPadOS || _isAndroid;
-const _useRedirect = _isMobileAuth;
+// [AUTH FIX] iOS Safari에서 signInWithRedirect는 ITP 때문에 세션 유실 → popup 사용
+// Android Chrome만 redirect. iOS는 popup (iOS 15+ popup 안정적)
+const _useRedirect = _isAndroid && !_isIOS && !_isIPadOS;
 async function _doGoogleLogin(){
   if(_authInFlight) return; // 이미 진행 중이면 중복 호출 무시
   _authInFlight = true;
@@ -10384,20 +10386,20 @@ window.invRender = invRender;
 const COL_PT = 'partTimers';
 let _fbPTTimer = null;
 
-window.__ptInitLoaded = false;  // Firebase 초기 로드 완료 플래그
+window.__ptInitLoaded = false;
 window.fbSetPT = async function(data) {
-  // 초기 Firebase 로드 전 push 차단 (오래된 로컬로 덮어쓰기 방지)
-  if(!window.__ptInitLoaded){
-    console.log('[PT] 초기 Firebase 로드 전 push 취소');
+  // 인증 없으면 저장 불가
+  if(!window.__fbUser || !window.__fbUser.email){
+    console.warn('[PT] 인증 안 됨, 저장 취소');
     return;
   }
   clearTimeout(_fbPTTimer);
   _fbPTTimer = setTimeout(async () => {
     try {
-      if(!window.__fbUser || !window.__fbUser.email) return;
       await setDoc(doc(_db, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 10 });
+      console.log('[PT] Firebase 저장 완료');
     } catch(e) { console.warn('[FB] 파트타이머 저장 오류:', e.code, e.message); }
-  }, 500);
+  }, 300);
 };
 
 // PT onSnapshot 리스너
