@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v048</span><script>window.__APP_VERSION=48;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v049</span><script>window.__APP_VERSION=49;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2809,7 +2809,7 @@ function saveStoreLinks(map){
     if(window.__fbDb && window.__fbSetDoc && window.__fbUser && window.__fbUser.email){
       window.__fbSetDoc(
         window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'),
-        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 48 },
+        { storeLinks: json, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 49 },
         { merge: true }
       ).then(() => console.log('[storeLinks] 강제 push 완료')).catch(e => console.warn('[storeLinks] push 오류:', e));
       if(window.__lastSharedSnap) window.__lastSharedSnap.storeLinks = json;
@@ -10253,20 +10253,23 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
     }, 2000);
   }
   if(changed){
-    console.log('[FB] empPhoto 수신:', affected);
-    // 여러 방식으로 강제 재렌더 (배치현황 카드, 직원목록, 상세패널 모두)
+    console.log('[FB] empPhoto 수신:', affected.length + '개');
+    // EMPS 배열의 emp.photo_b64도 함께 업데이트 → 옛 baseline 사진 덮어씀
+    try {
+      if(typeof EMPS !== 'undefined'){
+        affected.forEach(id => {
+          const emp = EMPS.find(e => e.id === id);
+          const b = window.__photoMemCache[id];
+          if(emp && b){ emp.photo_b64 = b; emp.has_photo = true; }
+        });
+      }
+    } catch(_){}
+    // 여러 방식으로 강제 재렌더
     try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
     try { if(typeof refresh==='function') refresh(); } catch(_){}
-    // 배치현황 매장 카드의 chip 아바타를 직접 강제 갱신 (재렌더 없이 img src 교체)
-    try {
-      affected.forEach(id => {
-        const b = window.__photoMemCache[id];
-        if(!b) return;
-        document.querySelectorAll('.lv-avatar[data-id="'+id+'"] img, .emp-chip[data-id="'+id+'"] img, [data-emp="'+id+'"] img').forEach(img => {
-          if(img.src !== b) img.src = b;
-        });
-      });
-    } catch(_){}
+    // 100ms, 500ms 추가 재렌더 (연속 스냅샷 배치 처리 안정성)
+    setTimeout(() => { try { window.lvRender && window.lvRender(); refresh && refresh(); } catch(_){} }, 100);
+    setTimeout(() => { try { window.lvRender && window.lvRender(); refresh && refresh(); } catch(_){} }, 500);
     // 열려있는 직원 상세 사진도 갱신
     try {
       if(typeof curEmp !== 'undefined' && curEmp && affected.includes(curEmp.id)){
