@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v042</span><script>window.__APP_VERSION=42;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v043</span><script>window.__APP_VERSION=43;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9746,14 +9746,13 @@ window.addEventListener('pagehide',    () => { try { window.__flushAllPending();
 // [STANDALONE] iOS 홈화면 바로가기(standalone) 감지 — Safari 브라우저와 구분해서 처리
 window.__isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
 window.__lastHideAt = 0;
-// [STANDALONE] 홈화면 바로가기는 옛 캐시 문제 심각 → 공유 데이터 캐시 완전 초기화 후 Firebase에서 재수신
+// [STANDALONE] 홈화면 바로가기 = 완전 읽기 전용 (모든 push 차단, 옛 캐시 초기화)
 if(window.__isStandalone){
-  console.warn('[STANDALONE] 홈화면 바로가기 - 공유 캐시 초기화 후 Firebase 재수신');
+  console.warn('[STANDALONE] 홈화면 바로가기 - 완전 읽기 전용 (모든 push 차단)');
   // 공유 데이터 캐시 완전 초기화 (Firebase가 진실)
-  const _sharedKeys = ['lvDeletedStores','hrDeletedEmpIds_v1','lvStoreBaseOverrides','lvSbBaseOverrides','lvMgrImpSlots','lvMgrImpStoreOrder','layoutDraftData','layoutActualData','lvStoreLinks','hrPT_v1','store_list_v2','__fbEditsCache'];
+  const _sharedKeys = ['lvDeletedStores','hrDeletedEmpIds_v1','lvStoreBaseOverrides','lvSbBaseOverrides','lvMgrImpSlots','lvMgrImpStoreOrder','layoutDraftData','layoutActualData','lvStoreLinks','hrPT_v1','store_list_v2','__fbEditsCache','hrP'];
   ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k => _sharedKeys.push('lvOrder_'+k));
   _sharedKeys.forEach(k => { try { localStorage.removeItem(k); } catch(_){} });
-  // hr_fb_* 개별 직원 캐시도 삭제 (배치 정보 포함)
   try {
     const _rm = [];
     for(let i=0; i<localStorage.length; i++){
@@ -9761,19 +9760,27 @@ if(window.__isStandalone){
       if(k && (k.startsWith('hr_fb_') || k.startsWith('eval_'))) _rm.push(k);
     }
     _rm.forEach(k => localStorage.removeItem(k));
-    console.log('[STANDALONE] 개별 캐시 '+_rm.length+'개 삭제');
   } catch(_){}
-  // 대용량 공유 데이터 push 차단
-  window.fbSetPT = function(){ console.warn('[STANDALONE] fbSetPT 차단'); };
-  window.fbSetShared = function(){ console.warn('[STANDALONE] fbSetShared 차단'); };
-  window.fbSetStoreList = function(){ console.warn('[STANDALONE] fbSetStoreList 차단'); };
-  window.fbSetStoreHistory = function(){ console.warn('[STANDALONE] fbSetStoreHistory 차단'); };
+  // 모든 Firebase write 함수 완전 차단
+  const _noop = function(name){ return function(){ console.warn('[STANDALONE READ-ONLY] '+name+' 차단'); }; };
+  window.fbSetPT           = _noop('fbSetPT');
+  window.fbSetShared       = _noop('fbSetShared');
+  window.fbSetStoreList    = _noop('fbSetStoreList');
+  window.fbSetStoreHistory = _noop('fbSetStoreHistory');
+  window.fbSetPraise       = _noop('fbSetPraise');
+  window.fbSetInvitation   = _noop('fbSetInvitation');
+  window.fbSetEdit         = _noop('fbSetEdit');
+  window.fbSetEmpPhoto     = _noop('fbSetEmpPhoto');
+  window.fbSetSchedule     = _noop('fbSetSchedule');
+  window.fbSetStoreEval    = _noop('fbSetStoreEval');
+  window.fbSetCriteria     = _noop('fbSetCriteria');
+  window._fbCanWrite       = function(){ return false; };
   // 안내 배지
   setTimeout(() => {
     if(document.body){
       const badge = document.createElement('div');
       badge.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:999999;background:#fff7e8;color:#a87900;border:1px solid #f5d078;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,"Pretendard",sans-serif';
-      badge.textContent = '📖 홈화면앱 (읽기 전용) · 편집은 Safari';
+      badge.textContent = '📖 읽기 전용 · 편집은 Safari에서';
       document.body.appendChild(badge);
     }
   }, 1500);
