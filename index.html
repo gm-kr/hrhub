@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v028</span><script>window.__APP_VERSION=28;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v030</span><script>window.__APP_VERSION=30;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9695,32 +9695,57 @@ if(window.__isStandalone){
       location.reload();
     }
   }, 30 * 60 * 1000);
-  // [STANDALONE POLL] 열려있는 동안 15초마다 Firebase 강제 재-fetch (onSnapshot 끊겨도 커버)
-  setInterval(async () => {
-    if(document.visibilityState !== 'visible') return;
-    if(!window.__fbDb || !window.__fbDoc) return;
-    try {
-      // 최소 한 컬렉션(sharedSettings)만 명시적으로 재-fetch → onSnapshot 재작동 유도
-      const { getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const snap = await getDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
-      if(snap.exists()){
-        const data = snap.data();
-        // 로컬과 비교 후 다르면 갱신 (변경 시 lvRender)
-        let changed = false;
-        if(typeof data.layoutDraft === 'string' && localStorage.getItem('layoutDraftData') !== data.layoutDraft){
-          localStorage.setItem('layoutDraftData', data.layoutDraft); changed = true;
-        }
-        if(typeof data.sbBase === 'string' && localStorage.getItem('lvSbBaseOverrides') !== data.sbBase){
-          localStorage.setItem('lvSbBaseOverrides', data.sbBase); changed = true;
-        }
-        if(changed){
-          console.log('[STANDALONE POLL] 변경 감지 → 재렌더');
-          try { if(typeof lvRender==='function') lvRender(); } catch(_){}
-          try { if(typeof lvRenderSB==='function') lvRenderSB(); } catch(_){}
+}
+// [MOBILE POLL] 모바일 실시간 폴링 — sharedSettings + PT + hrEdits + storeList
+window._mobilePoll = async function(){
+  if(document.visibilityState !== 'visible') return;
+  if(!window.__fbDb || !window.__fbGetDoc) return;
+  try {
+    const s = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
+    if(s.exists()){
+      const data = s.data();
+      let changed = false;
+      if(typeof data.layoutDraft === 'string' && localStorage.getItem('layoutDraftData') !== data.layoutDraft){
+        localStorage.setItem('layoutDraftData', data.layoutDraft); changed = true;
+      }
+      if(typeof data.sbBase === 'string' && localStorage.getItem('lvSbBaseOverrides') !== data.sbBase){
+        localStorage.setItem('lvSbBaseOverrides', data.sbBase); changed = true;
+      }
+      if(typeof data.storeBase === 'string' && localStorage.getItem('lvStoreBaseOverrides') !== data.storeBase){
+        localStorage.setItem('lvStoreBaseOverrides', data.storeBase); changed = true;
+      }
+      if(changed){
+        console.log('[MOBILE POLL] shared 변경 → 재렌더');
+        try { lvRender && lvRender(); } catch(_){}
+        try { lvRenderSB && lvRenderSB(); } catch(_){}
+      }
+    }
+    const p = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
+    if(p.exists()){
+      const d = p.data();
+      if(d && d.data){
+        if(d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
+          localStorage.setItem('hrPT_v1', d.data);
+          console.log('[MOBILE POLL] PT 변경 → 재렌더');
+          try { lvRender && lvRender(); } catch(_){}
         }
       }
-    } catch(e){ console.warn('[STANDALONE POLL] 실패:', e); }
-  }, 15000);
+    }
+  } catch(e){ console.warn('[MOBILE POLL] 실패:', e.code||e.message); }
+};
+if(window.__isMobile){
+  // 5초마다 자동 폴링 (아이폰도 실시간 체감)
+  setInterval(window._mobilePoll, 5000);
+  // 사용자 터치/스크롤/탭 시 즉시 폴링 (백그라운드 서스펜드 깨어남 감지)
+  let _lastPollAt = 0;
+  const _pollThrottled = () => {
+    const now = Date.now();
+    if(now - _lastPollAt < 2000) return;  // 2초 스로틀
+    _lastPollAt = now;
+    window._mobilePoll();
+  };
+  document.addEventListener('touchstart', _pollThrottled, { passive: true });
+  document.addEventListener('click', _pollThrottled, { passive: true });
 }
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
@@ -10221,12 +10246,13 @@ window.fbSubscribeStoreEval = function(storeId) {
   });
 };
 // [EXPORT] 모듈 밖 script에서도 Firebase 사용할 수 있도록 window에 노출
-// (PT 관련 함수가 모듈 밖에 있어서 onSnapshot/setDoc/doc/serverTimestamp is not defined 오류 나던 것 해결)
 window.__fbDb = _db;
 window.__fbDoc = doc;
 window.__fbSetDoc = setDoc;
+window.__fbGetDoc = getDoc;  // 폴링용
 window.__fbOnSnapshot = onSnapshot;
 window.__fbCollection = collection;
+window.__fbGetDocs = getDocs;
 window.__fbServerTimestamp = serverTimestamp;
 </script>
 <script>
