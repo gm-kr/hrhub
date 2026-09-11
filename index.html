@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v013</span><script>window.__APP_VERSION=13;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v014</span><script>window.__APP_VERSION=14;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9580,6 +9580,14 @@ window.fbSetShared = function(){
     } catch(e) { console.error('fbSetShared:', e); }
   }, 100);
 };
+// [SAFETY] Firebase가 5초 안에 응답 안 하면 오버레이 강제 해제 (앱 잠금 방지)
+setTimeout(() => {
+  if(!window.__sharedInitLoaded){
+    console.warn('[SHARED] Firebase 5초 응답 없음 - 오버레이 강제 해제');
+    window.__sharedInitLoaded = true;
+    try { const ov = document.getElementById('fb-loading-overlay'); if(ov) ov.remove(); } catch(_){}
+  }
+}, 5000);
 onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   // [INIT] 스냅샷 도착만으로도 init 완료 표시 (오버레이 해제) — 데이터 유무/버전 무관
   window.__sharedInitLoaded = true;
@@ -9708,6 +9716,11 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
       setTimeout(_doRender, 1500);
     }
   } catch(e) { console.error('shared snap:', e); }
+}, (err) => {
+  // Firestore 오류 (권한 등) 처리 — 오버레이 강제 해제
+  console.error('[SHARED] onSnapshot 오류:', err.code, err.message);
+  window.__sharedInitLoaded = true;
+  try { const ov = document.getElementById('fb-loading-overlay'); if(ov) ov.remove(); } catch(_){}
 });
 
 // [SHARE] 칭찬/포상 통합 저장 (디바운싱)
