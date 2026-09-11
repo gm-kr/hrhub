@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v024</span><script>window.__APP_VERSION=24;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v025</span><script>window.__APP_VERSION=25;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5409,6 +5409,65 @@ function trigPhoto(){
   }
   document.getElementById('avinput').click();
 }
+// [CLIPBOARD] File 객체를 받아서 사진 처리 (파일 선택 + 클립보드 붙여넣기 공용)
+function _processPhotoFile(file){
+  if(!curEmp || !file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const rawB = ev.target.result;
+    const img = new Image();
+    img.onload = function(){
+      let w = img.width, h = img.height;
+      const MAX = 800;
+      if(w > MAX || h > MAX){
+        if(w > h){ h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const b = canvas.toDataURL('image/jpeg', 0.85);
+      console.log('[Photo] 압축 완료:', curEmp.id, w+'x'+h, Math.round(b.length/1024)+'KB');
+      setP(curEmp.id, b);
+      const pp = document.getElementById('pp');
+      if(pp){ pp.innerHTML = `<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; pp.className = 'pp'; }
+      refresh();
+      if(typeof lvToast==='function') lvToast('✓ 사진 저장 완료');
+    };
+    img.onerror = function(){
+      setP(curEmp.id, rawB);
+      const pp = document.getElementById('pp');
+      if(pp){ pp.innerHTML = `<img src="${rawB}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; pp.className = 'pp'; }
+      refresh();
+    };
+    img.src = rawB;
+  };
+  reader.readAsDataURL(file);
+}
+
+// [CLIPBOARD] 상세 패널 어디서든 Ctrl+V / Cmd+V 로 사진 붙여넣기 지원
+document.addEventListener('paste', function(e){
+  if(!curEmp) return;
+  // 상세 패널이 열려있을 때만 작동
+  const pdrawer = document.getElementById('pdrawer');
+  if(!pdrawer || !pdrawer.classList.contains('on')) return;
+  // 텍스트 입력 필드에 포커스 있으면 텍스트 붙여넣기 우선 (사진 무시)
+  const active = document.activeElement;
+  if(active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type && item.type.startsWith('image/')){
+      const file = item.getAsFile();
+      if(file){
+        e.preventDefault();
+        _processPhotoFile(file);
+        return;
+      }
+    }
+  }
+});
+
 function handlePhoto(e){
   if(!curEmp)return;const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
