@@ -1115,7 +1115,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v034</span><script>window.__APP_VERSION=34;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v035</span><script>window.__APP_VERSION=35;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3479,7 +3479,23 @@ function avEl(e,sz){
 }
 function ctag(ch){const m={'HAUS':'chHAUS','FS':'chFS','DS':'chDS','MALL':'chMALL','DFS':'chDFS','ATS':'chATS','NUF':'chNUF','PU':'chPU'};return`<span class="chtag ${m[ch]||'chdef'}">${ch||'기타'}</span>`}
 function getP(){try{return JSON.parse(localStorage.getItem('hrP')||'{}')}catch{return{}}}
-function setP(id,b){const p=getP();p[id]=b;localStorage.setItem('hrP',JSON.stringify(p));try{if(window.fbSetEmpPhoto)window.fbSetEmpPhoto(id,b);}catch(_){}}
+function setP(id,b){
+  const p=getP();
+  p[id]=b;
+  try {
+    localStorage.setItem('hrP',JSON.stringify(p));
+  } catch(e){
+    // [QUOTA FIX] localStorage 꽉 참 → 옛 사진 정리 후 재시도
+    console.warn('[Photo] localStorage 꽉 참 - 오래된 사진 정리 시도');
+    try {
+      // 이번 새 사진만 남기고 다른 옛 사진 삭제
+      const trimmed = { [id]: b };
+      localStorage.setItem('hrP', JSON.stringify(trimmed));
+      console.log('[Photo] hrP 리셋 완료 - Firebase에서 다른 사진 다시 받아옴');
+    } catch(e2){ console.error('[Photo] localStorage 저장 실패 (완전 초과):', e2); }
+  }
+  try{if(window.fbSetEmpPhoto)window.fbSetEmpPhoto(id,b);}catch(_){}
+}
 function getH(){try{return JSON.parse(localStorage.getItem('hrH')||'{}')}catch{return{}}}
 function setH(id,a){
   const h=getH();
@@ -5419,7 +5435,7 @@ function _processPhotoFile(file){
     const img = new Image();
     img.onload = function(){
       let w = img.width, h = img.height;
-      const MAX = 800;
+      const MAX = 500;  // 800 → 500 (localStorage 절약)
       if(w > MAX || h > MAX){
         if(w > h){ h = Math.round(h * MAX / w); w = MAX; }
         else { w = Math.round(w * MAX / h); h = MAX; }
@@ -5427,7 +5443,7 @@ function _processPhotoFile(file){
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b = canvas.toDataURL('image/jpeg', 0.85);
+      const b = canvas.toDataURL('image/jpeg', 0.75);  // 0.85 → 0.75 (용량 30% 감소)
       console.log('[Photo] 압축 완료:', empId, w+'x'+h, Math.round(b.length/1024)+'KB');
       setP(empId, b);
       // EMPS 배열에도 즉시 반영 (다른 렌더에서 emp.photo_b64로 접근하는 경우 대응)
