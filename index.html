@@ -10,13 +10,17 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 67;
+  window.__APP_VERSION = 68;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
   window.__hideMobileFreshOverlay = function(){
-    try { document.documentElement.classList.remove('mobile-loading-fresh'); } catch(_){}
+    try { document.documentElement.classList.remove('mobile-loading-fresh','app-loading-fresh'); } catch(_){}
   };
+  try {
+    var isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
+    if(!isLocal) document.documentElement.classList.add('app-loading-fresh');
+  } catch(_){}
   if(isMobile){
     var vp = document.getElementById('vp');
     if(vp) vp.setAttribute('content', 'width=1400,initial-scale=' + (window.innerWidth/1400).toFixed(3) + ',minimum-scale=0.2,maximum-scale=5,user-scalable=yes');
@@ -25,7 +29,8 @@
 })();
 </script>
 <style>
-html.mobile-loading-fresh body::before{
+html.mobile-loading-fresh body::before,
+html.app-loading-fresh body::before{
   content:'최신 데이터 불러오는 중...';
   position:fixed;inset:0;z-index:2147483647;
   display:flex;align-items:center;justify-content:center;
@@ -49,7 +54,7 @@ html.mobile-loading-fresh body::before{
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 67);
+    var appVersion = String(window.__APP_VERSION || 68);
     if(isStandalone && params.get('appv') !== appVersion){
       var u = new URL(location.href);
       u.searchParams.set('appv', appVersion);
@@ -1194,7 +1199,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v067</span><script>window.__APP_VERSION=67;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v068</span><script>window.__APP_VERSION=68;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9102,6 +9107,14 @@ function _resetGateUI(){
 }
 // [FORCE SYNC] localStorage의 모든 변경분을 Firebase에 일괄 push
 window.__authForceSync = async function(){
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
+    alert('모바일 바로가기는 보기 전용이라 동기화할 수 없습니다.');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    alert('최신 서버 데이터를 확인한 뒤 다시 시도해주세요.');
+    return;
+  }
   if(!confirm('로컬 변경분을 Firebase에 강제로 동기화합니다.\n다른 사용자 계정에서도 본인의 변경사항이 보이게 됩니다.\n진행할까요?')) return;
   const btn = document.getElementById('auth-force-sync');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ 동기화 중...'; }
@@ -9270,6 +9283,7 @@ onAuthStateChanged(_auth, (user)=>{
   }
   if(!isEmailAllowed(user.email)){
     // 로그인했지만 허용 이메일이 아님 → 안내 화면
+    try { if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay(); } catch(_){}
     _renderRejectedUser(user);
     _setAuthStatus(`'${user.email}' 계정은 접근 권한이 없습니다.\n관리자에게 등록을 요청해주세요.`, 'error');
     _showAuthGate(true);
@@ -9283,6 +9297,7 @@ onAuthStateChanged(_auth, (user)=>{
   const now = Date.now();
   if(lastLoginAt && (now - lastLoginAt) > AUTO_LOGIN_MAX_MS){
     // 24시간 초과 - 강제 로그아웃 후 재로그인 요구
+    try { if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay(); } catch(_){}
     try { localStorage.removeItem(_loginTsKey); } catch(_){}
     try { signOut(_auth); } catch(_){}
     _resetGateUI();
@@ -9316,25 +9331,8 @@ onAuthStateChanged(_auth, (user)=>{
     const ov = document.createElement('div');
     ov.id = 'fb-loading-overlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(247,246,243,.98);z-index:999998;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
-    ov.innerHTML = '<div style="font-size:40px;margin-bottom:16px">☁️</div><div style="font-size:16px;font-weight:600;color:#2a2f42;margin-bottom:8px">최신 데이터 불러오는 중...</div><div style="font-size:13px;color:#7a8299">최대 3초</div>';
+    ov.innerHTML = '<div style="font-size:40px;margin-bottom:16px">☁️</div><div style="font-size:16px;font-weight:600;color:#2a2f42;margin-bottom:8px">최신 데이터 불러오는 중...</div><div style="font-size:13px;color:#7a8299">서버 확인 후 화면을 엽니다</div>';
     document.body.appendChild(ov);
-    // 3초 후 자동 해제 (더 오래 기다리면 UX 나쁨)
-    const _removeOverlay = () => {
-      const o = document.getElementById('fb-loading-overlay');
-      if(o) o.remove();
-      window.__sharedInitLoaded = true;
-      // 로딩 종료 후 강제 재렌더 (최신 데이터 반영)
-      try { lvRender && lvRender(); } catch(_){}
-      try { refresh && refresh(); } catch(_){}
-    };
-    setTimeout(_removeOverlay, 3000);
-    // shared + empPhotos 둘 다 도착하면 3초 안 기다리고 즉시 종료
-    window.__loadCheckInterval = setInterval(() => {
-      if(window.__sharedInitLoaded && window.__photoMemCache && Object.keys(window.__photoMemCache).length > 0){
-        clearInterval(window.__loadCheckInterval);
-        _removeOverlay();
-      }
-    }, 200);
   }
 });
 const COL_EDITS    = 'hrEdits';
@@ -9350,6 +9348,7 @@ if (!window.__fbEdits) window.__fbEdits = {}; /* [FINAL FIX A] 기존 캐시 보
 window.__fbSchedule = { joining: [], returning: [] };
 window.__fbReady    = false;
 window.__fbUser     = null;
+window.__freshServerLoaded = false;
 function updateLoginUserInfo(user) {
   const el = document.getElementById('fb-user-info');
   if (!el || !user) return;
@@ -9649,6 +9648,10 @@ window.fbSetEdit = function(empId, field, value) {
     console.warn('[MOBILE READ-ONLY] fbSetEdit 차단');
     return;
   }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetEdit 차단');
+    return;
+  }
   // hrEdits는 필드별 merge 저장이라 race 위험 낮음 → 가드 없이 즉시 저장
   if (!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
   window.__fbEdits[empId][field] = value;
@@ -9694,6 +9697,10 @@ window.fbSetSchedule = async function(data) {
     console.warn('[MOBILE READ-ONLY] fbSetSchedule 차단');
     return;
   }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetSchedule 차단');
+    return;
+  }
   try {
     await setDoc(doc(_db, COL_SCHEDULE, 'data'), data);
     window.__fbSchedule = data;
@@ -9726,7 +9733,6 @@ window.fbSetSchedule = async function(data) {
       window.__fbSchedule = _sd;
     }
   } catch(e) {}
-  window.__fbReady = true;
   // [AUTH FLUSH] 인증 전 보관된 매장 리스트 변경분 자동 푸시
   try {
     const pending = localStorage.getItem('__pendingStoreList');
@@ -9739,12 +9745,14 @@ window.fbSetSchedule = async function(data) {
   } catch(_){}
   // [FIREBASE FIRST] 페이지 로드 시 Firebase에서 모든 공유 데이터를 먼저 fetch → localStorage 덮어쓰기
   // Firebase가 source of truth. localStorage는 오프라인 캐시 + 속도 fallback일 뿐.
+  let _freshOk = false;
   try {
     // 하드코딩: COL_SHARED/COL_STORELIST 상수가 아래에 정의돼 TDZ 오류 발생하므로 문자열 직접 사용
     const [sharedSnap, storeListSnap] = await Promise.all([
-      getDoc(doc(_db, 'sharedSettings', 'data')).catch(()=>null),
-      getDoc(doc(_db, 'storeList', 'data')).catch(()=>null)
+      getDocFromServer(doc(_db, 'sharedSettings', 'data')).catch(()=>null),
+      getDocFromServer(doc(_db, 'storeList', 'data')).catch(()=>null)
     ]);
+    _freshOk = !!(sharedSnap || storeListSnap);
     if(sharedSnap && sharedSnap.exists()){
       const d = sharedSnap.data() || {};
       const incomingVer = Number(d._clientVersion || 0);
@@ -9780,8 +9788,20 @@ window.fbSetSchedule = async function(data) {
     // 캐시 무효화 후 다음 렌더에 반영
     try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
   } catch(e) { console.warn('[FIREBASE FIRST]', e); }
-  // [AUTH FLUSH] 인증 전 변경된 sharedSettings(매장기준/매니저슬롯/중요매장/draft) 자동 푸시
-  try { window.fbSetShared && window.fbSetShared(); } catch(_){}
+  if(!_freshOk){
+    try {
+      const o = document.getElementById('fb-loading-overlay');
+      if(o) o.innerHTML = '<div style="font-size:16px;font-weight:700;color:#2a2f42;margin-bottom:8px">최신 데이터 확인 실패</div><div style="font-size:13px;color:#7a8299">네트워크 확인 후 새로고침해주세요</div>';
+    } catch(_){}
+    throw new Error('Fresh server fetch failed');
+  }
+  window.__freshServerLoaded = true;
+  window.__fbReady = true;
+  try {
+    const o = document.getElementById('fb-loading-overlay');
+    if(o) o.remove();
+    if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay();
+  } catch(_){}
   // [AUTH FLUSH] 인증 전에 모인 pending 직원 편집 push
   try { if(window.__flushPendingEdits) await window.__flushPendingEdits(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
@@ -9820,6 +9840,10 @@ window.fbSetStoreEval = function(storeId, q, field, value) {
     console.warn('[MOBILE READ-ONLY] fbSetStoreEval 차단');
     return;
   }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetStoreEval 차단');
+    return;
+  }
   const key = `${q}_${field}`;
   if (!_fbEvalBuf[storeId]) _fbEvalBuf[storeId] = {};
   if (value === null || value === undefined || value === '') {
@@ -9851,6 +9875,10 @@ window.fbSetStoreList = async function(list) {
     console.warn('[MOBILE READ-ONLY] fbSetStoreList 차단');
     return;
   }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetStoreList 차단');
+    return;
+  }
   // 인증 안 되면 보관 후 인증 시 자동 푸시
   if(!window.__fbUser || !window.__fbUser.email){
     try { localStorage.setItem('__pendingStoreList', JSON.stringify(list||[])); } catch(_){}
@@ -9873,6 +9901,10 @@ window.fbSetStoreList = async function(list) {
 window.fbSetCriteria = async function(criteriaArr) {
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetCriteria 차단');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetCriteria 차단');
     return;
   }
   try {
@@ -9926,6 +9958,10 @@ let _fbSharedTimer = null;
 window.__flushAllPending = function(){
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] flush 차단');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 flush 차단');
     return;
   }
   try {
@@ -10419,6 +10455,10 @@ window._fbCanWrite = function(colName){
     console.warn('[MOBILE READ-ONLY] '+(colName||'write')+' push 차단');
     return false;
   }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 '+(colName||'write')+' push 차단');
+    return false;
+  }
   if(!window.__fbUser || !window.__fbUser.email) return false;
   if(colName && !window.__fbInit[colName]){
     console.warn('[FB] '+colName+' 초기 로드 전 push 차단 (본인 캐시 덮어쓰기 방지)');
@@ -10438,6 +10478,10 @@ setTimeout(() => {
 window.fbSetShared = function(){
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetShared 차단');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetShared 차단');
     return;
   }
   clearTimeout(_fbSharedTimer);
@@ -10490,18 +10534,16 @@ window.fbSetShared = function(){
     } catch(e) { console.error('fbSetShared:', e); }
   }, 100);
 };
-// [SAFETY] Firebase가 5초 안에 응답 안 하면 오버레이 강제 해제 (앱 잠금 방지)
+// [SAFETY] shared onSnapshot 응답이 느려도 push 잠금만 해제. 화면은 fresh server fetch 후 표시.
 setTimeout(() => {
   if(!window.__sharedInitLoaded){
-    console.warn('[SHARED] Firebase 5초 응답 없음 - 오버레이 강제 해제');
+    console.warn('[SHARED] Firebase 5초 응답 없음 - push 잠금만 해제');
     window.__sharedInitLoaded = true;
-    try { const ov = document.getElementById('fb-loading-overlay'); if(ov) ov.remove(); } catch(_){}
   }
 }, 5000);
 onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
-  // [INIT] 스냅샷 도착만으로도 init 완료 표시 (오버레이 해제) — 데이터 유무/버전 무관
+  // [INIT] 스냅샷 도착만으로도 init 완료 표시. 화면 표시는 fresh server fetch 완료 후.
   window.__sharedInitLoaded = true;
-  try { const ov = document.getElementById('fb-loading-overlay'); if(ov) ov.remove(); } catch(_){}
   if(!snap.exists()) return;
   try {
     const data = snap.data() || {};
@@ -10518,13 +10560,13 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     });
     // [GUARD] 초기 로드 완료 표시 → 이제부터 로컬 편집 push 가능 (초기 로드 전 push는 오래된 로컬로 덮어쓰기 방지)
     window.__sharedInitLoaded = true;
-    // 로딩 오버레이 제거 + 강제 재렌더
+    // fresh server fetch가 끝난 뒤에만 강제 재렌더
     try {
-      const ov = document.getElementById('fb-loading-overlay');
-      if(ov) ov.remove();
-      if(typeof window.lvRender==='function') window.lvRender();
-      if(typeof window.lvRenderSB==='function') window.lvRenderSB();
-      if(typeof renderSidebar==='function') renderSidebar();
+      if(window.__freshServerLoaded){
+        if(typeof window.lvRender==='function') window.lvRender();
+        if(typeof window.lvRenderSB==='function') window.lvRenderSB();
+        if(typeof renderSidebar==='function') renderSidebar();
+      }
     } catch(_){}
     let needRerender = false;
     if(typeof data.storeBase === 'string'){
@@ -10723,6 +10765,10 @@ window.fbSetEmpPhoto = function(empId, base64){
   if(!empId || !base64) return;
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetEmpPhoto 차단');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetEmpPhoto 차단');
     return;
   }
   clearTimeout(_fbPhotoTimers[empId]);
@@ -11278,6 +11324,8 @@ window.invDeleteCandidate = async function(mgId, candId) {
 async function invFirestoreSaveManager(mg) {
   try {
     if (!window._db) return;
+    if (window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly) return;
+    if (!window.__freshServerLoaded) return;
     const { doc, setDoc, serverTimestamp } =
       await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     await setDoc(doc(window._db, COL_INV_MANAGERS, mg.id),
@@ -11288,6 +11336,8 @@ async function invFirestoreSaveManager(mg) {
 async function invFirestoreDeleteManager(mgId) {
   try {
     if (!window._db) return;
+    if (window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly) return;
+    if (!window.__freshServerLoaded) return;
     const { doc, deleteDoc } =
       await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     await deleteDoc(doc(window._db, COL_INV_MANAGERS, mgId));
@@ -11296,6 +11346,8 @@ async function invFirestoreDeleteManager(mgId) {
 async function invFirestoreSaveCandidate(candId, data) {
   try {
     if (!window._db) return;
+    if (window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly) return;
+    if (!window.__freshServerLoaded) return;
     const { doc, setDoc, serverTimestamp } =
       await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     await setDoc(doc(window._db, COL_INV_CANDIDATES, candId),
@@ -11305,6 +11357,8 @@ async function invFirestoreSaveCandidate(candId, data) {
 async function invFirestoreDeleteCandidate(candId) {
   try {
     if (!window._db) return;
+    if (window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly) return;
+    if (!window.__freshServerLoaded) return;
     const { doc, deleteDoc } =
       await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     await deleteDoc(doc(window._db, COL_INV_CANDIDATES, candId));
@@ -11346,6 +11400,10 @@ window.__ptInitLoaded = false;
 window.fbSetPT = async function(data) {
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetPT 차단');
+    return;
+  }
+  if(!window.__freshServerLoaded){
+    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetPT 차단');
     return;
   }
   if(!window.__fbUser || !window.__fbUser.email){
