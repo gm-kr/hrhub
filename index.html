@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 68;
+  window.__APP_VERSION = 69;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -54,7 +54,7 @@ html.app-loading-fresh body::before{
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 68);
+    var appVersion = String(window.__APP_VERSION || 69);
     if(isStandalone && params.get('appv') !== appVersion){
       var u = new URL(location.href);
       u.searchParams.set('appv', appVersion);
@@ -1199,7 +1199,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v068</span><script>window.__APP_VERSION=68;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v069</span><script>window.__APP_VERSION=69;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -7205,14 +7205,49 @@ const PT_GROUPS = [
   { key:'friSatSun', label:'금토일' }
 ];
 let __ptVisible = localStorage.getItem('lvPtExcluded') === '1' ? false : true;
+window.__ptStoreMem = window.__ptStoreMem || {};
 
 function getPTStore() {
-  try { return JSON.parse(localStorage.getItem(PT_LS_KEY)||'{}'); } catch(e) { return {}; }
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(PT_LS_KEY)||'{}') || {}; } catch(e) { stored = {}; }
+  try {
+    if(window.__ptStoreMem && typeof window.__ptStoreMem === 'object'){
+      return Object.assign({}, stored, window.__ptStoreMem);
+    }
+  } catch(_){}
+  return stored;
 }
 function savePTStore(data) {
-  localStorage.setItem(PT_LS_KEY, JSON.stringify(data));
+  try { window.__ptStoreMem = JSON.parse(JSON.stringify(data || {})); } catch(_) { window.__ptStoreMem = data || {}; }
+  try {
+    localStorage.setItem(PT_LS_KEY, JSON.stringify(data));
+  } catch(e) {
+    console.warn('[PT] localStorage 저장 실패 - 메모리/Firebase로 계속 진행:', e && (e.name || e.message));
+    try {
+      if(typeof lvToast === 'function') lvToast('저장공간이 부족해 임시 반영 후 서버 저장을 시도합니다');
+    } catch(_){}
+  }
   // Firebase 실시간 공유
   if (window.fbSetPT) window.fbSetPT(data);
+}
+function applyPTStoreJson(json, source) {
+  if(!json) return false;
+  let remote;
+  try { remote = typeof json === 'string' ? JSON.parse(json) : json; } catch(e) {
+    console.warn('[PT] 원격 데이터 파싱 실패:', source || '', e);
+    return false;
+  }
+  const nextJson = JSON.stringify(remote || {});
+  let curJson = '{}';
+  try { curJson = JSON.stringify(getPTStore() || {}); } catch(_){}
+  if(nextJson === curJson) return false;
+  try { window.__ptStoreMem = JSON.parse(nextJson); } catch(_) { window.__ptStoreMem = remote || {}; }
+  try {
+    localStorage.setItem(PT_LS_KEY, nextJson);
+  } catch(e) {
+    console.warn('[PT] localStorage 수신 저장 실패 - 메모리로 반영:', e && (e.name || e.message));
+  }
+  return true;
 }
 function normalizePTData(raw) {
   const base = parseInt(raw && raw.ptBase, 10);
@@ -7273,8 +7308,14 @@ if(typeof window !== 'undefined'){
   window.PT_GROUPS = PT_GROUPS;
   window.getPTStore = getPTStore;
   window.savePTStore = savePTStore;
+  window.applyPTStoreJson = applyPTStoreJson;
 }
 function setPTData(storeKey, data) {
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
+    console.warn('[MOBILE READ-ONLY] setPTData 차단');
+    try { if(typeof lvToast === 'function') lvToast('모바일 바로가기는 보기 전용입니다'); } catch(_){}
+    return false;
+  }
   if(storeKey==='GM_서울_PU_포켓'||storeKey==='PU_성수_Pocket_팝업'||storeKey==='포켓') storeKey='PU 성수 포켓 팝업';
   const store = getPTStore();
   store[storeKey] = normalizePTData(data);
@@ -7285,6 +7326,7 @@ function setPTData(storeKey, data) {
   if (typeof window.lvRenderSB === 'function') {
     try { window.lvRenderSB(); } catch(e) {}
   }
+  return true;
 }
 // [BUG FIX] setPTData도 노출
 if(typeof window !== 'undefined') window.setPTData = setPTData;
@@ -7300,12 +7342,12 @@ window.lvPTAdd = function(storeKey, groupKey) {
 window.lvPTBulkAdd = function(storeKey, groupKey, text, endDate){
   const data = getPTData(storeKey);
   const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
-  // 줄바꿈/쉼표/탭/세미콜론 모두 구분자로 인식
-  const names = (text||'').split(/[\n,\t;]+/).map(s=>s.trim()).filter(Boolean);
+  // 줄바꿈/쉼표/탭/세미콜론/여러 공백 모두 구분자로 인식
+  const names = (text||'').split(/[\n,\t; ]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length) return 0;
   names.forEach(n => data.groups[key].push({name: n, endDate: endDate||''}));
-  setPTData(storeKey, data);
-  lvRender();
+  if(setPTData(storeKey, data) === false) return 0;
+  try { if(typeof lvRender === 'function') lvRender(); } catch(e) { console.warn('[PT] render failed:', e); }
   return names.length;
 };
 
@@ -10163,8 +10205,7 @@ window._mobilePoll = async function(){
     if(p.exists()){
       const d = p.data();
       if(d && d.data){
-        if(d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
-          localStorage.setItem('hrPT_v1', d.data);
+        if(typeof window.applyPTStoreJson === 'function' && window.applyPTStoreJson(d.data, 'mobile-poll')){
           console.log('[MOBILE POLL] PT 변경 → 재렌더');
           if(typeof window.__mobileRenderAfterInteraction === 'function') window.__mobileRenderAfterInteraction();
           else {
@@ -10364,8 +10405,8 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
         const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
         if(p.exists()){
           const d = p.data();
-          if(d && d.data && d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
-            try { localStorage.setItem('hrPT_v1', d.data); anyChanged = true; } catch(_){}
+          if(d && d.data && typeof window.applyPTStoreJson === 'function' && window.applyPTStoreJson(d.data, 'full-pull')){
+            anyChanged = true;
           }
         }
       } catch(e){ console.warn('[PULL] PT 실패:', e.code||e.message); }
@@ -11437,10 +11478,7 @@ window.fbSetPT = async function(data) {
       const d = snap.data();
       if (!d || !d.data) return;
       try {
-        const remote = JSON.parse(d.data);
-        const local = localStorage.getItem('hrPT_v1') || '{}';
-        if (JSON.stringify(remote) !== local) {
-          localStorage.setItem('hrPT_v1', JSON.stringify(remote));
+        if (typeof window.applyPTStoreJson === 'function' && window.applyPTStoreJson(d.data, 'snapshot')) {
           console.log('[PT] 원격 → 로컬 갱신 완료');
           if (window.lvRender) window.lvRender();
         }
@@ -11832,7 +11870,14 @@ window.lvPTConfirmStoreBulk = function(){
       if(storeKey && !text.trim()) skipped.push('이름 비어있음');
       return;
     }
-    const added = window.lvPTBulkAdd(storeKey, groupKey, text, '');
+    let added = 0;
+    try {
+      added = window.lvPTBulkAdd(storeKey, groupKey, text, '');
+    } catch(e) {
+      console.warn('[PT BULK] 행 등록 실패:', e);
+      skipped.push('등록 실패');
+      return;
+    }
     if(added > 0){
       totalAdded += added;
       storeCount++;
