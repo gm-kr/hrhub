@@ -32,22 +32,42 @@
         window.matchMedia('(display-mode: minimal-ui)').matches
       ));
   } catch(_){}
+  window.__clearHRAppStorage = function(opts){
+    opts = opts || {};
+    var keys = [
+      'layoutActualData','__fbEditsCache',
+      'lvStoreBaseOverrides','lvSbBaseOverrides','store_list_v2',
+      'lvDeletedStores','hrDeletedEmpIds_v1','hrPT_v1','hrP',
+      'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH',
+      'last_selected_store'
+    ];
+    if(!opts.preserveDraft) keys.push('layoutDraftData');
+    ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(function(k){ keys.push('lvOrder_'+k); });
+    try {
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(k && (k.indexOf('hr_fb_') === 0 || k.indexOf('eval_') === 0)) keys.push(k);
+      }
+    } catch(_){}
+    keys.forEach(function(k){ try { localStorage.removeItem(k); } catch(_){} });
+  };
   if(!isIOS) return;
   window.__isIOSStandaloneEarly = true;
-  var keys = [
-    'layoutActualData','layoutDraftData','__fbEditsCache',
-    'lvStoreBaseOverrides','lvSbBaseOverrides','store_list_v2',
-    'lvDeletedStores','hrDeletedEmpIds_v1','hrPT_v1','hrP',
-    'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH'
-  ];
-  ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(function(k){ keys.push('lvOrder_'+k); });
+  window.__clearHRAppStorage({ preserveDraft: true });
   try {
-    for(var i=0;i<localStorage.length;i++){
-      var k = localStorage.key(i);
-      if(k && (k.indexOf('hr_fb_') === 0 || k.indexOf('eval_') === 0)) keys.push(k);
-    }
+    var nativeSetItem = Storage.prototype.setItem;
+    var appCacheKey = /^(layout|lv|hr|praise|inv|eval_|store_|last_selected_store|__fb|FSMALL|DS|DFS|ATS|NUF|ETC)/;
+    Storage.prototype.setItem = function(k, v) {
+      try { return nativeSetItem.call(this, k, v); }
+      catch(e) {
+        if(appCacheKey.test(String(k || ''))) {
+          console.warn('[iOS storage skipped]', k, e && (e.name || e.message));
+          return;
+        }
+        throw e;
+      }
+    };
   } catch(_){}
-  keys.forEach(function(k){ try { localStorage.removeItem(k); } catch(_){} });
 })();
 </script>
 <title>HR 인사관리 시스템</title>
@@ -1147,7 +1167,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v060</span><script>window.__APP_VERSION=60;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v064</span><script>window.__APP_VERSION=64;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3702,6 +3722,7 @@ function _lvDiscardDraft(){
   try {
     const actualRaw = localStorage.getItem('layoutActualData') || '{}';
     localStorage.setItem('layoutDraftData', actualRaw);
+    window.__layoutDraftDirty = true;
     try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
     if(typeof lvToast==='function') lvToast('🗑 테스트 변경 버림');
   } catch(e){}
@@ -6073,6 +6094,7 @@ function lvSaveDraftMove(empId,storeKey){
   const draft=lvEnsureDraftData();
   draft[empId]={current_store:storeKey,channel:guessChannel(storeKey)||''};
   lvWriteLayout(LV_DRAFT_KEY,draft);
+  window.__layoutDraftDirty = true;
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
@@ -6180,6 +6202,7 @@ function lvSetMode(mode){
 function lvResetDraft(){
   if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?\n(모든 사용자에게 공유됩니다)')) return;
   lvWriteLayout(LV_DRAFT_KEY,lvEnsureActualData());
+  window.__layoutDraftDirty = true;
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   lvToast('↩ 테스트 배치를 실제 배치 기준으로 초기화했습니다.');
   showSaved();
@@ -7349,7 +7372,7 @@ function lvSyncPTButton(){
 }
 window.lvTogglePT = function() {
   __ptVisible = !__ptVisible;
-  localStorage.setItem('lvPtExcluded', __ptVisible ? '0' : '1');
+  try { localStorage.setItem('lvPtExcluded', __ptVisible ? '0' : '1'); } catch(_){}
   lvSyncPTButton();
   document.querySelectorAll('.lv-card').forEach(card => {
     card.classList.toggle('pt-hidden', !__ptVisible);
@@ -9004,7 +9027,12 @@ const _auth = getAuth(_app);
 const _googleProvider = new GoogleAuthProvider();
 _googleProvider.setCustomParameters({ prompt: 'select_account' });
 // 30일 자동 로그인 유지(브라우저 로컬 저장)
-setPersistence(_auth, browserLocalPersistence).catch(()=>{});
+setPersistence(_auth, browserLocalPersistence).catch((e)=>{
+  const msg = String((e && (e.code || e.message)) || '').toLowerCase();
+  if(msg.includes('quota') && typeof window.__clearHRAppStorage === 'function'){
+    try { window.__clearHRAppStorage({ preserveDraft: true }); } catch(_){}
+  }
+});
 function _setAuthStatus(msg, kind){
   const el = document.getElementById('auth-status');
   if(!el) return;
@@ -9132,6 +9160,9 @@ async function _doGoogleLogin(){
   // [SECURITY] 로그인 진행 중에는 게이트를 반드시 표시
   _showAuthGate(true);
   try {
+    if(window.__isIOSStandaloneEarly && typeof window.__clearHRAppStorage === 'function'){
+      try { window.__clearHRAppStorage(); } catch(_){}
+    }
     if(_useRedirect){
       await signInWithRedirect(_auth, _googleProvider);
       return;
@@ -9143,7 +9174,8 @@ async function _doGoogleLogin(){
     // cancelled-popup-request 는 사용자가 새 팝업을 열어서 이전 팝업이 취소된 정상 케이스
     // → 에러 메시지를 표시하지 않고 조용히 무시
     if(code === 'auth/cancelled-popup-request'){
-      _authInFlight = false;
+      if(btn) btn.disabled = false;
+      _setAuthStatus('다른 로그인 창이 열려있습니다. 열린 창에서 계속 진행해주세요.', '');
       return;
     }
     if(!_useRedirect && (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/operation-not-supported-in-this-environment')){
@@ -9156,7 +9188,12 @@ async function _doGoogleLogin(){
     }
     console.error('[AUTH] signIn error:', err);
     let msg = err && err.message ? err.message : '알 수 없는 오류';
-    if(code === 'auth/popup-blocked') msg = '팝업이 차단되었습니다. 브라우저 팝업 차단을 해제해주세요.';
+    const rawMsg = String((err && (err.message || err.code)) || '').toLowerCase();
+    if(rawMsg.includes('quota') || rawMsg.includes('storage')){
+      try { if(typeof window.__clearHRAppStorage === 'function') window.__clearHRAppStorage({ preserveDraft: true }); } catch(_){}
+      msg = '브라우저 저장공간 때문에 로그인 저장에 실패했습니다. 운영팀 테스트 데이터는 보존하고 앱 캐시만 정리했으니 새로고침 후 다시 로그인해주세요.';
+    }
+    else if(code === 'auth/popup-blocked') msg = '팝업이 차단되었습니다. 브라우저 팝업 차단을 해제해주세요.';
     else if(code === 'auth/popup-closed-by-user') msg = '로그인 창이 닫혔습니다. 다시 시도해주세요.';
     else if(code === 'auth/operation-not-allowed') msg = 'Firebase에서 Google 로그인이 활성화되지 않았습니다. 콘솔에서 활성화해주세요.';
     else if(code === 'auth/unauthorized-domain') msg = '이 도메인은 Firebase Authorized domains에 등록되어있지 않습니다.';
@@ -9856,7 +9893,6 @@ window.__flushAllPending = function(){
       const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
       const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
       const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
-      const layoutDraft  = localStorage.getItem('layoutDraftData')      || '{}';
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
         const v = localStorage.getItem('lvOrder_'+k);
@@ -9867,15 +9903,23 @@ window.__flushAllPending = function(){
       const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1') || '[]';
       const _last = window.__lastSharedSnap || {};
       const sbBase = localStorage.getItem('lvSbBaseOverrides') || '{}';
-      const cur = { storeBase, mgrImpSlots, mgrImpOrder, layoutDraft, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase };
+      const cur = { storeBase, mgrImpSlots, mgrImpOrder, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase };
+      if(window.__layoutDraftDirty === true){
+        cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
+      }
       const diff = {};
       Object.keys(cur).forEach(k=>{ if(cur[k] !== (_last[k]||'')) diff[k] = cur[k]; });
       if(Object.keys(diff).length){
+        if(diff.layoutDraft !== undefined && typeof window.__backupLayoutDraft === 'function'){
+          window.__backupLayoutDraft(diff.layoutDraft, 'flush before push').catch(()=>{});
+        }
         setDoc(doc(_db, COL_SHARED, 'data'), {
           ...diff,
           _updatedAt: serverTimestamp(),
-          _updatedBy: window.__fbUser.email
+          _updatedBy: window.__fbUser.email,
+          _clientVersion: window.__APP_VERSION || 10
         }, { merge: true }).catch(()=>{});
+        if(diff.layoutDraft !== undefined) window.__layoutDraftDirty = false;
       }
     }
   } catch(_){}
@@ -10009,9 +10053,12 @@ window._mobilePoll = async function(){
       }
       if(changed){
         console.log('[MOBILE POLL] shared 변경 → 재렌더');
-        try { lvRender && lvRender(); } catch(_){}
-        try { lvRenderSB && lvRenderSB(); } catch(_){}
-        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+        if(typeof window.__mobileRenderAfterInteraction === 'function') window.__mobileRenderAfterInteraction();
+        else {
+          try { lvRender && lvRender(); } catch(_){}
+          try { lvRenderSB && lvRenderSB(); } catch(_){}
+          try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+        }
       }
     }
     const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
@@ -10021,8 +10068,11 @@ window._mobilePoll = async function(){
         if(d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
           localStorage.setItem('hrPT_v1', d.data);
           console.log('[MOBILE POLL] PT 변경 → 재렌더');
-          try { lvRender && lvRender(); } catch(_){}
-          try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+          if(typeof window.__mobileRenderAfterInteraction === 'function') window.__mobileRenderAfterInteraction();
+          else {
+            try { lvRender && lvRender(); } catch(_){}
+            try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+          }
         }
       }
     }
@@ -10054,9 +10104,12 @@ window._mobilePoll = async function(){
               });
             }
           } catch(_){}
-          try { lvRender && lvRender(); } catch(_){}
-          try { refresh && refresh(); } catch(_){}
-          try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+          if(typeof window.__mobileRenderAfterInteraction === 'function') window.__mobileRenderAfterInteraction();
+          else {
+            try { lvRender && lvRender(); } catch(_){}
+            try { refresh && refresh(); } catch(_){}
+            try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+          }
         }
       } catch(e){ console.warn('[MOBILE POLL] empPhotos 실패:', e.code||e.message); }
     }
@@ -10065,21 +10118,33 @@ window._mobilePoll = async function(){
 if(window.__isMobile || window.__isStandalone){
   // 5초마다 자동 폴링 (아이폰도 실시간 체감)
   setInterval(window._mobilePoll, 5000);
-  // 사용자 터치/스크롤/탭 시 즉시 폴링 (백그라운드 서스펜드 깨어남 감지)
-  let _lastPollAt = 0;
-  const _pollThrottled = (event) => {
-    if(event && event.target && event.target.closest && event.target.closest('.tab[data-tab]')) return;
-    const now = Date.now();
-    if(now - _lastPollAt < 2000) return;  // 2초 스로틀
-    _lastPollAt = now;
-    window._mobilePoll();
-  };
-  document.addEventListener('touchstart', _pollThrottled, { passive: true });
-  document.addEventListener('click', _pollThrottled, { passive: true });
+  // 터치/클릭 중 즉시 폴링하면 버튼 대상 DOM이 교체되어 클릭이 유실될 수 있음.
 }
 // [MOBILE READ-ONLY PULL ALL] 모바일은 onSnapshot/iOS 캐시가 불안정 → 3초마다 전체 서버 fetch
 // (sharedSettings + empPhotos + hrEdits + storeList + partTimers)
 if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+  const _markMobileInteraction = () => { window.__lastMobileInteractionAt = Date.now(); };
+  document.addEventListener('pointerdown', _markMobileInteraction, { passive: true, capture: true });
+  document.addEventListener('click', _markMobileInteraction, { passive: true, capture: true });
+  let _mobileDeferredRenderTimer = 0;
+  const _mobileRenderAll = () => {
+    try { window.lvRender && window.lvRender(); } catch(_){}
+    try { window.lvRenderSB && window.lvRenderSB(); } catch(_){}
+    try { window.refresh && window.refresh(); } catch(_){}
+    try { window.ppRender && window.ppRender(); } catch(_){}
+    try { if(typeof renderSidebar==='function') renderSidebar(); } catch(_){}
+    try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+  };
+  const _mobileRenderAfterInteraction = () => {
+    const elapsed = Date.now() - (window.__lastMobileInteractionAt || 0);
+    if(elapsed < 900){
+      clearTimeout(_mobileDeferredRenderTimer);
+      _mobileDeferredRenderTimer = setTimeout(_mobileRenderAfterInteraction, 950 - elapsed);
+      return;
+    }
+    _mobileRenderAll();
+  };
+  window.__mobileRenderAfterInteraction = _mobileRenderAfterInteraction;
   const _setStatus = (txt) => {
     window.__lastPullResult = txt;
     try { const el = document.getElementById('sync-status'); if(el) el.textContent = txt; } catch(_){}
@@ -10228,22 +10293,13 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
           });
         }
       } catch(_){}
-      // [FIX] 재렌더는 매 pull마다 무조건 실행 - 홈화면앱은 렌더 누락되면 영영 옛날화면
-      try { window.lvRender && window.lvRender(); } catch(_){}
-      try { window.lvRenderSB && window.lvRenderSB(); } catch(_){}
-      try { window.refresh && window.refresh(); } catch(_){}
-      try { window.ppRender && window.ppRender(); } catch(_){}
-      try { if(typeof renderSidebar==='function') renderSidebar(); } catch(_){}
-      try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+      // [FIX] 재렌더는 매 pull마다 실행하되, 모바일 조작 직후에는 클릭 이벤트가 먼저 끝나도록 살짝 미룸.
+      _mobileRenderAfterInteraction();
       setTimeout(() => {
-        try { window.lvRender && window.lvRender(); } catch(_){}
-        try { window.refresh && window.refresh(); } catch(_){}
-        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+        _mobileRenderAfterInteraction();
       }, 300);
       setTimeout(() => {
-        try { window.lvRender && window.lvRender(); } catch(_){}
-        try { window.refresh && window.refresh(); } catch(_){}
-        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
+        _mobileRenderAfterInteraction();
       }, 1000);
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
@@ -10267,20 +10323,27 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
     const ok = await window._standalonePullAll();
     if(ok){ clearInterval(_initTimer); }
   }, 500);
-  // 터치 시 즉시 동기화
-  document.addEventListener('touchstart', (event) => {
-    if(event && event.target && event.target.closest && event.target.closest('.tab[data-tab]')) return;
-    const _last = window.__lastPullAt || 0;
-    if(Date.now() - _last > 1500){
-      window.__lastPullAt = Date.now();
-      window._standalonePullAll();
-    }
-  }, { passive: true });
+  // 터치 중 강제 동기화는 버튼/카드 클릭 이벤트를 끊을 수 있어 주기 동기화만 사용.
 }
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
 window.__lastSharedSnap = window.__lastSharedSnap || {};
 window.__sharedInitLoaded = window.__sharedInitLoaded || false;  // Firebase 초기 로드 완료 플래그
+window.__layoutDraftDirty = window.__layoutDraftDirty || false;
+window.__backupLayoutDraft = async function(layoutDraft, reason){
+  try {
+    if(!window.__fbUser || !window.__fbUser.email) return;
+    if(!layoutDraft || layoutDraft === '{}') return;
+    const id = String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
+    await setDoc(doc(_db, 'layoutDraftBackups', id), {
+      layoutDraft,
+      reason: reason || 'layoutDraft push',
+      _createdAt: serverTimestamp(),
+      _createdBy: window.__fbUser.email,
+      _clientVersion: window.__APP_VERSION || 10
+    });
+  } catch(e) { console.warn('[DRAFT BACKUP] failed:', e && (e.code || e.message)); }
+};
 // [UNIVERSAL GUARD] 모든 컬렉션에 대해 초기 Firebase 로드 전 push 차단
 // → 신뢰할 수 있는 상태를 받기 전엔 절대 쓰지 않음 (본인 캐시가 Firebase 덮어쓰는 문제 원천 차단)
 window.__fbInit = window.__fbInit || { edits:false, storeList:false, praise:false, invitation:false, storeHistory:false, empPhotos:false, criteria:false };
@@ -10315,12 +10378,14 @@ window.fbSetShared = function(){
         storeBase:    localStorage.getItem('lvStoreBaseOverrides') || '{}',
         mgrImpSlots:  localStorage.getItem('lvMgrImpSlots')        || '[]',
         mgrImpOrder:  localStorage.getItem('lvMgrImpStoreOrder')   || '[]',
-        layoutDraft:  localStorage.getItem('layoutDraftData')      || '{}',
         deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
         deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]',
         sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}',
         storeLinks:   localStorage.getItem('lvStoreLinks')         || '{}'
       };
+      if(window.__layoutDraftDirty === true){
+        cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
+      }
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
         const v = localStorage.getItem('lvOrder_'+k);
@@ -10335,6 +10400,9 @@ window.fbSetShared = function(){
         }
       });
       if(Object.keys(diff).length === 0) return;
+      if(diff.layoutDraft !== undefined){
+        await window.__backupLayoutDraft(diff.layoutDraft, 'fbSetShared before push');
+      }
       await setDoc(doc(_db, COL_SHARED, 'data'), {
         ...diff,
         _updatedAt: serverTimestamp(),
@@ -10343,6 +10411,7 @@ window.fbSetShared = function(){
       }, { merge: true });
       // push 성공한 필드는 lastSharedSnap에도 반영
       Object.keys(diff).forEach(k => window.__lastSharedSnap[k] = diff[k]);
+      if(diff.layoutDraft !== undefined) window.__layoutDraftDirty = false;
     } catch(e) { console.error('fbSetShared:', e); }
   }, 100);
 };
