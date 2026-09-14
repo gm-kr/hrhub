@@ -19,7 +19,7 @@
 })();
 </script>
 <script>
-// [iOS QUOTA FIX] 홈화면 앱에서 Firebase Auth가 쓰기 전에 대형 앱 캐시를 먼저 비움
+// [iOS MOBILE FIX] Firebase Auth/최신 pull 전에 iPhone/iPad의 오래된 대형 앱 캐시를 먼저 비움
 (function(){
   var ua = navigator.userAgent || '';
   var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -32,7 +32,7 @@
         window.matchMedia('(display-mode: minimal-ui)').matches
       ));
   } catch(_){}
-  if(!isIOS || !isStandalone) return;
+  if(!isIOS) return;
   window.__isIOSStandaloneEarly = true;
   var keys = [
     'layoutActualData','layoutDraftData','__fbEditsCache',
@@ -1147,7 +1147,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v058</span><script>window.__APP_VERSION=58;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v059</span><script>window.__APP_VERSION=59;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9215,7 +9215,7 @@ onAuthStateChanged(_auth, (user)=>{
   try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
   _showAuthGate(false);
   // [STANDALONE] 인증 확정 즉시 강제 pull (interval 다음 tick 기다리지 않음)
-  if(window.__isStandalone && typeof window._standalonePullAll === 'function'){
+  if((window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly) && typeof window._standalonePullAll === 'function'){
     setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 200);
     setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 1500);
   }
@@ -10049,9 +10049,9 @@ if(window.__isMobile || window.__isStandalone){
   document.addEventListener('touchstart', _pollThrottled, { passive: true });
   document.addEventListener('click', _pollThrottled, { passive: true });
 }
-// [STANDALONE PULL ALL] 홈화면앱은 onSnapshot이 iOS ITP 등으로 불안정 → 3초마다 전체 강제 fetch
+// [MOBILE READ-ONLY PULL ALL] 모바일은 onSnapshot/iOS 캐시가 불안정 → 3초마다 전체 서버 fetch
 // (sharedSettings + empPhotos + hrEdits + storeList + partTimers)
-if(window.__isStandalone){
+if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
   const _setStatus = (txt) => {
     window.__lastPullResult = txt;
     try { const el = document.getElementById('sync-status'); if(el) el.textContent = txt; } catch(_){}
