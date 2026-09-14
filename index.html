@@ -18,6 +18,38 @@
   }
 })();
 </script>
+<script>
+// [iOS QUOTA FIX] 홈화면 앱에서 Firebase Auth가 쓰기 전에 대형 앱 캐시를 먼저 비움
+(function(){
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isStandalone = navigator.standalone === true;
+  try {
+    isStandalone = isStandalone ||
+      (window.matchMedia && (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches
+      ));
+  } catch(_){}
+  if(!isIOS || !isStandalone) return;
+  window.__isIOSStandaloneEarly = true;
+  var keys = [
+    'layoutActualData','layoutDraftData','__fbEditsCache',
+    'lvStoreBaseOverrides','lvSbBaseOverrides','store_list_v2',
+    'lvDeletedStores','hrDeletedEmpIds_v1','hrPT_v1','hrP',
+    'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH'
+  ];
+  ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(function(k){ keys.push('lvOrder_'+k); });
+  try {
+    for(var i=0;i<localStorage.length;i++){
+      var k = localStorage.key(i);
+      if(k && (k.indexOf('hr_fb_') === 0 || k.indexOf('eval_') === 0)) keys.push(k);
+    }
+  } catch(_){}
+  keys.forEach(function(k){ try { localStorage.removeItem(k); } catch(_){} });
+})();
+</script>
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
@@ -1115,7 +1147,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v057</span><script>window.__APP_VERSION=57;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v058</span><script>window.__APP_VERSION=58;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -8861,7 +8893,7 @@ function knExportChanges(){
 </script>
 <script type="module">
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, writeBatch, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocFromServer, onSnapshot, collection, getDocs, getDocsFromServer, writeBatch, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -9514,6 +9546,7 @@ function startEmbedFastSyncIfNeeded() {
 const _fbEditBuf = {};
 const _fbEditTimers = {};
 function persistEditsCache() {
+  if(window.__isStandalone || window.__isIOSStandaloneEarly) return;
   try {
     localStorage.setItem('__fbEditsCache', JSON.stringify(window.__fbEdits || {}));
   } catch(e) {}
@@ -9917,8 +9950,10 @@ if(window.__isStandalone){
 window._mobilePoll = async function(){
   if(document.visibilityState !== 'visible') return;
   if(!window.__fbDb || !window.__fbGetDoc) return;
+  const getDocFresh = window.__fbGetDocFresh || window.__fbGetDoc;
+  const getDocsFresh = window.__fbGetDocsFresh || window.__fbGetDocs;
   try {
-    const s = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
+    const s = await getDocFresh(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
     if(s.exists()){
       const data = s.data();
       let changed = false;
@@ -9954,7 +9989,7 @@ window._mobilePoll = async function(){
         try { lvRenderSB && lvRenderSB(); } catch(_){}
       }
     }
-    const p = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
+    const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
     if(p.exists()){
       const d = p.data();
       if(d && d.data){
@@ -9966,9 +10001,9 @@ window._mobilePoll = async function(){
       }
     }
     // [FIX] empPhotos 폴링 - 홈화면앱에서 옛날 사진만 보이는 문제
-    if(window.__fbGetDocs && window.__fbCollection){
+    if(getDocsFresh && window.__fbCollection){
       try {
-        const snap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'empPhotos'));
+        const snap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
         window.__photoMemCache = window.__photoMemCache || {};
         let photoChanged = false;
         const affected = [];
@@ -10025,13 +10060,15 @@ if(window.__isStandalone){
   window._standalonePullAll = async function(){
     if(!window.__fbUser || !window.__fbUser.email){ _setStatus('로그인 대기'); return false; }
     if(!window.__fbDb || !window.__fbGetDoc || !window.__fbGetDocs){ _setStatus('Firebase 초기화 대기'); return false; }
+    const getDocFresh = window.__fbGetDocFresh || window.__fbGetDoc;
+    const getDocsFresh = window.__fbGetDocsFresh || window.__fbGetDocs;
     _setStatus('불러오는 중…');
     let anyChanged = false;
     let photoCount = 0, editCount = 0;
     try {
       // 1) sharedSettings (storeLinks, layoutDraft, deletedStores, storeBase, sbBase, lvOrder …)
       try {
-        const s = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
+        const s = await getDocFresh(window.__fbDoc(window.__fbDb, 'sharedSettings', 'data'));
         if(s.exists()){
           const data = s.data();
           const map = {
@@ -10059,7 +10096,7 @@ if(window.__isStandalone){
       } catch(e){ console.warn('[PULL] sharedSettings 실패:', e.code||e.message); }
       // 2) empPhotos (전체)
       try {
-        const photoSnap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'empPhotos'));
+        const photoSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
         window.__photoMemCache = window.__photoMemCache || {};
         photoSnap.forEach(docSnap => {
           const d = docSnap.data();
@@ -10080,7 +10117,7 @@ if(window.__isStandalone){
       } catch(e){ console.warn('[PULL] empPhotos 실패:', e.code||e.message); }
       // 3) hrEdits (드래그·상태변경 실시간 반영)
       try {
-        const editSnap = await window.__fbGetDocs(window.__fbCollection(window.__fbDb, 'hrEdits'));
+        const editSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'hrEdits'));
         window.__fbEdits = window.__fbEdits || {};
         editSnap.forEach(docSnap => {
           const id = docSnap.id;
@@ -10115,7 +10152,7 @@ if(window.__isStandalone){
       } catch(e){ console.warn('[PULL] hrEdits 실패:', e.code||e.message); }
       // 4) storeList (매장 추가/삭제 반영)
       try {
-        const slSnap = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'storeList', 'data'));
+        const slSnap = await getDocFresh(window.__fbDoc(window.__fbDb, 'storeList', 'data'));
         if(slSnap.exists()){
           const d = slSnap.data();
           if(d && Array.isArray(d.list)){
@@ -10129,7 +10166,7 @@ if(window.__isStandalone){
       } catch(e){ console.warn('[PULL] storeList 실패:', e.code||e.message); }
       // 5) partTimers
       try {
-        const p = await window.__fbGetDoc(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
+        const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
         if(p.exists()){
           const d = p.data();
           if(d && d.data && d.data !== (localStorage.getItem('hrPT_v1')||'{}')){
@@ -10543,24 +10580,27 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
       changed = true;
       affected.push(id);
     }
-    // localStorage에도 시도 (quota 넘으면 조용히 실패)
-    try {
-      const p = JSON.parse(localStorage.getItem('hrP')||'{}');
-      if(p[id] !== data.photo){
-        p[id] = data.photo;
-        try {
-          localStorage.setItem('hrP', JSON.stringify(p));
-        } catch(quotaErr){
-          // localStorage 꽉 참 - 메모리만 사용 (사진은 안 사라짐)
+    // localStorage에도 시도 (홈화면 앱은 quota 보호를 위해 메모리만 사용)
+    if(!(window.__isStandalone || window.__isIOSStandaloneEarly)){
+      try {
+        const p = JSON.parse(localStorage.getItem('hrP')||'{}');
+        if(p[id] !== data.photo){
+          p[id] = data.photo;
+          try {
+            localStorage.setItem('hrP', JSON.stringify(p));
+          } catch(quotaErr){
+            // localStorage 꽉 참 - 메모리만 사용 (사진은 안 사라짐)
+          }
         }
-      }
-    } catch(_){}
+      } catch(_){}
+    }
   });
   // 초기 로드 후: 로컬에 있는데 Firebase엔 없는 사진 자동 업로드
   if(!_fbPhotoInitialLoaded){
     _fbPhotoInitialLoaded = true;
     setTimeout(() => {
       try {
+        if(window.__isStandalone || window.__isIOSStandaloneEarly) return;
         const p = JSON.parse(localStorage.getItem('hrP')||'{}');
         // snap.docs로 실제 Firebase에 있는 문서 ID 수집
         const fbIds = new Set();
@@ -10599,8 +10639,11 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
     // 열려있는 직원 상세 사진도 갱신
     try {
       if(typeof curEmp !== 'undefined' && curEmp && affected.includes(curEmp.id)){
-        const p = JSON.parse(localStorage.getItem('hrP')||'{}');
-        const b = p[curEmp.id];
+        let b = window.__photoMemCache && window.__photoMemCache[curEmp.id];
+        if(!b && !(window.__isStandalone || window.__isIOSStandaloneEarly)){
+          const p = JSON.parse(localStorage.getItem('hrP')||'{}');
+          b = p[curEmp.id];
+        }
         if(b){
           document.querySelectorAll('#pdrawer .pp img, .pp img').forEach(img => { img.src = b; });
           document.querySelectorAll('.pp').forEach(el => {
@@ -10737,9 +10780,17 @@ window.__fbDb = _db;
 window.__fbDoc = doc;
 window.__fbSetDoc = setDoc;
 window.__fbGetDoc = getDoc;  // 폴링용
+window.__fbGetDocFresh = async function(ref){
+  try { return await getDocFromServer(ref); }
+  catch(e){ console.warn('[FB] server doc fallback:', e.code||e.message); return await getDoc(ref); }
+};
 window.__fbOnSnapshot = onSnapshot;
 window.__fbCollection = collection;
 window.__fbGetDocs = getDocs;
+window.__fbGetDocsFresh = async function(ref){
+  try { return await getDocsFromServer(ref); }
+  catch(e){ console.warn('[FB] server docs fallback:', e.code||e.message); return await getDocs(ref); }
+};
 window.__fbServerTimestamp = serverTimestamp;
 </script>
 <script>
@@ -12596,4 +12647,3 @@ document.addEventListener('keydown', e => {
 
 </body>
 </html>
-
