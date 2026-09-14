@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 69;
+  window.__APP_VERSION = 70;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -54,7 +54,7 @@ html.app-loading-fresh body::before{
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 69);
+    var appVersion = String(window.__APP_VERSION || 70);
     if(isStandalone && params.get('appv') !== appVersion){
       var u = new URL(location.href);
       u.searchParams.set('appv', appVersion);
@@ -1199,7 +1199,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v069</span><script>window.__APP_VERSION=69;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v070</span><script>window.__APP_VERSION=70;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9789,12 +9789,18 @@ window.fbSetSchedule = async function(data) {
   // Firebase가 source of truth. localStorage는 오프라인 캐시 + 속도 fallback일 뿐.
   let _freshOk = false;
   try {
-    // 하드코딩: COL_SHARED/COL_STORELIST 상수가 아래에 정의돼 TDZ 오류 발생하므로 문자열 직접 사용
-    const [sharedSnap, storeListSnap] = await Promise.all([
+    // 첫 화면을 열기 전에 핵심 컬렉션을 모두 서버에서 직접 읽는다.
+    // localStorage/onSnapshot 캐시에 의존하면 다른 계정에서 옛 정보가 먼저 보일 수 있다.
+    const [sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap, editsSnap, photosSnap] = await Promise.all([
       getDocFromServer(doc(_db, 'sharedSettings', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'storeList', 'data')).catch(()=>null)
+      getDocFromServer(doc(_db, 'storeList', 'data')).catch(()=>null),
+      getDocFromServer(doc(_db, 'partTimers', 'ptData')).catch(()=>null),
+      getDocFromServer(doc(_db, 'scheduled', 'data')).catch(()=>null),
+      getDocFromServer(doc(_db, 'criteria', 'data')).catch(()=>null),
+      getDocsFromServer(collection(_db, 'hrEdits')).catch(()=>null),
+      getDocsFromServer(collection(_db, 'empPhotos')).catch(()=>null)
     ]);
-    _freshOk = !!(sharedSnap || storeListSnap);
+    _freshOk = [sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap, editsSnap, photosSnap].every(Boolean);
     if(sharedSnap && sharedSnap.exists()){
       const d = sharedSnap.data() || {};
       const incomingVer = Number(d._clientVersion || 0);
@@ -9826,6 +9832,60 @@ window.fbSetSchedule = async function(data) {
     if(storeListSnap && storeListSnap.exists()){
       const d = storeListSnap.data() || {};
       if(Array.isArray(d.list)) localStorage.setItem('store_list_v2', JSON.stringify(d.list));
+    }
+    if(ptSnap && ptSnap.exists()){
+      const d = ptSnap.data() || {};
+      if(d && d.data && typeof window.applyPTStoreJson === 'function') window.applyPTStoreJson(d.data, 'firebase-first');
+    }
+    if(scheduleSnap && scheduleSnap.exists()){
+      window.__fbSchedule = scheduleSnap.data() || { joining: [], returning: [] };
+      try { localStorage.setItem('__fbScheduleCache', JSON.stringify(window.__fbSchedule)); } catch(_){}
+    }
+    if(criteriaSnap && criteriaSnap.exists()){
+      const d = criteriaSnap.data() || {};
+      if(Array.isArray(d.criteria)) localStorage.setItem('store_criteria_v1', JSON.stringify(d.criteria));
+    }
+    if(editsSnap){
+      const edits = {};
+      editsSnap.forEach(d => { edits[d.id] = d.data(); });
+      window.__fbEdits = edits;
+      try { persistEditsCache(); } catch(_){}
+      if (typeof EMPS !== 'undefined') {
+        Object.keys(edits).forEach(id => {
+          const d = edits[id];
+          if (!d || !d._isNewEmp || EMPS.find(e => e.id === id)) return;
+          EMPS.push({
+            id,
+            name:          d.name          || '',
+            brand:         d.brand         || 'GM',
+            position:      d.position      || '직원',
+            channel:       d.channel       || '',
+            channel_exp:   d.channel       || '',
+            current_store: d.current_store || '',
+            hire_date:     d.hire_date     || '',
+            tenure:        d.tenure        || '신입',
+            language:      d.language      || '',
+            residence:     d.residence     || '',
+            store_history: [],
+            status:        d.status        || 'active',
+          });
+        });
+      }
+      applyEditsToEmps(edits);
+    }
+    if(photosSnap){
+      window.__photoMemCache = {};
+      photosSnap.forEach(d => {
+        const data = d.data();
+        if(data && data.photo) window.__photoMemCache[d.id] = data.photo;
+      });
+      if(typeof EMPS !== 'undefined'){
+        Object.keys(window.__photoMemCache).forEach(id => {
+          const emp = EMPS.find(e => e.id === id);
+          const photo = window.__photoMemCache[id];
+          if(emp && photo){ emp.photo_b64 = photo; emp.has_photo = true; }
+        });
+      }
     }
     // 캐시 무효화 후 다음 렌더에 반영
     try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
