@@ -1147,7 +1147,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v059</span><script>window.__APP_VERSION=59;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v060</span><script>window.__APP_VERSION=60;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3784,6 +3784,30 @@ function switchMain(tab){
       lv.classList.remove('on');
     }
   }
+}
+function restoreMainTabView(){
+  const tab = window.__currentTab || 'hr';
+  document.querySelectorAll('.tab[data-tab]').forEach(el=>{
+    el.classList.toggle('on', el.dataset.tab===tab);
+  });
+  const hrv  = document.getElementById('hrv');
+  const hrbar= document.getElementById('hrbar');
+  const stv  = document.getElementById('stv');
+  const lv   = document.getElementById('layoutv');
+  const invv = document.getElementById('invitationv');
+  if(hrv)   hrv.style.display   = tab==='hr' ? 'flex' : 'none';
+  if(hrbar) hrbar.style.display = tab==='hr' ? 'flex' : 'none';
+  if(stv){
+    if(tab==='store'){
+      stv.classList.add('store-active');
+      stv.style.cssText = 'display:flex !important; flex-direction:column; position:fixed; top:44px; left:0; right:0; bottom:0; z-index:100; overflow:hidden; background:var(--bg)';
+    } else {
+      stv.classList.remove('store-active');
+      stv.style.cssText = 'display:none;';
+    }
+  }
+  if(lv) lv.classList.toggle('on', tab==='layout');
+  if(invv) invv.classList.toggle('on', tab==='invitation');
 }
 const BORD=['GM','ATS','NUF'];
 const CH_GROUP_MAP = {
@@ -9987,6 +10011,7 @@ window._mobilePoll = async function(){
         console.log('[MOBILE POLL] shared 변경 → 재렌더');
         try { lvRender && lvRender(); } catch(_){}
         try { lvRenderSB && lvRenderSB(); } catch(_){}
+        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
       }
     }
     const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
@@ -9997,6 +10022,7 @@ window._mobilePoll = async function(){
           localStorage.setItem('hrPT_v1', d.data);
           console.log('[MOBILE POLL] PT 변경 → 재렌더');
           try { lvRender && lvRender(); } catch(_){}
+          try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
         }
       }
     }
@@ -10030,6 +10056,7 @@ window._mobilePoll = async function(){
           } catch(_){}
           try { lvRender && lvRender(); } catch(_){}
           try { refresh && refresh(); } catch(_){}
+          try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
         }
       } catch(e){ console.warn('[MOBILE POLL] empPhotos 실패:', e.code||e.message); }
     }
@@ -10040,7 +10067,8 @@ if(window.__isMobile || window.__isStandalone){
   setInterval(window._mobilePoll, 5000);
   // 사용자 터치/스크롤/탭 시 즉시 폴링 (백그라운드 서스펜드 깨어남 감지)
   let _lastPollAt = 0;
-  const _pollThrottled = () => {
+  const _pollThrottled = (event) => {
+    if(event && event.target && event.target.closest && event.target.closest('.tab[data-tab]')) return;
     const now = Date.now();
     if(now - _lastPollAt < 2000) return;  // 2초 스로틀
     _lastPollAt = now;
@@ -10206,13 +10234,16 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
       try { window.refresh && window.refresh(); } catch(_){}
       try { window.ppRender && window.ppRender(); } catch(_){}
       try { if(typeof renderSidebar==='function') renderSidebar(); } catch(_){}
+      try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
       setTimeout(() => {
         try { window.lvRender && window.lvRender(); } catch(_){}
         try { window.refresh && window.refresh(); } catch(_){}
+        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
       }, 300);
       setTimeout(() => {
         try { window.lvRender && window.lvRender(); } catch(_){}
         try { window.refresh && window.refresh(); } catch(_){}
+        try { if(typeof restoreMainTabView==='function') restoreMainTabView(); } catch(_){}
       }, 1000);
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
@@ -10237,7 +10268,8 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
     if(ok){ clearInterval(_initTimer); }
   }, 500);
   // 터치 시 즉시 동기화
-  document.addEventListener('touchstart', () => {
+  document.addEventListener('touchstart', (event) => {
+    if(event && event.target && event.target.closest && event.target.closest('.tab[data-tab]')) return;
     const _last = window.__lastPullAt || 0;
     if(Date.now() - _last > 1500){
       window.__lastPullAt = Date.now();
