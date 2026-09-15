@@ -10,12 +10,23 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 71;
+  window.__APP_VERSION = 72;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
-  window.__hideMobileFreshOverlay = function(){
-    try { document.documentElement.classList.remove('mobile-loading-fresh','app-loading-fresh'); } catch(_){}
+  window.__hideMobileFreshOverlay = function(opts){
+    opts = opts || {};
+    try {
+      if(window.__HR_STRICT_SERVER && window.__fbUser && window.__fbUser.email && !window.__SERVER_BOOTSTRAP_DONE && !opts.force){
+        document.documentElement.classList.add('app-loading-fresh');
+        if(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+          document.documentElement.classList.add('mobile-loading-fresh');
+        }
+        return false;
+      }
+      document.documentElement.classList.remove('mobile-loading-fresh','app-loading-fresh');
+      return true;
+    } catch(_){ return false; }
   };
   try {
     var isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
@@ -40,6 +51,10 @@ html.app-loading-fresh body::before{
   background:#f7f6f3;color:#2a2f42;
   font:700 17px -apple-system,BlinkMacSystemFont,"Pretendard",sans-serif;
 }
+html.mobile-loading-fresh body > :not(#fb-loading-overlay),
+html.app-loading-fresh body > :not(#fb-loading-overlay){
+  visibility:hidden!important;
+}
 </style>
 <script>
 // [iOS MOBILE FIX] Firebase Auth/최신 pull 전에 iPhone/iPad의 오래된 대형 앱 캐시를 먼저 비움
@@ -57,7 +72,7 @@ html.app-loading-fresh body::before{
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 71);
+    var appVersion = String(window.__APP_VERSION || 72);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -1206,7 +1221,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v071</span><script>window.__APP_VERSION=71;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v072</span><script>window.__APP_VERSION=72;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9414,6 +9429,12 @@ onAuthStateChanged(_auth, (user)=>{
     photoURL: user.photoURL||''
   };
   try { if(typeof updateLoginUserInfo==='function') updateLoginUserInfo(window.__fbUser); } catch(_){}
+  if(window.__HR_STRICT_SERVER){
+    try { document.documentElement.classList.add('app-loading-fresh'); } catch(_){}
+  }
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
+    try { document.documentElement.classList.add('mobile-loading-fresh'); } catch(_){}
+  }
   _showAuthGate(false);
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     try { document.documentElement.classList.add('mobile-loading-fresh'); } catch(_){}
@@ -10060,11 +10081,6 @@ window.fbSetSchedule = async function(data) {
   window.__freshServerLoaded = true;
   window.__SERVER_BOOTSTRAP_DONE = true;
   window.__fbReady = true;
-  try {
-    const o = document.getElementById('fb-loading-overlay');
-    if(o) o.remove();
-    if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay();
-  } catch(_){}
   // [AUTH FLUSH] 인증 전에 모인 pending 직원 편집 push
   try { if(window.__flushPendingEdits) await window.__flushPendingEdits(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
@@ -10077,6 +10093,11 @@ window.fbSetSchedule = async function(data) {
     window.lvRender?.();
     window.lvRenderSB?.();
   }
+  try {
+    const o = document.getElementById('fb-loading-overlay');
+    if(o) o.remove();
+    if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay();
+  } catch(_){}
   (async () => {
     try {
       await Promise.all([loadAllEdits(), loadSchedule()]);
@@ -10519,6 +10540,7 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
     _setStatus('불러오는 중…');
     let anyChanged = false;
     let photoCount = 0, editCount = 0;
+    let requiredOk = true;
     try {
       // 1) sharedSettings (storeLinks, layoutDraft, deletedStores, storeBase, sbBase, lvOrder …)
       try {
@@ -10551,7 +10573,7 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
             } catch(_){}
           }
         }
-      } catch(e){ console.warn('[PULL] sharedSettings 실패:', e.code||e.message); }
+      } catch(e){ requiredOk = false; console.warn('[PULL] sharedSettings 실패:', e.code||e.message); }
       // 2) empPhotos (전체)
       try {
         const photoSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
@@ -10572,7 +10594,7 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
             photoCount++;
           }
         });
-      } catch(e){ console.warn('[PULL] empPhotos 실패:', e.code||e.message); }
+      } catch(e){ requiredOk = false; console.warn('[PULL] empPhotos 실패:', e.code||e.message); }
       // 3) hrEdits (드래그·상태변경 실시간 반영)
       try {
         const editSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'hrEdits'));
@@ -10612,7 +10634,7 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
           } catch(_){}
         });
         try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
-      } catch(e){ console.warn('[PULL] hrEdits 실패:', e.code||e.message); }
+      } catch(e){ requiredOk = false; console.warn('[PULL] hrEdits 실패:', e.code||e.message); }
       // 4) storeList (매장 추가/삭제 반영)
       try {
         const slSnap = await getDocFresh(window.__fbDoc(window.__fbDb, 'storeList', 'data'));
@@ -10626,7 +10648,7 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
             }
           }
         }
-      } catch(e){ console.warn('[PULL] storeList 실패:', e.code||e.message); }
+      } catch(e){ requiredOk = false; console.warn('[PULL] storeList 실패:', e.code||e.message); }
       // 5) partTimers
       try {
         const p = await getDocFresh(window.__fbDoc(window.__fbDb, 'partTimers', 'ptData'));
@@ -10636,7 +10658,11 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
             anyChanged = true;
           }
         }
-      } catch(e){ console.warn('[PULL] PT 실패:', e.code||e.message); }
+      } catch(e){ requiredOk = false; console.warn('[PULL] PT 실패:', e.code||e.message); }
+      if(!requiredOk){
+        _setStatus('최신 확인 재시도 중');
+        return false;
+      }
       // [FIX] EMPS 배열에 memCache의 사진들을 무조건 다시 덮어씀 (EMPS가 나중에 로드된 경우 대응)
       try {
         if(typeof EMPS !== 'undefined' && window.__photoMemCache){
