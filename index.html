@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 72;
+  window.__APP_VERSION = 73;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -72,7 +72,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 72);
+    var appVersion = String(window.__APP_VERSION || 73);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -1221,7 +1221,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v072</span><script>window.__APP_VERSION=72;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v073</span><script>window.__APP_VERSION=73;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -1374,7 +1374,6 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
           <option value="DS" selected>DS</option>
           <option value="DFS">DFS</option>
           <option value="MALL">MALL</option>
-          <option value="PU">PU</option>
           <option value="하우스 노웨어">하우스 노웨어</option>
           <option value="HAUS">HAUS</option>
           <option value="기타">기타</option>
@@ -1462,7 +1461,6 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
           <option value="하우스 노웨어">하우스 노웨어</option>
           <option value="FS">FS</option>
           <option value="MALL">MALL</option>
-          <option value="PU">PU</option>
           <option value="DS">DS</option>
           <option value="DFS">DFS</option>
         </select>
@@ -1602,24 +1600,6 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
           </div>
           <div class="si-edit-btn" onclick="event.stopPropagation();openStoreEditMenu('GM_서울_MALL_롯데_월드몰',event)" title="매장 편집">⋯</div>
           <div class="si-grade-badge" id="sig-GM_서울_MALL_롯데_월드몰"></div>
-        </div>
-        </div>
-      </div>
-      <div class="sidebar-group">
-        <div class="sidebar-group-header" onclick="toggleGroup(this)">
-          <span class="sg-region">📦 PU</span>
-          <span class="sg-count">1</span>
-          <span class="sg-arrow">▾</span>
-        </div>
-        <div class="sidebar-group-body">
-        <div class="sidebar-item" id="si-GM_서울_PU_포켓" onclick="selectStore('GM_서울_PU_포켓')" title="GM_서울_PU_포켓">
-          <span class="si-icon">📦</span>
-          <div class="si-text">
-            <div class="si-channel">서울</div>
-            <div class="si-name">포켓</div>
-          </div>
-          <div class="si-edit-btn" onclick="event.stopPropagation();openStoreEditMenu('GM_서울_PU_포켓',event)" title="매장 편집">⋯</div>
-          <div class="si-grade-badge" id="sig-GM_서울_PU_포켓"></div>
         </div>
         </div>
       </div>
@@ -2442,13 +2422,13 @@ function resetCriteria() {
   if(!confirm('등급 기준표를 초기값으로 되돌릴까요?')) return;
   localStorage.removeItem('store_criteria_v1'); location.reload();
 }
-const CHANNEL_ORDER_JS = ['HAUS','하우스 노웨어','FS','MALL','PU','DS','DFS','기타'];
+const CHANNEL_ORDER_JS = ['HAUS','하우스 노웨어','FS','MALL','DS','DFS','기타'];
 const CHANNEL_LABEL_JS = {
   'HAUS': '🏠 HAUS', '하우스 노웨어': '🏠 하우스 노웨어',
-  'FS':'🛍️ FS', 'MALL':'🏪 MALL', 'PU':'📦 PU', 'DS':'🏬 DS', 'DFS':'✈️ DFS', '기타':'🏪 기타'
+  'FS':'🛍️ FS', 'MALL':'🏪 MALL', 'DS':'🏬 DS', 'DFS':'✈️ DFS', '기타':'🏪 기타'
 };
 const CHANNEL_ICON_JS = {
-  'HAUS':'🏠','하우스 노웨어':'🏠','FS':'🛍️','MALL':'🏪','PU':'📦','DS':'🏬','DFS':'✈️','기타':'🏪'
+  'HAUS':'🏠','하우스 노웨어':'🏠','FS':'🛍️','MALL':'🏪','DS':'🏬','DFS':'✈️','기타':'🏪'
 };
 const REGION_ORDER_JS = ['서울','경기','인천','부산','대구','대전','광주','제주','천안','기타'];
 function cleanStorePart(v){ return String(v||'').trim().replace(/\s+/g,'_').replace(/__+/g,'_'); }
@@ -2476,20 +2456,35 @@ function parseStoreName(id){
 function normalizeStoreName(name) {
   return String(name || '').trim();
 }
+const POCKET_STORE_ALIASES = ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓','PU 포켓'];
+function isPocketStoreKey(v){
+  const s = normalizeStoreName(v);
+  if(!s) return false;
+  return POCKET_STORE_ALIASES.includes(s) || s.includes('성수 포켓') || /^PU\s*포켓$/.test(s);
+}
+function isPocketStoreEntry(s){
+  return !!s && (
+    isPocketStoreKey(s.id) ||
+    isPocketStoreKey(s.raw) ||
+    isPocketStoreKey(s.name) ||
+    isPocketStoreKey(s.display) ||
+    isPocketStoreKey(s.displayName)
+  );
+}
 function isFullStoreId(v){
   return /^[A-Z]+_[^_]+_[^_]+_/.test(normalizeStoreName(v));
 }
 function canonicalStoreKey(store){
   const id = normalizeStoreName((store&&store.id)||store);
   const name = normalizeStoreName((store&&store.name)||id);
-  if(id==='GM_서울_PU_포켓' || id==='PU 성수 포켓 팝업'       || name==='포켓' || name==='PU_성수_Pocket_팝업') return 'PU 성수 포켓 팝업';
+  if(isPocketStoreKey(id) || isPocketStoreKey(name)) return 'PU 성수 포켓 팝업';
   if(isFullStoreId(id)) return id;
   if(isFullStoreId(name)) return name;
   return id || name;
 }
 function normalizeStoreEntry(s){
   const id=s.id||s.raw||s.name||'';
-  if(id==='GM_서울_PU_포켓' || id==='PU_성수_Pocket_팝업' || s.name==='포켓' || s.name==='PU_성수_Pocket_팝업'){
+  if(isPocketStoreKey(id) || isPocketStoreKey(s.raw) || isPocketStoreKey(s.name)){
     return {id:'PU 성수 포켓 팝업',region:'서울',channel:'PU',name:'PU 성수 포켓 팝업',displayName:'성수 포켓 팝업',brand:'GM',vendor:'',branch:'성수 포켓 팝업'};
   }
   const parsed=parseStoreName(id);
@@ -2518,6 +2513,7 @@ function dedupeStoreList(list){
   // STORE CRUD FIX
   const byKey = new Map();
   (list||[]).map(normalizeStoreEntry).forEach(store => {
+    if(isPocketStoreEntry(store)) return;
     const key = canonicalStoreKey(store);
     if (!key) return;
     store.id = key;
@@ -2541,8 +2537,9 @@ function getBaselineStoreList(){
 // ATS_/NUF_ 등 다른 브랜드 store 키는 직원 데이터 참조용으로만 사용(배치현황에는 표시됨)
 function isSidebarVisibleStore(s){
   if(!s) return false;
+  if(isPocketStoreEntry(s)) return false;
   const id=s.id||s.raw||'';
-  if(id==='PU 성수 포켓 팝업' || id==='육아휴직' || /^PU\s/.test(id)) return true;
+  if(id==='육아휴직') return true;
   const parsed=parseStoreName(id);
   const brand=(s.brand||parsed.brand||'').toUpperCase();
   return !brand || brand==='GM';
@@ -2624,15 +2621,12 @@ const DELETED_STORES_KEY='lvDeletedStores';
 function getDeletedStores(){
   let d;
   try{ d = JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]'); }catch{ d=[]; }
-  // [SELF-HEAL] 성수 포켓 alias 중 하나라도 있으면 나머지도 자동 등록 (자꾸 되살아나는 문제 방지)
+  // [PERMANENT DELETE] 포켓은 baseline/SB/Firebase 어느 경로로 와도 항상 삭제 상태로 유지
   try {
-    const pocketAliases = ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓'];
-    const hasAny = pocketAliases.some(a => d.includes(a));
-    if(hasAny){
-      let changed = false;
-      pocketAliases.forEach(a => { if(!d.includes(a)){ d.push(a); changed = true; } });
-      if(changed) localStorage.setItem(DELETED_STORES_KEY, JSON.stringify(d));
-    }
+    const pocketAliases = (typeof POCKET_STORE_ALIASES !== 'undefined') ? POCKET_STORE_ALIASES : ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓','PU 포켓'];
+    let changed = false;
+    pocketAliases.forEach(a => { if(!d.includes(a)){ d.push(a); changed = true; } });
+    if(changed) localStorage.setItem(DELETED_STORES_KEY, JSON.stringify(d));
   } catch(_){}
   return d;
 }
@@ -2657,7 +2651,10 @@ function addDeletedStore(id){
   }
 }
 function removeDeletedStore(id){
-  const d=getDeletedStores().filter(x=>x!==id);
+  if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(id)) return;
+  const aliases = _STORE_ALIASES[id] || [id];
+  const removeSet = new Set(aliases);
+  const d=getDeletedStores().filter(x=>!removeSet.has(x));
   localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
@@ -3461,7 +3458,7 @@ window.openMoveChannel = openMoveChannel;
           <select class="pedit-sel" id="pch-sel" onchange="filterStoreByChannel(this.value);saveFieldEdit('channel',this.value)">
             <option value="HAUS">HAUS</option><option value="FS">FS</option>
             <option value="DS">DS</option><option value="DFS">DFS</option>
-            <option value="MALL">MALL</option><option value="PU">PU</option>
+            <option value="MALL">MALL</option>
           </select>
         </span>
       </div>
@@ -3905,10 +3902,10 @@ const CH_GROUP_MAP = {
   '휴직':   ['휴직'],
 };
 const CH_GROUP_ORDER = ['FS','DS+MALL','DFS','휴직'];
-const CH_GROUP_LBL   = {'FS':'FS / HAUS / PU','DS+MALL':'DS / MALL','DFS':'DFS 면세점','휴직':'휴직'};
+const CH_GROUP_LBL   = {'FS':'FS / HAUS','DS+MALL':'DS / MALL','DFS':'DFS 면세점','휴직':'휴직'};
 const CH_GROUP_ICON  = {'FS':'🏪','DS+MALL':'🏬','DFS':'✈️','휴직':'💤'};
-const SUBCH_LBL  = {'HAUS':'하우스 노웨어','FS':'플래그십','PU':'팝업','DS':'백화점','MALL':'몰','DFS':'면세점','휴직':'휴직'};
-const SUBCH_ICON = {'HAUS':'🏠','FS':'🏪','PU':'🎪','DS':'🏬','MALL':'🛍️','DFS':'✈️','휴직':'💤'};
+const SUBCH_LBL  = {'HAUS':'하우스 노웨어','FS':'플래그십','PU':'미분류','DS':'백화점','MALL':'몰','DFS':'면세점','휴직':'휴직'};
+const SUBCH_ICON = {'HAUS':'🏠','FS':'🏪','PU':'🏪','DS':'🏬','MALL':'🛍️','DFS':'✈️','휴직':'💤'};
 function chGrp(ch){
   for(const [g,chs] of Object.entries(CH_GROUP_MAP)){if(chs.includes(ch))return g;}
   return '기타';
@@ -4357,7 +4354,7 @@ function guessChannel(store){
   if(s.includes('_DFS_'))return'DFS';
   if(s.includes('_DS_'))return'DS';
   if(s.includes('_MALL_'))return'MALL';
-  if(s.includes('팝업')||s.includes('PU'))return'PU';
+  if(s.includes('팝업')||s.includes('PU'))return'FS';
   if(s.includes('휴직'))return'휴직';
   return null;
 }
@@ -5522,7 +5519,7 @@ function populateChannelSelect(brandFilter){
     }
   });
   // 표시 순서
-  const channelOrder = ['HAUS','FS','MALL','PU','DS','DFS'];
+  const channelOrder = ['HAUS','FS','MALL','DS','DFS'];
   const used = channelOrder.filter(c=>channelSet.has(c));
   const others = [...channelSet].filter(c=>!channelOrder.includes(c));
   const allChannels = [...used, ...others];
@@ -6040,11 +6037,12 @@ function lvSection(emp){
   if(br==='ATS') return 'ATS';
   if(br==='NUF') return 'NUF';
   const s=emp.current_store||'';
+  if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(s)) return 'ETC';
   if(s==='육아휴직') return 'ETC';
   const ch=emp.channel||'';
   if(ch==='DS')  return 'DS';
   if(ch==='DFS') return 'DFS';
-  if(ch==='HAUS'||ch==='FS'||ch==='MALL'||ch==='PU'||ch==='하우스 노웨어') return 'FSMALL';
+  if(ch==='HAUS'||ch==='FS'||ch==='MALL'||ch==='하우스 노웨어') return 'FSMALL';
   if(/^PU /.test(s)||s.includes('하우스 노웨어')||s.includes('하우스')) return 'FSMALL';
   return 'ETC';
 }
@@ -6067,7 +6065,7 @@ function lvPosKey(pos){
 const POS_ORDER=['MG','BM','SF','IN'];
 const POS_LABEL={MG:'매니저',BM:'부매니저',SF:'팀원',IN:'인턴'};
 const SEC_CFG={
-  FSMALL:{label:'FS · MALL · HAUS · 포켓',dot:'#7c6cf8',icon:'🏠',accent:'#7c6cf8'},
+  FSMALL:{label:'FS · MALL · HAUS',dot:'#7c6cf8',icon:'🏠',accent:'#7c6cf8'},
   DS:    {label:'DS 백화점',               dot:'#2daa72',icon:'👔',accent:'#2daa72'},
   DFS:   {label:'DFS 면세점',              dot:'#3c7ef3',icon:'✈️',accent:'#3c7ef3'},
   ATS:   {label:'ATS 어티슈',              dot:'#e07b12',icon:'💜',accent:'#e07b12'},
@@ -7214,7 +7212,6 @@ const PT_EXCEL_INIT = {
   'GM_서울_FS_홍대':                { ptBase: 9,  names: ['이창헌','이채원','이승헌','김희주','강주희','김경은','유가경','임하민'] },
   'GM_서울_MALL_롯데_월드몰'        : { ptBase: 11, names: ['윤장원','박창민','강소연','배형근','임가영','이윤채','박민선','조수연','이지수','김상진','장원우'] },
   'GM_경기_MALL_신세계스타필드_하남':{ ptBase: 7, names: ['김강령','조준승','박서희','김민서','박병준','구민채','손승수'] },
-  'PU_성수_Pocket_팝업':            { ptBase: 6,  names: ['김예진','고은이','전효영','윤가희','도지민','박선빈'] },
   /* ── DS ── */
   'GM_서울_DS_신세계_명동':         { ptBase: 5,  names: ['김희주','손민서','이우령'] },
   'GM_서울_DS_신세계_강남':         { ptBase: 5,  names: ['이재환','장진명','박지후','오채윤','문예인'] },
@@ -7281,6 +7278,11 @@ function getPTStore() {
   return stored;
 }
 function savePTStore(data) {
+  try {
+    Object.keys(data || {}).forEach(k => {
+      if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(k)) delete data[k];
+    });
+  } catch(_){}
   try { window.__ptStoreMem = JSON.parse(JSON.stringify(data || {})); } catch(_) { window.__ptStoreMem = data || {}; }
   try {
     localStorage.setItem(PT_LS_KEY, JSON.stringify(data));
@@ -7300,6 +7302,11 @@ function applyPTStoreJson(json, source) {
     console.warn('[PT] 원격 데이터 파싱 실패:', source || '', e);
     return false;
   }
+  try {
+    Object.keys(remote || {}).forEach(k => {
+      if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(k)) delete remote[k];
+    });
+  } catch(_){}
   const nextJson = JSON.stringify(remote || {});
   let curJson = '{}';
   try { curJson = JSON.stringify(getPTStore() || {}); } catch(_){}
@@ -7350,6 +7357,9 @@ function getPTTotalCount(data) {
 
 /* ── 매장별 PT 데이터 가져오기 (초기값: 엑셀) ── */
 function getPTData(storeKey) {
+  if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(storeKey)) {
+    return normalizePTData({ ptBase: 0, names: [] });
+  }
   const store = getPTStore();
   const legacyKey = storeKey==='PU 성수 포켓 팝업' ? 'PU_성수_Pocket_팝업' : storeKey;
   if (store[storeKey]) return normalizePTData(store[storeKey]);
@@ -7379,7 +7389,10 @@ function setPTData(storeKey, data) {
     try { if(typeof lvToast === 'function') lvToast('모바일 바로가기는 보기 전용입니다'); } catch(_){}
     return false;
   }
-  if(storeKey==='GM_서울_PU_포켓'||storeKey==='PU_성수_Pocket_팝업'||storeKey==='포켓') storeKey='PU 성수 포켓 팝업';
+  if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(storeKey)){
+    console.warn('[PT] 삭제된 포켓 매장 저장 차단');
+    return false;
+  }
   const store = getPTStore();
   store[storeKey] = normalizePTData(data);
   savePTStore(store);
@@ -7600,12 +7613,14 @@ function lvRender(){
   const layoutStoreIds=new Set(layoutStores.map(s=>s.id).filter(Boolean));
   const secs={FSMALL:{},DS:{},DFS:{},ATS:{},NUF:{},ETC:{}};
   layoutStores.forEach(store=>{
+    if(typeof isPocketStoreEntry === 'function' && isPocketStoreEntry(store)) return;
     const fakeEmp={id:'__store__',current_store:store.id,channel:store.channel||guessChannel(store.id),brand:store.brand||parseStoreName(store.id).brand||'GM',position:''};
     const sec=lvSection(fakeEmp);
     if(!secs[sec][store.id]) secs[sec][store.id]=[];
   });
   lvModeEmployees().filter(emp=>getEmpStatus(emp)!=='deleted').forEach(emp=>{
     const sk=emp.current_store||'미배정';
+    if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(sk)) return;
     if(!layoutStoreIds.has(sk)) return;
     const sec=lvSection(emp);
     if(!secs[sec][sk]) secs[sec][sk]=[];
@@ -8500,7 +8515,7 @@ window.aeFilterChannelByBrand = function(brand){
       if(ch) chSet.add(ch);
     }
   });
-  const order = ['HAUS','FS','MALL','PU','DS','DFS'];
+  const order = ['HAUS','FS','MALL','DS','DFS'];
   const used = order.filter(c=>chSet.has(c));
   const others = [...chSet].filter(c=>!order.includes(c));
   const all = [...used, ...others];
@@ -8722,10 +8737,13 @@ window.asPreview = function(){
   const rg=document.getElementById('as-region').value;
   const dt=(document.getElementById('as-detail').value||'').trim();
   let key='';
+  if(ch==='PU'){
+    const el=document.getElementById('as-preview-key');
+    if(el) el.textContent='삭제된 채널';
+    return;
+  }
   if(ch==='HAUS'){
     key=dt?`${br}_${rg}_하우스 노웨어_${dt}`:`${br}_${rg}_하우스 노웨어_`;
-  } else if(ch==='PU'){
-    key=dt?`PU ${dt}`:'PU ';
   } else {
     key=dt?`${br}_${rg}_${ch}_${dt}`:`${br}_${rg}_${ch}_`;
   }
@@ -8735,6 +8753,7 @@ window.asPreview = function(){
 window.doAddStore = function(){
   // STORE CRUD FIX
   const ch=document.getElementById('as-channel').value;
+  if(ch==='PU'){ alert('포켓/PU 매장은 삭제되어 추가할 수 없습니다.'); return; }
   const br=document.getElementById('as-brand').value;
   const rg=document.getElementById('as-region').value;
   const dt=(document.getElementById('as-detail').value||'').trim();
@@ -8826,7 +8845,6 @@ window.SB_DATA = SB_DATA;
         <option value="FS">FS (플래그십)</option>
         <option value="HAUS">HAUS (하우스 노웨어)</option>
         <option value="MALL">MALL (몰)</option>
-        <option value="PU">PU (포켓/팝업)</option>
         <option value="DS">DS (백화점)</option>
         <option value="DFS">DFS (면세점)</option>
       </select>
@@ -12035,6 +12053,7 @@ window.lvPTConfirmBulk = function(){
 function _ptbsBuildStoreOptions(){
   let stores = [];
   try { if(typeof loadStoreList==='function') stores = loadStoreList(); } catch(_){}
+  try { stores = stores.filter(s => !(typeof isPocketStoreEntry === 'function' && isPocketStoreEntry(s))); } catch(_){}
   // 매장을 그룹 분류 - HAUS / FS / MALL / DS / DFS / ATS / NUF / 기타
   const getGroup = (s) => {
     const brand = ((s.brand||'GM')+'').toUpperCase();
@@ -12044,7 +12063,7 @@ function _ptbsBuildStoreOptions(){
     if(ch === 'HAUS' || ch.includes('하우스')) return 'HAUS';
     if(ch === 'FS')   return 'FS';
     if(ch === 'MALL') return 'MALL';
-    if(ch === 'PU')   return 'FS'; // PU는 FS와 같이 묶음
+    if(ch === 'PU')   return '기타';
     if(ch === 'DS')   return 'DS';
     if(ch === 'DFS')  return 'DFS';
     return '기타';
@@ -12057,10 +12076,6 @@ function _ptbsBuildStoreOptions(){
     if(!groups[g]) groups[g] = [];
     groups[g].push(s);
   });
-  // PU 성수 포켓 팝업도 FS 그룹에 추가 (없으면)
-  if(!groups.FS.find(s => s.id === 'PU 성수 포켓 팝업')){
-    groups.FS.push({id:'PU 성수 포켓 팝업'});
-  }
   let html = '<option value="">매장 선택...</option>';
   groupOrder.forEach(g => {
     const list = (groups[g]||[]).slice().sort((a,b) => (a.id||'').localeCompare(b.id||'', 'ko'));
