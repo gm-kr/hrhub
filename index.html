@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 73;
+  window.__APP_VERSION = 74;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -72,7 +72,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 73);
+    var appVersion = String(window.__APP_VERSION || 74);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -1221,7 +1221,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v073</span><script>window.__APP_VERSION=73;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v074</span><script>window.__APP_VERSION=74;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5923,6 +5923,15 @@ window.guessChannel = guessChannel;
 window.addEventListener('DOMContentLoaded',()=>{
   try{ void 0;
   }catch(e){}
+  if(window.__HR_STRICT_SERVER && !window.__freshServerLoaded){
+    try {
+      document.documentElement.classList.add('app-loading-fresh');
+      if(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+        document.documentElement.classList.add('mobile-loading-fresh');
+      }
+    } catch(_){}
+    return;
+  }
   /* [LAYOUT FIX 1] 렌더링 전 localStorage 캐시를 EMPS + window.__fbEdits 양쪽에 적용
      → getEmpStatus가 window.__fbEdits 의존하므로 반드시 함께 설정해야 상태 표시 정상화 */
   if(!window.__HR_STRICT_SERVER){
@@ -10553,6 +10562,16 @@ if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
   window._standalonePullAll = async function(){
     if(!window.__fbUser || !window.__fbUser.email){ _setStatus('로그인 대기'); return false; }
     if(!window.__fbDb || !window.__fbGetDoc || !window.__fbGetDocs){ _setStatus('Firebase 초기화 대기'); return false; }
+    if(window.__HR_STRICT_SERVER && !window.__freshServerLoaded){
+      _setStatus('초기 최신 로딩 중…');
+      try {
+        document.documentElement.classList.add('app-loading-fresh');
+        if(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+          document.documentElement.classList.add('mobile-loading-fresh');
+        }
+      } catch(_){}
+      return false;
+    }
     const getDocFresh = window.__fbGetDocFresh || window.__fbGetDoc;
     const getDocsFresh = window.__fbGetDocsFresh || window.__fbGetDocs;
     _setStatus('불러오는 중…');
