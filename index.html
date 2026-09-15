@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 75;
+  window.__APP_VERSION = 76;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -72,7 +72,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 75);
+    var appVersion = String(window.__APP_VERSION || 76);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -1221,7 +1221,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v075</span><script>window.__APP_VERSION=75;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v076</span><script>window.__APP_VERSION=76;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6263,7 +6263,10 @@ function _lvAskDraftPassword(){
 }
 
 function lvSetMode(mode){
-  if(window.__HR_STRICT_SERVER && !window.__freshServerLoaded){
+  const stillVisiblyLoading = document.documentElement.classList.contains('app-loading-fresh') ||
+    document.documentElement.classList.contains('mobile-loading-fresh') ||
+    !!document.getElementById('fb-loading-overlay');
+  if(window.__HR_STRICT_SERVER && !window.__freshServerLoaded && stillVisiblyLoading){
     try { if(typeof lvToast === 'function') lvToast('최신 데이터 로딩 완료 후 다시 눌러주세요'); } catch(_){}
     try {
       document.documentElement.classList.add('app-loading-fresh');
@@ -6299,6 +6302,21 @@ function lvSetMode(mode){
     return;
   }
   _applyMode(mode);
+}
+function bindLvModeButtons(){
+  const bind = (id, mode) => {
+    const btn = document.getElementById(id);
+    if(!btn || btn.dataset.boundLvMode === '1') return;
+    btn.dataset.boundLvMode = '1';
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+      lvSetMode(mode);
+    }, true);
+  };
+  bind('lv-actual-tab', 'actual');
+  bind('lv-mode-draft', 'draft');
 }
 function lvResetDraft(){
   if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?\n(모든 사용자에게 공유됩니다)')) return;
@@ -8498,6 +8516,7 @@ function lvLoadStatuses(){
   ppSave(ppLoad());
 }
 function lvInit(){
+  bindLvModeButtons();
   lvLoadStatuses();
   saveStoreList(loadStoreList());
   lvEnsureActualData();
@@ -8518,6 +8537,7 @@ window.lvApplyDraftToActual=lvApplyDraftToActual;
 window.lvResetDraft=lvResetDraft;
 window.getAllStores=getAllStores;
 window.lvStoreName=lvStoreName;
+bindLvModeButtons();
 })();
 let _aePhoto = null;
 // [SMART] 신규입사자 모달 캐스케이드 - 브랜드 변경시 채널 + 매장 재구성
