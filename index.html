@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 81;
+  window.__APP_VERSION = 87;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -18,14 +18,24 @@
     opts = opts || {};
     try {
       if(window.__HR_STRICT_SERVER && window.__fbUser && window.__fbUser.email && !window.__SERVER_BOOTSTRAP_DONE && !opts.force){
-        document.documentElement.classList.add('app-loading-fresh');
-        if(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
-          document.documentElement.classList.add('mobile-loading-fresh');
-        }
+        if(window.__showFreshLoading) window.__showFreshLoading();
         return false;
       }
       document.documentElement.classList.remove('mobile-loading-fresh','app-loading-fresh');
       return true;
+    } catch(_){ return false; }
+  };
+  window.__showFreshLoading = function(){
+    try {
+      document.documentElement.classList.add('app-loading-fresh');
+      if(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+        document.documentElement.classList.add('mobile-loading-fresh');
+      }
+    } catch(_){}
+  };
+  window.__isFreshRenderBlocked = function(){
+    try {
+      return !!(window.__HR_STRICT_SERVER && window.__fbUser && window.__fbUser.email && !window.__freshServerLoaded);
     } catch(_){ return false; }
   };
   try {
@@ -72,7 +82,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 81);
+    var appVersion = String(window.__APP_VERSION || 87);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -1228,7 +1238,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v086</span><script>window.__APP_VERSION=86;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v087</span><script>window.__APP_VERSION=87;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3829,6 +3839,11 @@ function switchMain(tab){
   //   탭 이동시 항상 유지됨. 별도 확인 팝업 불필요.
   //   실제 적용은 운영팀 테스트 페이지의 "전체 적용" 버튼으로만 가능.
   window.__currentTab = tab;
+  if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+    window.__pendingMainTab = tab;
+    if(window.__showFreshLoading) window.__showFreshLoading();
+    return;
+  }
   // [SYNC FIX] 같은 탭 중복 클릭 방지 최적화는 제거 - 연동 안정성 우선
   document.querySelectorAll('.tab[data-tab]').forEach(el=>{
     el.classList.toggle('on', el.dataset.tab===tab);
@@ -3906,6 +3921,10 @@ function switchMain(tab){
   }
 }
 function restoreMainTabView(){
+  if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+    if(window.__showFreshLoading) window.__showFreshLoading();
+    return;
+  }
   const tab = window.__currentTab || 'hr';
   document.querySelectorAll('.tab[data-tab]').forEach(el=>{
     el.classList.toggle('on', el.dataset.tab===tab);
@@ -4187,6 +4206,10 @@ function sortBy(col){
 function doBrand(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');curBrand=el.dataset.b;refresh()}
 function doSearch(q){searchQ=q;refresh()}
 function refresh(){
+  if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+    if(window.__showFreshLoading) window.__showFreshLoading();
+    return;
+  }
   const l=getList();
   renderBar(l);
   curView==='tbl'?renderTbl(l):renderGrd(l);
@@ -7695,6 +7718,10 @@ function buildHcBar(storeKey, counted, total, pendingBreakdown){
   </div></div>`;
 }
 function lvRender(){
+  if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+    if(window.__showFreshLoading) window.__showFreshLoading();
+    return;
+  }
   /* [FINAL FIX C] 렌더 전 항상 최신 편집값을 EMPS에 동기화 */
   try {
     let _lrEdits = window.__fbEdits;
@@ -8577,10 +8604,18 @@ function lvLoadStatuses(){
   ppSave(ppLoad());
 }
 function lvInit(){
+  if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+    if(window.__showFreshLoading) window.__showFreshLoading();
+    return;
+  }
   bindLvModeButtons();
   const keepMode = window.__lvUserSelectedMode || lvMode;
   lvLoadStatuses();
-  saveStoreList(loadStoreList());
+  if(window.__HR_STRICT_SERVER){
+    try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
+  } else {
+    saveStoreList(loadStoreList());
+  }
   lvEnsureActualData();
   lvEnsureDraftData();
   buildEmpDatalist();
@@ -10379,12 +10414,21 @@ window.fbSetSchedule = async function(data) {
   window.__freshServerLoaded = true;
   window.__SERVER_BOOTSTRAP_DONE = true;
   window.__fbReady = true;
+  let _usedPendingMainTab = false;
+  try {
+    const pendingTab = window.__pendingMainTab;
+    if(pendingTab){
+      delete window.__pendingMainTab;
+      switchMain(pendingTab);
+      _usedPendingMainTab = true;
+    }
+  } catch(_){}
   // [AUTH FLUSH] 인증 전에 모인 pending 직원 편집 push
   try { if(window.__flushPendingEdits) await window.__flushPendingEdits(); } catch(_){}
   if (typeof getList === 'function' && typeof renderTbl === 'function') {
     try { const l = getList(); renderBar(l); renderTbl(l); } catch(e) {}
   }
-  window.lvInit?.();
+  if(!_usedPendingMainTab) window.lvInit?.();
   window.ppRender?.();
   const activeTab = document.querySelector('.tab.on');
   if (activeTab && activeTab.dataset.tab === 'layout') {
@@ -10522,6 +10566,10 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     localStorage.setItem('store_list_v2', json);
     // [SYNC] 캐시 즉시 무효화 — 그렇지 않으면 옛 순서로 렌더됨
     try { if(typeof __lslInvalidate === 'function') __lslInvalidate(); } catch(_){}
+    if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+      if(window.__showFreshLoading) window.__showFreshLoading();
+      return;
+    }
     if (typeof renderSidebar === 'function') {
       renderSidebar();
     }
@@ -11275,7 +11323,14 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
   // Firestore 오류 (권한 등) 처리 — 오버레이 강제 해제
   console.error('[SHARED] onSnapshot 오류:', err.code, err.message);
   window.__sharedInitLoaded = true;
-  try { const ov = document.getElementById('fb-loading-overlay'); if(ov) ov.remove(); } catch(_){}
+  try {
+    if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
+      if(window.__showFreshLoading) window.__showFreshLoading();
+    } else {
+      const ov = document.getElementById('fb-loading-overlay');
+      if(ov) ov.remove();
+    }
+  } catch(_){}
 });
 
 // [SHARE] 칭찬/포상 통합 저장 (디바운싱)
