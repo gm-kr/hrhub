@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 95;
+  window.__APP_VERSION = 96;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 95);
+    var appVersion = String(window.__APP_VERSION || 96);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -193,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=95">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=95">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=95">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=95">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=95">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=95">
-<link rel="icon" type="image/png" href="icon.png?v=95">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=95">
-<link rel="manifest" href="manifest.json?v=95">
+<link rel="apple-touch-icon" href="icon.png?v=96">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=96">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=96">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=96">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=96">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=96">
+<link rel="icon" type="image/png" href="icon.png?v=96">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=96">
+<link rel="manifest" href="manifest.json?v=96">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=95">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=95">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=96">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=96">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -817,6 +817,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pp-tbl tr:hover td { background:#fafbff; }
 .lv-pp-input-name{width:100%; font-size:11.5px; border:1px solid #eaecf2; border-radius:5px; padding:3px 6px; color:#3a4053; background:#fafbff; outline:none; box-sizing:border-box;}
 .lv-pp-input-name:focus { border-color:#5b6cf8; background:#fff; }
+.lv-pp-row-card{display:flex;flex-direction:column;gap:5px;min-width:0;}
+.lv-pp-person-line{display:flex;align-items:center;gap:6px;min-width:0;}
+.lv-pp-person-line .lv-pp-input-name{border:none;background:transparent;padding:0;font-size:12px;font-weight:700;min-width:0;flex:1;color:#3a4053;}
+.lv-pp-person-line .lv-pp-input-name:focus{background:#fff;border:1px solid #5b6cf8;padding:2px 5px;}
+.lv-pp-fields-line{display:grid;grid-template-columns:minmax(82px,1fr) minmax(112px,1.08fr) minmax(48px,.75fr) 18px;gap:4px;align-items:center;}
 .lv-pp-select-store{width:100%; font-size:10.5px; border:1px solid #eaecf2; border-radius:5px; padding:3px 4px; color:#3a4053; background:#fafbff; outline:none; cursor:pointer; max-width:120px;}
 .lv-pp-select-store:focus { border-color:#5b6cf8; }
 .lv-pp-input-date{font-size:10.5px; border:1px solid #eaecf2; border-radius:5px; padding:3px 4px; color:#3a4053; background:#fafbff; outline:none; width:100%; box-sizing:border-box;}
@@ -1309,7 +1314,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v095</span><script>window.__APP_VERSION=95;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v096</span><script>window.__APP_VERSION=96;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2706,6 +2711,41 @@ function cleanupStoreReferences(){
 let __lslCache = null;
 function __lslInvalidate(){ __lslCache = null; }
 const DELETED_STORES_KEY='lvDeletedStores';
+function isStorageQuotaError(e){
+  return !!(e && (
+    e.name === 'QuotaExceededError' ||
+    e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    e.code === 22 ||
+    e.code === 1014
+  ));
+}
+function safeSetLocalStorage(key, value, opts){
+  opts = opts || {};
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(e) {
+    if(isStorageQuotaError(e) && opts.clearPhotoCache){
+      try { localStorage.removeItem('hrP'); } catch(_){}
+      try {
+        localStorage.setItem(key, value);
+        console.warn('[storage] quota recovered by clearing local photo cache:', key);
+        return true;
+      } catch(e2) {
+        console.warn('[storage] local save skipped:', key, e2 && (e2.message || e2.name));
+        return false;
+      }
+    }
+    console.warn('[storage] local save skipped:', key, e && (e.message || e.name));
+    return false;
+  }
+}
+function setStoreListCache(list){
+  const normalized = dedupeStoreList(list || []);
+  window.__storeListMemCache = normalized;
+  safeSetLocalStorage('store_list_v2', JSON.stringify(normalized), {clearPhotoCache:true});
+  return normalized;
+}
 function getDeletedStores(){
   let d;
   try{ d = JSON.parse(localStorage.getItem(DELETED_STORES_KEY)||'[]'); }catch{ d=[]; }
@@ -2714,7 +2754,7 @@ function getDeletedStores(){
     const pocketAliases = (typeof POCKET_STORE_ALIASES !== 'undefined') ? POCKET_STORE_ALIASES : ['GM_서울_PU_포켓','PU 성수 포켓 팝업','PU_성수_Pocket_팝업','포켓','PU 포켓'];
     let changed = false;
     pocketAliases.forEach(a => { if(!d.includes(a)){ d.push(a); changed = true; } });
-    if(changed) localStorage.setItem(DELETED_STORES_KEY, JSON.stringify(d));
+    if(changed) safeSetLocalStorage(DELETED_STORES_KEY, JSON.stringify(d), {clearPhotoCache:true});
   } catch(_){}
   return d;
 }
@@ -2734,7 +2774,7 @@ function addDeletedStore(id){
     if(!d.includes(a)){ d.push(a); changed = true; }
   });
   if(changed){
-    localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
+    safeSetLocalStorage(DELETED_STORES_KEY, JSON.stringify(d), {clearPhotoCache:true});
     try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   }
 }
@@ -2743,14 +2783,16 @@ function removeDeletedStore(id){
   const aliases = _STORE_ALIASES[id] || [id];
   const removeSet = new Set(aliases);
   const d=getDeletedStores().filter(x=>!removeSet.has(x));
-  localStorage.setItem(DELETED_STORES_KEY,JSON.stringify(d));
+  safeSetLocalStorage(DELETED_STORES_KEY, JSON.stringify(d), {clearPhotoCache:true});
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function loadStoreList() {
   if(__lslCache) return __lslCache;
   cleanupStoreReferences();
   let result;
-  try {
+  if(Array.isArray(window.__storeListMemCache) && window.__storeListMemCache.length){
+    result = mergeStoreLists(window.__storeListMemCache, getBaselineStoreList());
+  } else try {
     const raw = localStorage.getItem('store_list_v2');
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -2761,7 +2803,7 @@ function loadStoreList() {
       // Firebase 저장은 saveStoreList(명시적 매장 추가/삭제/이름변경)에서만 호출됨
       const dedupedStr = JSON.stringify(deduped);
       if(dedupedStr !== raw){
-        try { localStorage.setItem('store_list_v2', dedupedStr); } catch(_){}
+        setStoreListCache(deduped);
       }
       result = deduped;
     } else {
@@ -2787,8 +2829,7 @@ function loadStoreList() {
 }
 function saveStoreList(list) {
   // STORE CRUD FIX
-  const normalized=dedupeStoreList(list||[]);
-  localStorage.setItem('store_list_v2', JSON.stringify(normalized));
+  const normalized=setStoreListCache(list||[]);
   window.fbSetStoreList && window.fbSetStoreList(normalized);
   window.CUSTOM_STORES = Array.from(new Set([...(window.CUSTOM_STORES||[]), ...normalized.map(s=>s.id)]));
   try { localStorage.setItem('lvCustomStores', JSON.stringify(window.CUSTOM_STORES)); } catch(e) {}
@@ -6917,33 +6958,35 @@ function ppAvatarHtml(rowOrEmp, fallbackName){
   return `<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${ac};color:#fff;font-size:9px;font-weight:700;text-align:center;line-height:20px;vertical-align:middle;flex:0 0 20px">${(name||'?').slice(-1)}</span>`;
 }
 function ppRowHtml(type, row){
-  const empOpts=EMPS.map(e=>`<option value="${e.name}">`).join('');
   const av=ppAvatarHtml(row, row.name||'');
+  const esc=(typeof escapeAttr==='function') ? escapeAttr : (v)=>String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const safeId=esc(row.id||'');
+  const safeName=esc(row.name||'');
+  const safeDate=esc(row.date||'');
+  const safeNote=esc(row.note||'');
+  const jsId=String(row.id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const jsType=String(type||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
-    <tr data-ppid="${row.id}" data-type="${type}">
-      <td>
-        <div style="display:flex;align-items:center;gap:5px;min-width:0">
+    <tr data-ppid="${safeId}" data-type="${type}">
+      <td colspan="5">
+        <div class="lv-pp-row-card">
+          <div class="lv-pp-person-line">
           ${av}
-          <input class="lv-pp-input-name" value="${row.name||''}" list="lv-pp-emp-list"
-            placeholder="이름 입력" oninput="ppUpdateField('${row.id}','name',this.value)" style="min-width:0">
+          <input class="lv-pp-input-name" value="${safeName}" list="lv-pp-emp-list"
+              placeholder="이름 입력" oninput="ppUpdateField('${jsId}','name',this.value)">
+          </div>
+          <div class="lv-pp-fields-line">
+            <select class="lv-pp-select-store" onchange="ppUpdateField('${jsId}','store',this.value)">
+              <option value="">매장 선택</option>
+              ${storeOptions(row.store||'')}
+            </select>
+            <input type="date" class="lv-pp-input-date" value="${safeDate}"
+              oninput="ppUpdateField('${jsId}','date',this.value)">
+            <input class="lv-pp-input-note" value="${safeNote}" placeholder="비고"
+              oninput="ppUpdateField('${jsId}','note',this.value)">
+            <button class="lv-pp-del-btn" onclick="ppDelete('${jsId}','${jsType}')" title="삭제">✕</button>
+          </div>
         </div>
-      </td>
-      <td>
-        <select class="lv-pp-select-store" onchange="ppUpdateField('${row.id}','store',this.value)">
-          <option value="">매장 선택</option>
-          ${storeOptions(row.store||'')}
-        </select>
-      </td>
-      <td>
-        <input type="date" class="lv-pp-input-date" value="${row.date||''}"
-          oninput="ppUpdateField('${row.id}','date',this.value)">
-      </td>
-      <td>
-        <input class="lv-pp-input-note" value="${row.note||''}" placeholder="비고"
-          oninput="ppUpdateField('${row.id}','note',this.value)">
-      </td>
-      <td>
-        <button class="lv-pp-del-btn" onclick="ppDelete('${row.id}','${type}')" title="삭제">✕</button>
       </td>
     </tr>`;
 }
@@ -10477,7 +10520,7 @@ window.fbSetSchedule = async function(data) {
     }
     if(storeListSnap && storeListSnap.exists()){
       const d = storeListSnap.data() || {};
-      if(Array.isArray(d.list)) localStorage.setItem('store_list_v2', JSON.stringify(d.list));
+      if(Array.isArray(d.list)) setStoreListCache(d.list);
     }
     if(ptSnap && ptSnap.exists()){
       const d = ptSnap.data() || {};
@@ -10745,7 +10788,7 @@ onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
     const json = JSON.stringify(effectiveList);
     if(json === _lastStoreListJson) return; // 같은 데이터면 무시 (재귀 방지)
     _lastStoreListJson = json;
-    localStorage.setItem('store_list_v2', json);
+    setStoreListCache(effectiveList);
     // [SYNC] 캐시 즉시 무효화 — 그렇지 않으면 옛 순서로 렌더됨
     try { if(typeof __lslInvalidate === 'function') __lslInvalidate(); } catch(_){}
     if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
@@ -11194,7 +11237,7 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
           if(d && Array.isArray(d.list)){
             const json = JSON.stringify(d.list);
             if(localStorage.getItem('store_list_v2') !== json){
-              try { localStorage.setItem('store_list_v2', json); anyChanged = true; } catch(_){}
+              setStoreListCache(d.list); anyChanged = true;
               try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
             }
           }
