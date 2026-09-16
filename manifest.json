@@ -2,20 +2,20 @@
   "name": "HR Hub",
   "short_name": "HR Hub",
   "description": "HR Hub staffing dashboard",
-  "start_url": "index.html?appv=90",
+  "start_url": "index.html?appv=91",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f7f6f3",
   "theme_color": "#f7f6f3",
   "icons": [
     {
-      "src": "icon.png?v=90",
+      "src": "icon.png?v=91",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon.png?v=90",
+      "src": "icon.png?v=91",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
