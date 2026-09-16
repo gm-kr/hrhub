@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 94;
+  window.__APP_VERSION = 95;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 94);
+    var appVersion = String(window.__APP_VERSION || 95);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -193,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=94">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=94">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=94">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=94">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=94">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=94">
-<link rel="icon" type="image/png" href="icon.png?v=94">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=94">
-<link rel="manifest" href="manifest.json?v=94">
+<link rel="apple-touch-icon" href="icon.png?v=95">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=95">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=95">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=95">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=95">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=95">
+<link rel="icon" type="image/png" href="icon.png?v=95">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=95">
+<link rel="manifest" href="manifest.json?v=95">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=94">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=94">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=95">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=95">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -1309,7 +1309,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v094</span><script>window.__APP_VERSION=94;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v095</span><script>window.__APP_VERSION=95;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -2794,6 +2794,30 @@ function saveStoreList(list) {
   try { localStorage.setItem('lvCustomStores', JSON.stringify(window.CUSTOM_STORES)); } catch(e) {}
   if(typeof __lslInvalidate==='function') __lslInvalidate(); // [PERF] 캐시 무효화
 }
+function afterStoreAdded(storeKey){
+  try { if(typeof __lslInvalidate==='function') __lslInvalidate(); } catch(_){}
+  try { renderSidebar(); } catch(e){ console.warn('[store add] renderSidebar', e); }
+  try { if(typeof refresh==='function') refresh(); } catch(e){ console.warn('[store add] refresh', e); }
+  try { if(typeof window.lvRender==='function') window.lvRender(); } catch(e){ console.warn('[store add] lvRender', e); }
+  try { if(typeof window.lvRenderSB==='function') window.lvRenderSB(); } catch(e){ console.warn('[store add] lvRenderSB', e); }
+  try {
+    document.querySelectorAll('datalist[id$="-store-list"]').forEach(dl=>{
+      dl.innerHTML=getAllStores().map(s=>`<option value="${s}">`).join('');
+    });
+  } catch(_){}
+  try {
+    if(typeof switchMain==='function') switchMain('layout');
+    else window.__pendingMainTab = 'layout';
+  } catch(_){
+    window.__pendingMainTab = 'layout';
+  }
+  setTimeout(()=>{
+    try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
+    try { if(typeof window.lvRenderSB==='function') window.lvRenderSB(); } catch(_){}
+  }, 60);
+  if(typeof lvToast==='function') lvToast(`✓ "${storeKey}" 매장이 추가되었습니다`);
+}
+window.afterStoreAdded = afterStoreAdded;
 function renderSidebar() {
   // [FIX] 사이드바에서 ATS_/NUF_ 등 비-GM 브랜드 중복 매장 숨김(서울/도산 중복 제거)
   const list = loadStoreList().filter(s => (typeof isSidebarVisibleStore==='function') ? isSidebarVisibleStore(s) : true);
@@ -2962,28 +2986,31 @@ function closeStoreEditOutside(e) {
   if (e.target === document.getElementById('storeEditOverlay')) closeStoreEditModal();
 }
 function confirmAddStore() {
-  // STORE NAME BUILDER
-  const brand   = document.getElementById('se-brand')?.value.trim() || 'GM';
-  const region  = document.getElementById('se-region').value.trim();
-  const channel = document.getElementById('se-channel').value.trim();
-  const vendor  = document.getElementById('se-vendor')?.value.trim() || '';
-  const branch  = document.getElementById('se-name').value.trim();
-  const warn    = document.getElementById('se-warning');
-  if (!branch) { warn.textContent = '지점명을 입력해주세요.'; warn.style.display='block'; return; }
-  const id = makeStoreId(region, channel, branch, brand, vendor);
-  const displayName = [vendor,branch].filter(Boolean).join('_');
-  const name = id;
-  const list = loadStoreList();
-  const newKey = canonicalStoreKey({id, name});
-  if (list.find(s => canonicalStoreKey(s) === newKey)) { alert('이미 등록된 매장입니다.'); warn.textContent = '이미 등록된 매장입니다.'; warn.style.display='block'; return; }
-  list.push({id, region, channel, name, displayName, brand, vendor, branch});
-  removeDeletedStore(id);
-  saveStoreList(list);
-  saveData();
-  closeStoreEditModal();
-  renderSidebar();
-  window.lvRender?.(); window.lvRenderSB?.();
-  selectStore(id);
+  try {
+    // STORE NAME BUILDER
+    const brand   = document.getElementById('se-brand')?.value.trim() || 'GM';
+    const region  = document.getElementById('se-region').value.trim();
+    const channel = document.getElementById('se-channel').value.trim();
+    const vendor  = document.getElementById('se-vendor')?.value.trim() || '';
+    const branch  = document.getElementById('se-name').value.trim();
+    const warn    = document.getElementById('se-warning');
+    if (!branch) { warn.textContent = '지점명을 입력해주세요.'; warn.style.display='block'; return; }
+    const id = makeStoreId(region, channel, branch, brand, vendor);
+    const displayName = [vendor,branch].filter(Boolean).join('_');
+    const name = id;
+    const list = loadStoreList();
+    const newKey = canonicalStoreKey({id, name});
+    if (list.find(s => canonicalStoreKey(s) === newKey)) { alert('이미 등록된 매장입니다.'); warn.textContent = '이미 등록된 매장입니다.'; warn.style.display='block'; return; }
+    list.push({id, region, channel, name, displayName, brand, vendor, branch});
+    removeDeletedStore(id);
+    saveStoreList(list);
+    saveData();
+    closeStoreEditModal();
+    afterStoreAdded(id);
+  } catch(e) {
+    console.error('[confirmAddStore]', e);
+    alert('매장 추가 중 오류가 발생했습니다: ' + (e && (e.message || e.code) || e));
+  }
 }
 let _renameTargetId = null; // document click 리스너가 _ctxTargetId를 초기화하므로 별도 변수 사용
 // [STORE LINK] 매장별 외부 링크 (SharePoint 등)
@@ -6856,13 +6883,50 @@ function getAllStores(){
 function storeOptions(selected){
   return getAllStores().map(s=>`<option value="${s}"${s===selected?' selected':''}>${lvStoreName(s)}</option>`).join('');
 }
+function ppFindEmp(rowOrEmp){
+  if(!rowOrEmp) return null;
+  if(rowOrEmp.id && EMPS.some(e=>e.id===rowOrEmp.id)) return rowOrEmp;
+  const empId = rowOrEmp.empId || rowOrEmp.id || '';
+  if(empId){
+    const byId = EMPS.find(e=>e.id===empId);
+    if(byId) return byId;
+  }
+  const nm = String(rowOrEmp.name || '').trim();
+  if(nm){
+    const exact = EMPS.find(e=>String(e.name||'').trim()===nm);
+    if(exact) return exact;
+  }
+  return null;
+}
+function getLatestEmpPhoto(empOrRow){
+  const emp = ppFindEmp(empOrRow) || empOrRow || {};
+  const id = emp.empId || emp.id || '';
+  let photos = {};
+  try { photos = (typeof getP==='function') ? getP() : {}; } catch(_){ photos = window.__photoMemCache || {}; }
+  return (id && photos && photos[id]) || emp.photo_b64 || '';
+}
+function ppAvatarHtml(rowOrEmp, fallbackName){
+  const emp = ppFindEmp(rowOrEmp) || rowOrEmp || {};
+  const name = String((emp && emp.name) || fallbackName || '').trim();
+  const src = getLatestEmpPhoto(emp);
+  const safeName = (typeof escapeAttr==='function') ? escapeAttr(name) : name.replace(/"/g,'&quot;');
+  const ac = aColor(name || '?');
+  if(src){
+    return `<img src="${src}" alt="${safeName}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;flex:0 0 20px">`;
+  }
+  return `<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${ac};color:#fff;font-size:9px;font-weight:700;text-align:center;line-height:20px;vertical-align:middle;flex:0 0 20px">${(name||'?').slice(-1)}</span>`;
+}
 function ppRowHtml(type, row){
   const empOpts=EMPS.map(e=>`<option value="${e.name}">`).join('');
+  const av=ppAvatarHtml(row, row.name||'');
   return `
     <tr data-ppid="${row.id}" data-type="${type}">
       <td>
-        <input class="lv-pp-input-name" value="${row.name||''}" list="lv-pp-emp-list"
-          placeholder="이름 입력" oninput="ppUpdateField('${row.id}','name',this.value)">
+        <div style="display:flex;align-items:center;gap:5px;min-width:0">
+          ${av}
+          <input class="lv-pp-input-name" value="${row.name||''}" list="lv-pp-emp-list"
+            placeholder="이름 입력" oninput="ppUpdateField('${row.id}','name',this.value)" style="min-width:0">
+        </div>
       </td>
       <td>
         <select class="lv-pp-select-store" onchange="ppUpdateField('${row.id}','store',this.value)">
@@ -6914,12 +6978,9 @@ function ppRender(){
       const to=e.current_store||'';
       const fromName=from?lvStoreName(from):'<span style="color:#aab0be">미기록</span>';
       const toName=to?lvStoreName(to):'<span style="color:#aab0be">미지정</span>';
-      const ac=aColor(e.name);
-      const av=e.has_photo&&e.photo_b64
-        ?`<img src="${e.photo_b64}" alt="${e.name}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px">`
-        :`<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${ac};color:#fff;font-size:9px;font-weight:700;text-align:center;line-height:20px;vertical-align:middle;margin-right:4px">${e.name.slice(-1)}</span>`;
+      const av=ppAvatarHtml(e, e.name);
       return `<tr>
-        <td style="font-size:12px;font-weight:600">${av}${e.name}</td>
+        <td style="font-size:12px;font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px">${av}${e.name}</span></td>
         <td style="font-size:11px;line-height:1.4">
           <span style="color:#7a8299">${fromName}</span>
           <span style="color:#e07b12;margin:0 4px">→</span>
@@ -6946,15 +7007,12 @@ function ppRender(){
       return da.localeCompare(db);
     });
     lBody.innerHTML=leavingEmps.map(e=>{
-      const ac=aColor(e.name);
-      const av=e.has_photo&&e.photo_b64
-        ?`<img src="${e.photo_b64}" alt="${e.name}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px">`
-        :`<span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${ac};color:#fff;font-size:9px;font-weight:700;text-align:center;line-height:20px;vertical-align:middle;margin-right:4px">${e.name.slice(-1)}</span>`;
+      const av=ppAvatarHtml(e, e.name);
       const dt=(window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._statusDate)||'';
       const dtDisp=dt?`<span style="color:#e84040;font-weight:600">${dt}</span>`:`<span style="color:#aab0be">미지정</span>`;
       const storeName=e.current_store?lvStoreName(e.current_store):'<span style="color:#aab0be">-</span>';
       return `<tr>
-        <td style="font-size:12px;font-weight:600">${av}${e.name}</td>
+        <td style="font-size:12px;font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px">${av}${e.name}</span></td>
         <td style="font-size:11px;color:#7a8299">${storeName}</td>
         <td style="font-size:11px">${dtDisp}</td>
         <td><button class="lv-pp-del-btn" onclick="ppClearLeaving('${e.id}')" title="퇴사예정 해제">✕</button></td>
@@ -9160,63 +9218,50 @@ window.asPreview = function(){
   if(el) el.textContent=key||'—';
 };
 window.doAddStore = function(){
-  // STORE CRUD FIX
-  const ch=document.getElementById('as-channel').value;
-  if(ch==='PU'){ alert('포켓/PU 매장은 삭제되어 추가할 수 없습니다.'); return; }
-  const br=document.getElementById('as-brand').value;
-  const rg=document.getElementById('as-region').value;
-  const dt=(document.getElementById('as-detail').value||'').trim();
-  if(!dt){ alert('매장 상세명을 입력하세요'); document.getElementById('as-detail').focus(); return; }
-  let storeKey='';
-  if(ch==='HAUS'){
-    storeKey=`${br}_${rg}_하우스 노웨어_${dt}`;
-  } else if(ch==='PU'){
-    storeKey=`PU ${dt}`;
-  } else {
-    storeKey=`${br}_${rg}_${ch}_${dt}`;
-  }
-  if(getAllStores().includes(storeKey)){
-    alert(`"${storeKey}" 는 이미 존재하는 매장입니다.`);
-    return;
-  }
-  try{
-    const list=loadStoreList();
-    if(list.find(s=>normalizeStoreName(s.name)===normalizeStoreName(storeKey))){
-      alert('이미 등록된 매장입니다.');
+  try {
+    // STORE CRUD FIX
+    const ch=document.getElementById('as-channel').value;
+    if(ch==='PU'){ alert('포켓/PU 매장은 삭제되어 추가할 수 없습니다.'); return; }
+    const br=document.getElementById('as-brand').value;
+    const rg=document.getElementById('as-region').value;
+    const dt=(document.getElementById('as-detail').value||'').trim();
+    if(!dt){ alert('매장 상세명을 입력하세요'); document.getElementById('as-detail').focus(); return; }
+    let storeKey='';
+    if(ch==='HAUS'){
+      storeKey=`${br}_${rg}_하우스 노웨어_${dt}`;
+    } else if(ch==='PU'){
+      storeKey=`PU ${dt}`;
+    } else {
+      storeKey=`${br}_${rg}_${ch}_${dt}`;
+    }
+    if(getAllStores().includes(storeKey)){
+      alert(`"${storeKey}" 는 이미 존재하는 매장입니다.`);
       return;
     }
-  }catch(e){}
-  if(!window.CUSTOM_STORES) window.CUSTOM_STORES=[];
-  if(!window.CUSTOM_STORES.includes(storeKey)) window.CUSTOM_STORES.push(storeKey);
-  try{
+    try{
+      const list=loadStoreList();
+      if(list.find(s=>normalizeStoreName(s.name)===normalizeStoreName(storeKey))){
+        alert('이미 등록된 매장입니다.');
+        return;
+      }
+    }catch(e){}
+    if(!window.CUSTOM_STORES) window.CUSTOM_STORES=[];
+    if(!window.CUSTOM_STORES.includes(storeKey)) window.CUSTOM_STORES.push(storeKey);
     const parsed=parseStoreName(storeKey);
     const list=loadStoreList();
     if(!list.find(s=>s.id===storeKey)){
       list.push({id:storeKey,region:parsed.region||rg,channel:parsed.channel||ch,name:storeKey,displayName:dt,brand:br,vendor:parsed.vendor||'',branch:parsed.branch||dt});
       saveStoreList(list);
     }
-  }catch(e){}
-  if(window.saveCustomStores) window.saveCustomStores();
-  if(window.fbSetEdit) window.fbSetEdit('__stores__', storeKey, {channel:ch, brand:br, region:rg});
-  saveData();
-  window.lvRender?.(); window.lvRenderSB?.();
-  document.querySelectorAll('datalist[id$="-store-list"]').forEach(dl=>{
-    dl.innerHTML=getAllStores().map(s=>`<option value="${s}">`).join('');
-  });
-  window.closeAddStore();
-  const lv=document.getElementById('layoutv');
-  if(lv && !lv.classList.contains('on')){
-    switchMain('layout');
-    document.querySelectorAll('.tab[data-tab]').forEach(el=>{
-      el.classList.toggle('on', el.dataset.tab==='layout');
-    });
+    if(window.saveCustomStores) window.saveCustomStores();
+    if(window.fbSetEdit) window.fbSetEdit('__stores__', storeKey, {channel:ch, brand:br, region:rg});
+    saveData();
+    window.closeAddStore();
+    if(typeof afterStoreAdded==='function') afterStoreAdded(storeKey);
+  } catch(e) {
+    console.error('[doAddStore]', e);
+    alert('매장 추가 중 오류가 발생했습니다: ' + (e && (e.message || e.code) || e));
   }
-  setTimeout(()=>{
-    if(typeof lvRender==='function') lvRender();
-    if(typeof window.lvRender==='function') window.lvRender();
-    if(typeof lvRenderSB==='function') lvRenderSB();
-  }, 50);
-  lvToast(`✓ "${storeKey}" 매장이 추가되었습니다!`);
 };
 document.getElementById('add-store-modal')?.addEventListener('click',function(e){
   if(e.target===this) window.closeAddStore();
