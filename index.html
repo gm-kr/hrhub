@@ -10,13 +10,18 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 91;
+  window.__APP_VERSION = 94;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
   window.__authResolved = false;
   window.__freshServerLoaded = false;
   window.__mobileFirstPullDone = false;
+  window.__needsStrictFirstPull = function(){
+    try {
+      return !!(window.__MOBILE_READ_ONLY || window.__isMobile || window.__isIOSStandaloneEarly || navigator.standalone === true);
+    } catch(_){ return false; }
+  };
   window.__hideMobileFreshOverlay = function(opts){
     opts = opts || {};
     try {
@@ -57,10 +62,9 @@
     try {
       var hasUser = !!(window.__fbUser && window.__fbUser.email);
       var authKnownNoUser = window.__authResolved === true && !hasUser;
-      var mobileShell = !!(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly || navigator.standalone === true);
       if(window.__HR_STRICT_SERVER && window.__authResolved !== true) return true;
       if(window.__HR_STRICT_SERVER && !window.__freshServerLoaded && !authKnownNoUser) return true;
-      if(window.__HR_STRICT_SERVER && mobileShell && hasUser && window.__mobileFirstPullDone !== true) return true;
+      if(window.__HR_STRICT_SERVER && window.__needsStrictFirstPull && window.__needsStrictFirstPull() && hasUser && window.__mobileFirstPullDone !== true) return true;
       return false;
     } catch(_){ return false; }
   };
@@ -127,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 91);
+    var appVersion = String(window.__APP_VERSION || 94);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -189,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=91">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=91">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=91">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=91">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=91">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=91">
-<link rel="icon" type="image/png" href="icon.png?v=91">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=91">
-<link rel="manifest" href="manifest.json?v=91">
+<link rel="apple-touch-icon" href="icon.png?v=94">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=94">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=94">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=94">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=94">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=94">
+<link rel="icon" type="image/png" href="icon.png?v=94">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=94">
+<link rel="manifest" href="manifest.json?v=94">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=91">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=91">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=94">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=94">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -1305,7 +1309,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v091</span><script>window.__APP_VERSION=91;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v094</span><script>window.__APP_VERSION=94;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3005,35 +3009,55 @@ function saveStoreLinks(map){
     }
   } catch(_){}
 }
+function normalizeStoreLinkUrl(url){
+  let u = String(url || '').trim();
+  if(!u) return '';
+  u = u.replace(/^<+|>+$/g, '').trim();
+  if(/^(mailto:|tel:|sms:)/i.test(u)) return u;
+  if(/^\/\//.test(u)) u = 'https:' + u;
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(u)){
+    if(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) u = 'https://' + u;
+    else return u;
+  }
+  try { return encodeURI(u); } catch(_){ return u; }
+}
+function escapeAttr(v){
+  return String(v || '')
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+function storeLinkValue(v){ return normalizeStoreLinkUrl(v); }
 // [ROBUST LOOKUP] storeId 정확히 매치되지 않아도 alias/display name/canonical로 재시도
 function getStoreLink(storeId){
   const map = getStoreLinks();
   if(!storeId) return '';
   // 1) 정확 매치
-  if(map[storeId]) return map[storeId];
+  if(map[storeId]) return storeLinkValue(map[storeId]);
   // 2) trim 매치
   const trimmed = String(storeId).trim();
-  if(trimmed !== storeId && map[trimmed]) return map[trimmed];
+  if(trimmed !== storeId && map[trimmed]) return storeLinkValue(map[trimmed]);
   // 3) alias map으로 canonical 찾기
   try {
     const aliasMap = (typeof buildStoreAliasMap==='function') ? buildStoreAliasMap() : {};
     const canonical = aliasMap[trimmed];
-    if(canonical && map[canonical]) return map[canonical];
+    if(canonical && map[canonical]) return storeLinkValue(map[canonical]);
     // 4) 매장 리스트에서 이 storeId의 관련 이름들 시도
     const list = (typeof loadStoreList==='function') ? loadStoreList() : [];
     const s = list.find(x => x && (x.id===storeId || x.raw===storeId || x.name===storeId));
     if(s){
-      if(map[s.id]) return map[s.id];
-      if(s.name && map[s.name]) return map[s.name];
-      if(s.raw && map[s.raw]) return map[s.raw];
-      if(s.displayName && map[s.displayName]) return map[s.displayName];
+      if(map[s.id]) return storeLinkValue(map[s.id]);
+      if(s.name && map[s.name]) return storeLinkValue(map[s.name]);
+      if(s.raw && map[s.raw]) return storeLinkValue(map[s.raw]);
+      if(s.displayName && map[s.displayName]) return storeLinkValue(map[s.displayName]);
     }
     // 5) 역매핑: map의 key 중 이 storeId와 같은 canonical인 것 찾기
     const myCanon = canonical || trimmed;
     for(const k in map){
       if(!map[k]) continue;
       const kCanon = aliasMap[String(k).trim()] || String(k).trim();
-      if(kCanon === myCanon) return map[k];
+      if(kCanon === myCanon) return storeLinkValue(map[k]);
     }
   } catch(_){}
   return '';
@@ -3055,13 +3079,16 @@ function editStoreLink(){
   if(url === null) return;
   const map = getStoreLinks();
   const trimmed = (url||'').trim();
-  if(trimmed) map[id] = trimmed; else delete map[id];
+  const normalized = normalizeStoreLinkUrl(trimmed);
+  if(normalized) map[id] = normalized; else delete map[id];
   saveStoreLinks(map);
   if(typeof lvRender==='function') lvRender();
-  if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨' : '🔗 링크 삭제됨');
+  if(typeof lvToast==='function') lvToast(normalized ? '🔗 링크 저장됨' : '🔗 링크 삭제됨');
 }
 window.editStoreLink = editStoreLink;
 window.getStoreLink = getStoreLink;
+window.normalizeStoreLinkUrl = normalizeStoreLinkUrl;
+window.escapeAttr = escapeAttr;
 // [INLINE EDIT] 배치현황 매장 카드에서 직접 링크 편집 (컨텍스트 메뉴 없이)
 // [FIX] 저장/삭제 시 storeId 뿐 아니라 canonical alias, 매장 raw/name 도 함께 정리
 //   → 한 매장의 여러 alias 중 아무 것이나 조회해도 링크가 잡히도록 (연결 안 되는 매장 방지)
@@ -3075,6 +3102,7 @@ window.lvEditStoreLinkInline = function(storeId){
   if(url === null) return;
   const map = getStoreLinks();
   const trimmed = (url||'').trim();
+  const normalized = normalizeStoreLinkUrl(trimmed);
   // 이 매장의 모든 alias 키 수집
   const keys = new Set([storeId]);
   if(s){
@@ -3092,14 +3120,14 @@ window.lvEditStoreLinkInline = function(storeId){
       Object.keys(aliasMap).forEach(k => { if(aliasMap[k] === canon) keys.add(k); });
     }
   } catch(_){}
-  if(trimmed){
-    keys.forEach(k => { if(k) map[k] = trimmed; });
+  if(normalized){
+    keys.forEach(k => { if(k) map[k] = normalized; });
   } else {
     keys.forEach(k => { delete map[k]; });
   }
   saveStoreLinks(map);
   if(typeof lvRender==='function') lvRender();
-  if(typeof lvToast==='function') lvToast(trimmed ? '🔗 링크 저장됨 (모두에게 공유)' : '🔗 링크 삭제됨');
+  if(typeof lvToast==='function') lvToast(normalized ? '🔗 링크 저장됨 (모두에게 공유)' : '🔗 링크 삭제됨');
 };
 // [STORE LINK SEED] Firebase 인증/부트스트랩 완료 후 실행 (덮어쓰기 방지)
 function _runStoreLinkSeed(){
@@ -3123,7 +3151,7 @@ function _runStoreLinkSeed(){
       'GM_대전_DS_신세계_대전': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EC%A0%84_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%8C%80%EC%A0%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w357719c11aab42d9bc4362e33519311d&csf=1&web=1&e=qZTaBe',
       'GM_부산_DS_롯데_서면': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EB%A1%AF%EB%8D%B0_%EC%84%9C%EB%A9%B4.xlsx?d=w06f7fa3d888043af9554dd9159cdaf2d&csf=1&web=1&e=uO3jEM',
       'GM_부산_DS_신세계_센텀': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%84%BC%ED%85%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w44ed8cf3f151407b8f949a5b6d6bddd8&csf=1&web=1&e=Cmrx8z',
-      'GM_서울_DS_현대_여의도': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%89%E1%85%A5%E1%84%8B%E1%85%AE%E1%86%AF_DS_%E1%84%92%E1%85%A7%E1%86%AB%E1%84%83%E1%85%A2_%E1%84%8B%E1%85%A7%E1%84%8B%E1%85%B4%E1%84%83%E1%85%A9_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5.xlsx?d=we115096fbdf449f5915745dd31447591&csf=1&web=1&e=c6eKRB',
+      'GM_서울_DS_현대_여의도': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE115096F-BDF4-49F5-9157-45DD31447591%7D&file=GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EC%97%AC%EC%9D%98%EB%8F%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
       'GM_서울_DS_갤러리아_압구정': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EA%B0%A4%EB%9F%AC%EB%A6%AC%EC%95%84_%EC%95%95%EA%B5%AC%EC%A0%95_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w79681bb6941c4a68893c9767a0a786bf&csf=1&web=1&e=KTiZl1',
       'GM_서울_DS_롯데_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EB%A1%AF%EB%8D%B0_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w0cfbdfd4563b4990809c64ded94c9342&csf=1&web=1&e=GWtiCo',
       'GM_서울_DS_신세계_강남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EA%B0%95%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=waa5e5368a67646f0a090bf557444a830&csf=1&web=1&e=D8WR6e',
@@ -3160,6 +3188,11 @@ function _runStoreLinkSeed(){
     const CENTUM_KEY = 'GM_부산_DS_신세계_센텀';
     if(map[CENTUM_KEY] && map[CENTUM_KEY].includes('wd9f527b602614a6fa9afc65d05bf7bd4')){
       map[CENTUM_KEY] = SEEDS[CENTUM_KEY];
+      changed = true;
+    }
+    const YEOUIDO_KEY = 'GM_서울_DS_현대_여의도';
+    if(map[YEOUIDO_KEY] && (map[YEOUIDO_KEY].includes('we115096fbdf449f5915745dd31447591') || map[YEOUIDO_KEY].includes('E1%84%8B%E1%85%A7'))){
+      map[YEOUIDO_KEY] = SEEDS[YEOUIDO_KEY];
       changed = true;
     }
     if(changed) saveStoreLinks(map);
@@ -8520,10 +8553,12 @@ function buildCard(storeKey,emps,secKey,accent){
       <div class="lv-store-icon" style="background:${ibg};color:${accent}">${ic}</div>
       <div style="flex:1;min-width:0">
         ${(function(){
-          const _url = (typeof getStoreLink==='function') ? getStoreLink(storeKey) : '';
+          const _rawUrl = (typeof getStoreLink==='function') ? getStoreLink(storeKey) : '';
+          const _url = (typeof normalizeStoreLinkUrl==='function') ? normalizeStoreLinkUrl(_rawUrl) : _rawUrl;
+          const _safeUrl = (typeof escapeAttr==='function') ? escapeAttr(_url) : String(_url || '').replace(/"/g,'&quot;');
           const editBtn = `<span onclick="event.stopPropagation();event.preventDefault();window.lvEditStoreLinkInline('${storeKey.replace(/'/g,"\\'")}')" title="링크 편집/추가" style="font-size:11px;opacity:.5;cursor:pointer;padding:0 3px;color:#5b6cf8;user-select:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">✎</span>`;
           if(_url){
-            return `<div style="display:inline-flex;align-items:center;gap:2px"><a href="${_url}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;overflow:visible" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_url.replace(/"/g,'&quot;')}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>${editBtn}</div>`;
+            return `<div style="display:inline-flex;align-items:center;gap:2px"><a href="${_safeUrl}" target="_blank" rel="noopener noreferrer" class="lv-store-name" style="color:#5b6cf8;text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;overflow:visible" onclick="event.stopPropagation()" title="새 탭에서 열기: ${_safeUrl}">${nm} <span style="font-size:11px;opacity:.7">↗</span></a>${editBtn}</div>`;
           }
           return `<div style="display:inline-flex;align-items:center;gap:2px"><div class="lv-store-name">${nm}</div>${editBtn}</div>`;
         })()}
@@ -9832,11 +9867,11 @@ onAuthStateChanged(_auth, (user)=>{
   if(window.__HR_STRICT_SERVER){
     try { document.documentElement.classList.add('app-loading-fresh'); } catch(_){}
   }
-  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
+  if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
     try { document.documentElement.classList.add('mobile-loading-fresh'); } catch(_){}
   }
   _showAuthGate(false);
-  if(window.__freshServerLoaded && !(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly)){
+  if(window.__freshServerLoaded && !(window.__needsStrictFirstPull && window.__needsStrictFirstPull())){
     setTimeout(() => {
       try {
         if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
@@ -9857,16 +9892,16 @@ onAuthStateChanged(_auth, (user)=>{
       } catch(_){}
     }, 0);
   }
-  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
+  if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
     try { document.documentElement.classList.add('mobile-loading-fresh'); } catch(_){}
   }
   // [STANDALONE] 인증 확정 즉시 강제 pull (interval 다음 tick 기다리지 않음)
-  if((window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly) && typeof window._standalonePullAll === 'function'){
+  if((window.__needsStrictFirstPull && window.__needsStrictFirstPull()) && typeof window._standalonePullAll === 'function'){
     setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 200);
     setTimeout(() => { try { window._standalonePullAll(); } catch(_){} }, 1500);
   }
   // [ALWAYS LOAD FRESH] 매 접속마다 Firebase 최신 데이터 도착까지 로딩 화면 (깜빡임 없이 최신만 표시)
-  if(!document.getElementById('fb-loading-overlay')){
+  if(!document.getElementById('fb-loading-overlay') && window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
     const ov = document.createElement('div');
     ov.id = 'fb-loading-overlay';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(247,246,243,.98);z-index:999998;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,"Pretendard",sans-serif;';
@@ -10340,6 +10375,10 @@ window.fbSetSchedule = async function(data) {
   try {
     // 첫 화면을 열기 전에 핵심 컬렉션을 모두 서버에서 직접 읽는다.
     // localStorage/onSnapshot 캐시에 의존하면 다른 계정에서 옛 정보가 먼저 보일 수 있다.
+    const optionalFresh = (promise, ms=900) => Promise.race([
+      promise.catch(()=>null),
+      new Promise(resolve => setTimeout(() => resolve(null), ms))
+    ]);
     const [
       sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap,
       editsSnap, photosSnap, storeHistorySnap, praiseSnap, invitationSnap,
@@ -10351,18 +10390,17 @@ window.fbSetSchedule = async function(data) {
       getDocFromServer(doc(_db, 'scheduled', 'data')).catch(()=>null),
       getDocFromServer(doc(_db, 'criteria', 'data')).catch(()=>null),
       getDocsFromServer(collection(_db, 'hrEdits')).catch(()=>null),
-      getDocsFromServer(collection(_db, 'empPhotos')).catch(()=>null),
-      getDocFromServer(doc(_db, 'storeHistory', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'praise', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'invitation', 'data')).catch(()=>null),
-      getDocsFromServer(collection(_db, 'inv_managers')).catch(()=>null),
-      getDocsFromServer(collection(_db, 'inv_candidates')).catch(()=>null),
-      getDocsFromServer(collection(_db, 'storeEvals')).catch(()=>null)
+      optionalFresh(getDocsFromServer(collection(_db, 'empPhotos'))),
+      optionalFresh(getDocFromServer(doc(_db, 'storeHistory', 'data'))),
+      optionalFresh(getDocFromServer(doc(_db, 'praise', 'data'))),
+      optionalFresh(getDocFromServer(doc(_db, 'invitation', 'data'))),
+      optionalFresh(getDocsFromServer(collection(_db, 'inv_managers'))),
+      optionalFresh(getDocsFromServer(collection(_db, 'inv_candidates'))),
+      optionalFresh(getDocsFromServer(collection(_db, 'storeEvals')))
     ]);
     _freshOk = [
       sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap,
-      editsSnap, photosSnap, storeHistorySnap, praiseSnap, invitationSnap,
-      invManagersSnap, invCandidatesSnap, storeEvalSnap
+      editsSnap
     ].every(Boolean);
     if(sharedSnap && sharedSnap.exists()){
       const d = sharedSnap.data() || {};
@@ -10506,6 +10544,9 @@ window.fbSetSchedule = async function(data) {
       if(o) o.innerHTML = '<div style="font-size:16px;font-weight:700;color:#2a2f42;margin-bottom:8px">최신 데이터 확인 실패</div><div style="font-size:13px;color:#7a8299">네트워크 확인 후 새로고침해주세요</div>';
     } catch(_){}
     throw new Error('Fresh server fetch failed');
+  }
+  if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
+    window.__mobileFirstPullDone = true;
   }
   window.__freshServerLoaded = true;
   window.__SERVER_BOOTSTRAP_DONE = true;
@@ -10767,16 +10808,20 @@ window.__isStandaloneReasons = [];
     r.push('iOS-fallback:'+window.innerHeight+'x'+window.innerWidth);
   }
   window.__isStandaloneReasons = r;
-  window.__isStandalone = r.length > 0 && !(r.length === 1 && r[0].startsWith('iOS-fallback'));
+  const detectedStandalone = r.length > 0 && !(r.length === 1 && r[0].startsWith('iOS-fallback'));
+  const strictMobileStandalone = detectedStandalone && (window.__isMobile || window.__MOBILE_READ_ONLY || window.__isIOSStandaloneEarly || window.navigator.standalone === true);
+  window.__isDesktopStandalone = detectedStandalone && !strictMobileStandalone;
+  window.__isStandalone = strictMobileStandalone;
   // 진단용: URL에 ?standalone=1 붙이면 강제로 standalone 모드
   if(new URLSearchParams(location.search).get('standalone') === '1'){
     window.__isStandalone = true;
+    window.__isDesktopStandalone = false;
     r.push('URL-force');
   }
 })();
 window.__lastHideAt = 0;
 // [STANDALONE] 홈화면 바로가기 = 완전 읽기 전용, 모든 캐시 초기화 (사진 포함)
-if(window.__isStandalone){
+if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
   console.warn('[STANDALONE] 홈화면 바로가기 - 완전 읽기 전용, 전 캐시 초기화');
   // 배치·매장·PT·사진·운영팀 테스트 캐시 삭제 → Firebase 서버값만 표시.
   try {
@@ -10802,7 +10847,7 @@ if(window.__isStandalone){
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){
     try {
-      if(window.__HR_STRICT_SERVER && (window.__isStandalone || window.__isIOSStandaloneEarly || window.__isMobile)){
+      if(window.__HR_STRICT_SERVER && window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
         if(typeof window.__showFreshLoading === 'function') window.__showFreshLoading();
       }
     } catch(_){}
@@ -10812,7 +10857,7 @@ document.addEventListener('visibilitychange', () => {
     window.__sharedInitLoaded = false;
     const hiddenMs = window.__lastHideAt ? Date.now() - window.__lastHideAt : 0;
     // [STANDALONE FIX] 홈화면 바로가기는 백그라운드 복귀 시 옛 화면 스냅샷 대신 서버 최신 로딩부터 시작
-    if(window.__isStandalone && hiddenMs > 1000){
+    if(window.__needsStrictFirstPull && window.__needsStrictFirstPull() && hiddenMs > 1000){
       console.log('[SYNC] standalone - '+Math.round(hiddenMs/1000)+'초 백그라운드 → 강제 새로고침');
       location.reload();
     } else if(window.__freshServerLoaded) {
@@ -10823,7 +10868,7 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => {
   try {
-    if(window.__HR_STRICT_SERVER && (window.__isStandalone || window.__isIOSStandaloneEarly || window.__isMobile)){
+    if(window.__HR_STRICT_SERVER && window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
       if(typeof window.__showFreshLoading === 'function') window.__showFreshLoading();
     }
   } catch(_){}
@@ -10835,7 +10880,7 @@ window.addEventListener('pageshow', (e) => {
   }
 });
 // [STANDALONE] 홈화면 바로가기는 30분마다 자동 새로고침 (긴 시간 열어놔도 데이터 최신 유지)
-if(window.__isStandalone){
+if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
   setInterval(() => {
     if(document.visibilityState === 'visible'){
       console.log('[SYNC] standalone 30분 주기 새로고침');
@@ -10946,14 +10991,14 @@ window._mobilePoll = async function(){
     }
   } catch(e){ console.warn('[MOBILE POLL] 실패:', e.code||e.message); }
 };
-if(window.__isMobile || window.__isStandalone){
+if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
   // 5초마다 자동 폴링 (아이폰도 실시간 체감)
   setInterval(window._mobilePoll, 5000);
   // 터치/클릭 중 즉시 폴링하면 버튼 대상 DOM이 교체되어 클릭이 유실될 수 있음.
 }
 // [MOBILE READ-ONLY PULL ALL] 모바일은 onSnapshot/iOS 캐시가 불안정 → 3초마다 전체 서버 fetch
 // (sharedSettings + empPhotos + hrEdits + storeList + partTimers)
-if(window.__isMobile || window.__isStandalone || window.__isIOSStandaloneEarly){
+if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
   const _markMobileInteraction = () => { window.__lastMobileInteractionAt = Date.now(); };
   document.addEventListener('pointerdown', _markMobileInteraction, { passive: true, capture: true });
   document.addEventListener('click', _markMobileInteraction, { passive: true, capture: true });
