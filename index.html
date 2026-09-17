@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 107;
+  window.__APP_VERSION = 109;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 107);
+    var appVersion = String(window.__APP_VERSION || 109);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -201,7 +201,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <link rel="apple-touch-icon-precomposed" href="icon.png?v=107">
 <link rel="icon" type="image/png" href="icon.png?v=107">
 <link rel="shortcut icon" type="image/png" href="icon.png?v=107">
-<link rel="manifest" href="manifest.json?v=107">
+<link rel="manifest" href="manifest.json?v=109">
 <meta name="theme-color" content="#f7f6f3">
 <link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=107">
 <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=107">
@@ -687,6 +687,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pos-label{font-size:9.5px; font-weight:600; color:#aab0be; letter-spacing:.5px; text-transform:uppercase; padding-left:2px; margin:6px 0 3px;}
 .lv-pos-label:first-child { margin-top:0; }
 .lv-pos-row { display:flex; flex-wrap:wrap; gap:4px; }
+.lv-card.draft-mode .lv-role-drop-row{min-height:30px;padding:4px;margin:0 -4px 2px;border:1px dashed transparent;border-radius:9px;transition:background .15s,border-color .15s,box-shadow .15s;}
+.lv-card.draft-mode .lv-role-drop-row.role-drop-over{background:#f5f7ff;border-color:#5b6cf8;box-shadow:0 0 0 2px rgba(91,108,248,.12) inset;}
+.lv-card.draft-mode .lv-role-drop-row[data-pos="BM"].role-drop-over{background:#fff8eb;border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.12) inset;}
+.lv-role-drop-empty{display:inline-flex;align-items:center;height:22px;padding:0 8px;border:1px dashed #dfe3ee;border-radius:14px;background:#fbfcff;color:#aab0be;font-size:10.5px;font-weight:600;}
 .lv-chip{position:relative; display:inline-flex; align-items:center; gap:5px; padding:4px 8px 4px 4px; border-radius:20px; border:1px solid #eaecf2; background:#f8f9fc; cursor:grab; transition:all .15s; user-select:none; font-size:11.5px; font-weight:500; color:#3a4053;}
 .lv-chip:hover { background:#eef0fe; border-color:#c0c6f5; color:#5b6cf8; }
 .lv-chip.dragging { opacity:.4; transform:scale(.95); cursor:grabbing; }
@@ -1366,7 +1370,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v107</span><script>window.__APP_VERSION=107;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v109</span><script>window.__APP_VERSION=109;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3738,7 +3742,7 @@ window.openMoveChannel = openMoveChannel;
 <div class="pdrawer" id="pdrawer">
   <div class="phd">
     <div class="phi">
-      <div class="ppw" onclick="trigPhoto()" oncontextmenu="return showPhotoCtxMenu(event)" title="클릭: 사진 보기 · 우클릭: 붙여넣기/파일 선택">
+      <div class="ppw" onclick="trigPhoto()" oncontextmenu="return showPhotoCtxMenu(event)" title="클릭: 사진 변경 · 우클릭: 붙여넣기/파일 선택">
         <div class="pp" id="pp"></div>
         <button class="ppbtn" onclick="event.stopPropagation();showPhotoCtxMenu(event)" title="사진 변경 옵션">📷</button>
       </div>
@@ -5760,8 +5764,14 @@ function togglePEdit(){
   setPEditMode(_pEditMode);
 }
 function setPEditMode(on){
+  const profileMode = __profileDraftMode || lvProfileModeForCurrentContext();
+  if(profileMode && on){
+    on = false;
+    if(typeof lvToast === 'function') lvToast('🧪 운영팀 테스트의 매장·직책 변경은 배치 카드 드래그로만 합니다.');
+  }
   _pEditMode=on;
   const btn=document.getElementById('peditBtn');
+  if(btn) btn.style.display = profileMode ? 'none' : '';
   if(btn) btn.textContent=on?'💾 저장':'✏️ 편집';
   if(btn) btn.style.background=on?'#5B6BE8':'';
   if(btn) btn.style.color=on?'#fff':'';
@@ -5947,8 +5957,8 @@ function filterStoreList(val){
     if(sel) sel.value = ch;
   }
 }
-function lvIsDraftProfileField(field){
-  return ['current_store','channel','position','brand'].includes(field);
+function lvIsDraftProfileField(field, mode){
+  return false;
 }
 function lvUpdateProfileDraftView(emp, field, val, row){
   if(!emp) return;
@@ -5978,8 +5988,8 @@ function lvSaveProfileDraftField(field, val){
   if(!curEmp) return false;
   const profileMode = __profileDraftMode || lvProfileModeForCurrentContext();
   if(!profileMode) return false;
-  if(!lvIsDraftProfileField(field)){
-    if(typeof lvToast === 'function') lvToast('🧪 운영팀 테스트에서는 매장·채널·브랜드·직책만 테스트 저장됩니다.');
+  if(!lvIsDraftProfileField(field, profileMode)){
+    if(typeof lvToast === 'function') lvToast('🧪 운영팀 테스트에서는 프로필 편집으로 배치를 바꾸지 않습니다. 카드의 역할 줄로 드래그해주세요.');
     try{
       const base=EMPS.find(e=>e.id===curEmp.id) || curEmp;
       openP(base);
@@ -6154,16 +6164,9 @@ function saveQual(){
   setF(curEmp.id,'qual',document.getElementById('pqual').value);
 }
 function trigPhoto(){
-  // 사진이 있으면 라이트박스로 크게 보기, 없으면 파일 업로드
-  if(curEmp){
-    const ph = getP();
-    const src = ph[curEmp.id] || curEmp.photo_b64;
-    if(src){
-      window.openPhotoLightbox(src);
-      return;
-    }
-  }
-  document.getElementById('avinput').click();
+  // 사진 클릭은 항상 변경으로 동작한다. 크게 보기는 우클릭/카메라 메뉴에서 처리.
+  const input = document.getElementById('avinput');
+  if(input) input.click();
 }
 // [CLIPBOARD] File 객체를 받아서 사진 처리 (파일 선택 + 클립보드 붙여넣기 공용)
 function _processPhotoFile(file){
@@ -6320,42 +6323,8 @@ document.addEventListener('paste', function(e){
 
 function handlePhoto(e){
   if(!curEmp)return;const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const rawB = ev.target.result;
-    // 800px 최대 크기로 압축 (JPEG 85%) — Firestore 1MB 제한 회피
-    const img = new Image();
-    img.onload = function(){
-      let w = img.width, h = img.height;
-      const MAX = 800;
-      if(w > MAX || h > MAX){
-        if(w > h){ h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      const b = canvas.toDataURL('image/jpeg', 0.85);
-      const sizeKB = Math.round(b.length / 1024);
-      console.log('[Photo] 압축 완료:', curEmp.id, w+'x'+h, sizeKB+'KB');
-      setP(curEmp.id, b);
-      const pp = document.getElementById('pp');
-      pp.innerHTML = `<img src="${b}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-      pp.className = 'pp';
-      refresh();
-    };
-    img.onerror = function(){
-      // 이미지 로드 실패시 원본 사용
-      setP(curEmp.id, rawB);
-      const pp = document.getElementById('pp');
-      pp.innerHTML = `<img src="${rawB}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-      pp.className = 'pp';
-      refresh();
-    };
-    img.src = rawB;
-  };
-  reader.readAsDataURL(file);
+  _processPhotoFile(file);
+  try{ e.target.value=''; }catch(_){}
 }
 window.switchMain  = switchMain;
 window.doBrand     = doBrand;
@@ -7162,15 +7131,32 @@ document.addEventListener('keydown', e => {
     lvMgrCloseRoleAssign();
   }
 });
-function lvSaveDraftMove(empId,storeKey){
+function lvPositionForDropRole(posKey, emp, storeKey){
+  if(posKey === 'BM') return '부매니저';
+  if(posKey === 'SF') return '팀원';
+  if(posKey === 'IN') return '인턴';
+  if(posKey === 'MG'){
+    const ch = (typeof guessChannel === 'function' ? guessChannel(storeKey || '') : '') || (emp && emp.channel) || '';
+    return (ch === 'HAUS' || (storeKey||'').includes('하우스')) ? 'HAUS 매니저' : '매니저';
+  }
+  return emp && emp.position ? emp.position : '팀원';
+}
+function lvSaveDraftMoveRole(empId,storeKey,posKey){
   const draft=lvEnsureDraftData();
   const prev=draft[empId]||{};
-  draft[empId]=Object.assign({}, prev, {current_store:storeKey,channel:guessChannel(storeKey)||prev.channel||''});
+  const emp=EMPS.find(e=>e.id===empId);
+  const next={current_store:storeKey,channel:guessChannel(storeKey)||prev.channel||''};
+  if(posKey) next.position=lvPositionForDropRole(posKey, emp, storeKey);
+  draft[empId]=Object.assign({}, prev, next);
   lvWriteLayout(LV_DRAFT_KEY,draft);
   if(!__mgrSandboxDirty) lvSyncMgrDraftFromDraft();
   window.__layoutDraftDirty = true;
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  return draft[empId];
+}
+function lvSaveDraftMove(empId,storeKey){
+  return lvSaveDraftMoveRole(empId,storeKey,null);
 }
 function lvSaveMgrDraftMove(empId,storeKey){
   const draft=lvEnsureMgrDraftData();
@@ -7273,11 +7259,6 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
         chip.style.opacity='';
         if(lvDragType==='chip'){ lvDragType=null; lvDragId=null; }
       });
-      chip.addEventListener('contextmenu', e=>{
-        e.preventDefault();
-        e.stopPropagation();
-        lvMgrOpenRoleMenu(chip.dataset.id, e.clientX, e.clientY);
-      });
     }
     chip.addEventListener('click', e=>{
       e.stopPropagation();
@@ -7356,7 +7337,7 @@ function lvRenderMgrOnlyDirect(){
     if(isEditMode){
       const block=document.createElement('div');
       block.className='lv-mgr-pageblock';
-      block.innerHTML=`<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">오른쪽 초안은 프로필 배치에 반영 전까지 메인 화면에 적용되지 않음</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrOpenRoleAssign()">역할 부여</button><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button></div>`;
+      block.innerHTML=`<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">오른쪽 초안은 프로필 배치에 반영 전까지 메인 화면에 적용되지 않음</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button><button class="lv-mgr-apply-view-btn" onclick="lvResetDraft()">테스트 초기화</button></div>`;
       mgrSecs.forEach(secKey=>{ const sec=buildCompare(secKey); if(sec) block.appendChild(sec); });
       frag.appendChild(block);
       if(typeof IMPORTANT_STORE_IDS!=='undefined' && IMPORTANT_STORE_IDS.length){
@@ -8868,7 +8849,8 @@ function lvSyncMgrButton(){
   btn.title = __mgrOnly ? '매니저/부매니저/HAUS만 보기 모드 해제' : '매니저/부매니저/HAUS 매니저만 표시';
 }
 function _lvSyncMgrButtonsVisibility(){
-  // 매니저 현황 모드에선 전체 적용 / 테스트 초기화 버튼 숨김 (해당 모드에선 즉시 저장이라 불필요)
+  // 매니저 현황 모드에선 상단 전체 적용 / 테스트 초기화 버튼 숨김
+  // 필요한 액션은 매니저현황 헤더의 "프로필 배치에 반영" / "테스트 초기화"만 노출한다.
   const apply = document.getElementById('lv-apply-btn');
   const reset = document.getElementById('lv-reset-draft-btn');
   const hide = !!__mgrOnly;
@@ -9105,7 +9087,7 @@ function lvRender(){
     } else {
       const overviewBlock = document.createElement('div');
       overviewBlock.className='lv-mgr-pageblock';
-      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">오른쪽 초안은 프로필 배치에 반영 전까지 메인 화면에 적용되지 않음</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrOpenRoleAssign()">역할 부여</button><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button></div>`;
+      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">오른쪽 초안은 프로필 배치에 반영 전까지 메인 화면에 적용되지 않음</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button><button class="lv-mgr-apply-view-btn" onclick="lvResetDraft()">테스트 초기화</button></div>`;
       mgrSecs.forEach(secKey=>{
         const section=_buildCompareSection(secKey);
         if(section) overviewBlock.appendChild(section);
@@ -9485,13 +9467,6 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
   `;
   // 칩 드래그/클릭 핸들러 (readonly 아닐 때만 드래그)
   row.querySelectorAll('.lv-mgr-chip').forEach(chip => {
-    if(canRoleEdit){
-      chip.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        lvMgrOpenRoleMenu(chip.dataset.id, e.clientX, e.clientY);
-      });
-    }
     if(!readonly){
       chip.addEventListener('dragstart', e => {
         lvDragType='chip'; lvDragId=chip.dataset.id;
@@ -9601,6 +9576,7 @@ function buildCard(storeKey,emps,secKey,accent){
   });
   const nm=lvStoreName(storeKey), rg=lvRegion(storeKey), ic=storeInit(nm), ibg=accent+'22';
   let chips='';
+  const _showDraftRoleDrops = lvMode === 'draft' && !(typeof __mgrOnly !== 'undefined' && __mgrOnly);
   // 헬퍼: 한 명의 직원을 칩 HTML로 렌더링
   const renderChip = (emp) => {
       const st=getEmpStatus(emp);
@@ -9637,9 +9613,12 @@ function buildCard(storeKey,emps,secKey,accent){
   // [MGR ONLY] __mgrOnly가 true면 매니저(MG) + 부매니저(BM)만 표시
   const _activePosKeys = (typeof __mgrOnly !== 'undefined' && __mgrOnly) ? ['MG','BM'] : POS_ORDER;
   _activePosKeys.forEach(pk=>{
-    if(!byPos[pk].length) return;
-    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row">`;
+    if(!byPos[pk].length && !_showDraftRoleDrops) return;
+    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row${_showDraftRoleDrops?' lv-role-drop-row':''}" data-pos="${pk}">`;
     byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
+    if(_showDraftRoleDrops && !byPos[pk].length){
+      chips+=`<span class="lv-role-drop-empty">여기에 드롭하면 ${POS_LABEL[pk]}</span>`;
+    }
     chips+='</div>';
   });
   // 2단계: 비-재직 직원을 카드 하단에 상태(status)별로 묶어서 렌더링
@@ -9743,6 +9722,38 @@ function buildCard(storeKey,emps,secKey,accent){
     e.stopPropagation();
   });
   head.addEventListener('dragend',()=>{card.classList.remove('card-dragging');lvDragType=null;lvDragId=null;lvDragSec=null;});
+  card.querySelectorAll('.lv-role-drop-row').forEach(row=>{
+    row.addEventListener('dragover',e=>{
+      if(lvMode!=='draft' || lvDragType!=='chip') return;
+      e.preventDefault();
+      e.stopPropagation();
+      row.classList.add('role-drop-over');
+      card.classList.add('drag-over');
+      e.dataTransfer.dropEffect='move';
+    });
+    row.addEventListener('dragleave',e=>{
+      if(!row.contains(e.relatedTarget)) row.classList.remove('role-drop-over');
+    });
+    row.addEventListener('drop',e=>{
+      if(lvMode!=='draft' || lvDragType!=='chip') return;
+      e.preventDefault();
+      e.stopPropagation();
+      row.classList.remove('role-drop-over');
+      card.classList.remove('drag-over','card-drag-over');
+      const empId=lvDragId;
+      const posKey=row.dataset.pos;
+      if(!empId || !posKey) return;
+      const emp=EMPS.find(x=>x.id===empId);
+      if(!emp) return;
+      const before=(typeof lvViewEmpForMode==='function') ? lvViewEmpForMode(emp,'draft') : emp;
+      const nextPosition=lvPositionForDropRole(posKey, emp, storeKey);
+      if((before.current_store||'')===storeKey && (before.position||'')===nextPosition) return;
+      lvSaveDraftMoveRole(emp.id, storeKey, posKey);
+      showSaved();
+      lvToast('🧪 '+emp.name+' → '+lvStoreName(storeKey)+' · '+nextPosition+' 테스트 저장됨');
+      lvRender();
+    });
+  });
   card.querySelectorAll('.lv-chip').forEach(chip=>{
     chip.addEventListener('dragstart',e=>{
       lvDragType='chip'; lvDragId=chip.dataset.id;
