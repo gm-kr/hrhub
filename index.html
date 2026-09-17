@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 98;
+  window.__APP_VERSION = 100;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 98);
+    var appVersion = String(window.__APP_VERSION || 100);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -193,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=98">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=98">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=98">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=98">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=98">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=98">
-<link rel="icon" type="image/png" href="icon.png?v=98">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=98">
-<link rel="manifest" href="manifest.json?v=98">
+<link rel="apple-touch-icon" href="icon.png?v=100">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=100">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=100">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=100">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=100">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=100">
+<link rel="icon" type="image/png" href="icon.png?v=100">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=100">
+<link rel="manifest" href="manifest.json?v=100">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=98">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=98">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=100">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=100">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -599,15 +599,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-chip.role-BM{background:#fef8e7;color:#9a6a00;border-color:#fce8a0;}
 .lv-mgr-chip.role-HAUS{background:#fee2e2;color:#a91414;border-color:#fcb5b5;}
 .lv-mgr-chip-role{font-size:9px;opacity:.7;font-weight:500;margin-left:2px;}
-.lv-mgr-role-tools{display:inline-flex;align-items:center;gap:2px;margin-left:4px;padding-left:4px;border-left:1px solid rgba(0,0,0,.08);}
-.lv-mgr-role-btn{height:18px;min-width:22px;border:1px solid #dde1ee;background:#fff;color:#687087;border-radius:5px;padding:0 5px;font-size:9.5px;font-weight:800;line-height:16px;cursor:pointer;}
-.lv-mgr-role-btn:hover{border-color:#5b6cf8;color:#4d5df0;background:#f5f6ff;}
-.lv-mgr-role-btn.demote:hover{border-color:#e84040;color:#e84040;background:#fff0f0;}
-.lv-mgr-promote-wrap{display:inline-flex;align-items:center;gap:3px;margin-left:3px;padding:2px 4px;border:1px dashed #d9deeb;border-radius:8px;background:#fbfcff;max-width:100%;}
-.lv-mgr-promote-select{height:22px;max-width:118px;border:1px solid #e1e5f0;border-radius:6px;background:#fff;color:#4c5368;font-size:10.5px;font-weight:600;padding:0 4px;outline:none;}
-.lv-mgr-promote-select:focus{border-color:#5b6cf8;}
-.lv-mgr-promote-btn{height:22px;border:1px solid #e1e5f0;border-radius:6px;background:#fff;color:#5b6378;font-size:10px;font-weight:800;padding:0 6px;cursor:pointer;}
-.lv-mgr-promote-btn:hover{background:#eef0fe;border-color:#5b6cf8;color:#4d5df0;}
+.lv-mgr-role-menu{position:fixed;z-index:2147483647;background:#fff;border:1px solid #dde1ee;border-radius:10px;box-shadow:0 10px 32px rgba(0,0,0,.16);padding:6px;min-width:160px;display:none;}
+.lv-mgr-role-menu-title{font-size:11px;font-weight:800;color:#2a2f42;padding:6px 8px 7px;border-bottom:1px solid #eef0f6;margin-bottom:4px;white-space:nowrap;}
+.lv-mgr-role-menu-btn{display:flex;width:100%;height:30px;align-items:center;justify-content:space-between;border:0;background:#fff;color:#3a4053;border-radius:7px;padding:0 9px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;}
+.lv-mgr-role-menu-btn:hover{background:#f5f6ff;color:#4d5df0;}
+.lv-mgr-role-menu-btn.team:hover{background:#fff0f0;color:#e84040;}
+.lv-mgr-role-modal{position:fixed;inset:0;z-index:2147483646;background:rgba(15,18,30,.42);display:none;align-items:center;justify-content:center;padding:18px;}
+.lv-mgr-role-modal.show{display:flex;}
+.lv-mgr-role-card{width:420px;max-width:calc(100vw - 32px);background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;}
+.lv-mgr-role-card-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid #eef0f6;}
+.lv-mgr-role-card-title{font-size:15px;font-weight:800;color:#1a1d23;}
+.lv-mgr-role-card-sub{font-size:11px;color:#8f96a8;margin-top:2px;}
+.lv-mgr-role-close{width:28px;height:28px;border:0;border-radius:50%;background:#f4f5f9;color:#7a8299;cursor:pointer;font-size:15px;}
+.lv-mgr-role-body{padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px;}
+.lv-mgr-role-field label{display:block;font-size:11px;font-weight:800;color:#7a8299;margin-bottom:5px;}
+.lv-mgr-role-input,.lv-mgr-role-select{width:100%;height:38px;border:1.5px solid #e1e5f0;border-radius:9px;background:#fbfcff;color:#2f3547;font-size:13px;font-family:inherit;padding:0 10px;box-sizing:border-box;outline:none;}
+.lv-mgr-role-input:focus,.lv-mgr-role-select:focus{border-color:#5b6cf8;background:#fff;box-shadow:0 0 0 3px rgba(91,108,248,.12);}
+.lv-mgr-role-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.lv-mgr-role-action{height:36px;border-radius:9px;border:1px solid #e1e5f0;background:#fff;color:#5b6378;font-size:13px;font-weight:800;padding:0 16px;cursor:pointer;}
+.lv-mgr-role-action.primary{background:#5b6cf8;border-color:#5b6cf8;color:#fff;}
+.lv-mgr-role-action:hover{background:#f5f6ff;}
+.lv-mgr-role-action.primary:hover{background:#4b5bea;}
 
 /* 샌드박스 영역: 드래그 자유, 매장 행도 드래그 가능 */
 .lv-mgr-sandbox{margin-top:2px;background:#fffaf2;border:1px dashed #f4d2a6;border-radius:8px;padding:5px;}
@@ -646,8 +658,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-test-memo-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 7px;background:#fffaf2;border-bottom:1px solid #f4eadc;}
 .lv-test-memo-title{font-size:12px;font-weight:800;color:#2a2f42;}
 .lv-test-memo-sub{font-size:10px;color:#9aa0b3;font-weight:500;}
-.lv-test-memo-textarea{width:100%;min-height:74px;max-height:180px;resize:vertical;border:0;outline:none;padding:10px 12px;font-family:inherit;font-size:12px;line-height:1.55;color:#2f3547;background:#fff;box-sizing:border-box;}
+.lv-test-memo-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}
+.lv-test-memo-cell{min-width:0;border-right:1px solid #edf0f6;background:#fff;}
+.lv-test-memo-cell:last-child{border-right:0;}
+.lv-test-memo-cell-head{padding:7px 10px 0;font-size:10px;font-weight:800;color:#8188a0;}
+.lv-test-memo-textarea{width:100%;min-height:72px;max-height:160px;resize:vertical;border:0;outline:none;padding:6px 10px 10px;font-family:inherit;font-size:12px;line-height:1.45;color:#2f3547;background:#fff;box-sizing:border-box;}
 .lv-test-memo-textarea::placeholder{color:#bdc2d0;}
+@media (max-width:900px){.lv-test-memo-grid{grid-template-columns:1fr;}.lv-test-memo-cell{border-right:0;border-bottom:1px solid #edf0f6;}.lv-test-memo-cell:last-child{border-bottom:0;}}
 @media (max-width: 900px){
   .lv-mgr-compare-grid{grid-template-columns:1fr;}
   .lv-mgr-compare-col{border-right:none;border-bottom:1px solid #edf0f6;}
@@ -1345,7 +1362,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v098</span><script>window.__APP_VERSION=98;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v100</span><script>window.__APP_VERSION=100;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3108,6 +3125,49 @@ function saveStoreLinks(map){
     }
   } catch(_){}
 }
+function formatSharePointGuid(raw){
+  const hex = String(raw || '').replace(/[^0-9a-f]/gi, '').toUpperCase();
+  if(hex.length !== 32) return '';
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20)
+  ].join('-');
+}
+function normalizeSharePointStoreLink(url){
+  let u = String(url || '');
+  if(!/sharepoint\.com/i.test(u)) return u;
+  u = u.replace(/(https?:\/\/[^/]+)\/:x:\/r\/sites\//i, '$1/sites/');
+  try {
+    const parsed = new URL(u);
+    if(!/sharepoint\.com$/i.test(parsed.hostname)) return u;
+    parsed.pathname = parsed.pathname.replace(/^\/:x:\/r\/sites\//i, '/sites/');
+    if(/\/_layouts\/15\/Doc\.aspx$/i.test(parsed.pathname)){
+      parsed.searchParams.set('action', parsed.searchParams.get('action') || 'default');
+      parsed.searchParams.set('mobileredirect', parsed.searchParams.get('mobileredirect') || 'true');
+      return parsed.toString();
+    }
+    const docId = parsed.searchParams.get('d') || '';
+    const docMatch = /^w([0-9a-f]{32})$/i.exec(docId);
+    if(!docMatch) return parsed.toString();
+    const fileName = decodeURIComponent((parsed.pathname.split('/').pop() || '').trim());
+    if(!/\.(xlsx?|xlsm)$/i.test(fileName)) return parsed.toString();
+    const siteRootMatch = parsed.pathname.match(/^(\/sites\/[^/]+)\//i);
+    const siteRoot = siteRootMatch ? siteRootMatch[1] : '/sites/sb2';
+    const guid = formatSharePointGuid(docMatch[1]);
+    if(!guid) return parsed.toString();
+    const docUrl = new URL(siteRoot + '/_layouts/15/Doc.aspx', parsed.origin);
+    docUrl.searchParams.set('sourcedoc', '{' + guid + '}');
+    docUrl.searchParams.set('file', fileName);
+    docUrl.searchParams.set('action', 'default');
+    docUrl.searchParams.set('mobileredirect', 'true');
+    return docUrl.toString();
+  } catch(_){
+    return u;
+  }
+}
 function normalizeStoreLinkUrl(url){
   let u = String(url || '').trim();
   if(!u) return '';
@@ -3115,10 +3175,15 @@ function normalizeStoreLinkUrl(url){
   if(/^(mailto:|tel:|sms:)/i.test(u)) return u;
   if(/^\/\//.test(u)) u = 'https:' + u;
   if(!/^[a-z][a-z0-9+.-]*:/i.test(u)){
-    if(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) u = 'https://' + u;
+      if(/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(u)) u = 'https://' + u;
     else return u;
   }
-  try { return encodeURI(u); } catch(_){ return u; }
+  u = normalizeSharePointStoreLink(u);
+  try { return new URL(u).toString(); }
+  catch(_){
+    try { return encodeURI(u).replace(/%25([0-9a-f]{2})/gi, '%$1'); }
+    catch(__){ return u; }
+  }
 }
 function escapeAttr(v){
   return String(v || '')
@@ -3239,7 +3304,7 @@ function _runStoreLinkSeed(){
       'GM_서울_하우스 노웨어_도산': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/FS/GM_%E1%84%89%E1%85%A5%E1%84%8B%E1%85%AE%E1%86%AF_%E1%84%92%E1%85%A1%E1%84%8B%E1%85%AE%E1%84%89%E1%85%B3%E1%84%82%E1%85%A9%E1%84%8B%E1%85%B0%E1%84%8B%E1%85%A5_%E1%84%83%E1%85%A9%E1%84%89%E1%85%A1%E1%86%AB_%E1%84%89%E1%85%B5%E1%84%91%E1%85%B3%E1%84%90%E1%85%B5%20%E1%84%89%E1%85%B3%E1%84%8F%E1%85%A6%E1%84%8C%E1%85%AE%E1%86%AF.xlsx?d=wea99e4753c0840ccb6966e356d7742bf&csf=1&web=1&e=ev8tRY',
       'GM_경기_DS_갤러리아_광교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%80%E1%85%A2%E1%86%AF%E1%84%85%E1%85%A5%E1%84%85%E1%85%B5%E1%84%8B%E1%85%A1_%E1%84%80%E1%85%AA%E1%86%BC%E1%84%80%E1%85%AD.xlsx?d=wece4fcc28ea346e19813d4b568a73ff8&csf=1&web=1&e=obXKvS',
       'GM_경기_DS_롯데_동탄': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%E1%84%80%E1%85%A7%E1%86%BC%E1%84%80%E1%85%B5_DS_%E1%84%85%E1%85%A9%E1%86%BA%E1%84%83%E1%85%A6_%E1%84%83%E1%85%A9%E1%86%BC%E1%84%90%E1%85%A1%E1%86%AB.xlsx?d=w17323468304143c6aa2d1803b863b3b9&csf=1&web=1&e=ME5wha',
-      'GM_경기_MALL_신세계스타필드_하남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE7F9D1B4-15CF-46AA-A749-BA7DDE825BB8%7D&file=GM_%EA%B2%BD%EA%B8%B0_MALL_%EC%8B%A0%EC%84%B8%EA%B3%84%EC%8A%A4%ED%83%80%ED%95%84%EB%93%9C_%ED%95%98%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
+      'GM_경기_MALL_신세계스타필드_하남': 'https://gentlemonster.sharepoint.com/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE7F9D1B4-15CF-46AA-A749-BA7DDE825BB8%7D&file=GM_%EA%B2%BD%EA%B8%B0_MALL_%EC%8B%A0%EC%84%B8%EA%B3%84%EC%8A%A4%ED%83%80%ED%95%84%EB%93%9C_%ED%95%98%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
       'GM_경기_DS_신세계_사우스시티': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%82%AC%EC%9A%B0%EC%8A%A4%EC%8B%9C%ED%8B%B0_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=wbf2e71b0408a4d709235575f863b9a4c&csf=1&web=1&e=DvlCja',
       'GM_경기_DS_신세계_의정부': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%9D%98%EC%A0%95%EB%B6%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w3dd91de71cde413295469ff67276f114&csf=1&web=1&e=1hgiHP',
       'GM_경기_DS_현대_판교': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EA%B2%BD%EA%B8%B0_DS_%ED%98%84%EB%8C%80_%ED%8C%90%EA%B5%90_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w802b34dd019747e383e2d9f408cc3544&csf=1&web=1&e=BokAOW',
@@ -3250,7 +3315,7 @@ function _runStoreLinkSeed(){
       'GM_대전_DS_신세계_대전': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%8C%80%EC%A0%84_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EB%8C%80%EC%A0%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w357719c11aab42d9bc4362e33519311d&csf=1&web=1&e=qZTaBe',
       'GM_부산_DS_롯데_서면': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EB%A1%AF%EB%8D%B0_%EC%84%9C%EB%A9%B4.xlsx?d=w06f7fa3d888043af9554dd9159cdaf2d&csf=1&web=1&e=uO3jEM',
       'GM_부산_DS_신세계_센텀': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EB%B6%80%EC%82%B0_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EC%84%BC%ED%85%80_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w44ed8cf3f151407b8f949a5b6d6bddd8&csf=1&web=1&e=Cmrx8z',
-      'GM_서울_DS_현대_여의도': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE115096F-BDF4-49F5-9157-45DD31447591%7D&file=GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EC%97%AC%EC%9D%98%EB%8F%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
+      'GM_서울_DS_현대_여의도': 'https://gentlemonster.sharepoint.com/sites/sb2/_layouts/15/Doc.aspx?sourcedoc=%7BE115096F-BDF4-49F5-9157-45DD31447591%7D&file=GM_%EC%84%9C%EC%9A%B8_DS_%ED%98%84%EB%8C%80_%EC%97%AC%EC%9D%98%EB%8F%84_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx&action=default&mobileredirect=true',
       'GM_서울_DS_갤러리아_압구정': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EA%B0%A4%EB%9F%AC%EB%A6%AC%EC%95%84_%EC%95%95%EA%B5%AC%EC%A0%95_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w79681bb6941c4a68893c9767a0a786bf&csf=1&web=1&e=KTiZl1',
       'GM_서울_DS_롯데_명동': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EB%A1%AF%EB%8D%B0_%EB%AA%85%EB%8F%99_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=w0cfbdfd4563b4990809c64ded94c9342&csf=1&web=1&e=GWtiCo',
       'GM_서울_DS_신세계_강남': 'https://gentlemonster.sharepoint.com/:x:/r/sites/sb2/GM%20SB/01.%EC%8A%A4%EC%BC%80%EC%A4%84/%5B2026%EB%85%84%5D%20%EC%8A%A4%EC%BC%80%EC%A4%84/DS%20MALL/GM_%EC%84%9C%EC%9A%B8_DS_%EC%8B%A0%EC%84%B8%EA%B3%84_%EA%B0%95%EB%82%A8_%EC%8B%9C%ED%94%84%ED%8B%B0.xlsx?d=waa5e5368a67646f0a090bf557444a830&csf=1&web=1&e=D8WR6e',
@@ -3294,7 +3359,17 @@ function _runStoreLinkSeed(){
       map[YEOUIDO_KEY] = SEEDS[YEOUIDO_KEY];
       changed = true;
     }
-    if(changed) saveStoreLinks(map);
+    Object.keys(map).forEach(k => {
+      const fixedUrl = normalizeStoreLinkUrl(map[k]);
+      if(fixedUrl && fixedUrl !== map[k]){
+        map[k] = fixedUrl;
+        changed = true;
+      }
+    });
+    if(changed){
+      saveStoreLinks(map);
+      try { if(typeof lvRender === 'function') lvRender(); } catch(_){}
+    }
   } catch(_){}
 }
 // Firebase ready 후 실행 (부트스트랩이 seed 데이터를 덮어쓰지 않도록)
@@ -6492,6 +6567,24 @@ function lvBuildSectionsForMode(mode, layoutStores){
 }
 const LV_TEST_MEMO_KEY='lvTestMemo';
 let __lvMemoTimer=null;
+function lvReadTestMemoSlots(){
+  const empty = ['', '', '', '', ''];
+  let raw = '';
+  try { raw = localStorage.getItem(LV_TEST_MEMO_KEY) || ''; } catch(_){}
+  if(!raw) return empty;
+  try {
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)){
+      return empty.map((_, i) => String(parsed[i] || ''));
+    }
+  } catch(_){}
+  empty[0] = String(raw || '');
+  return empty;
+}
+function lvWriteTestMemoSlots(slots){
+  const clean = ['', '', '', '', ''].map((_, i) => String((slots && slots[i]) || ''));
+  try { localStorage.setItem(LV_TEST_MEMO_KEY, JSON.stringify(clean)); } catch(_){}
+}
 function lvRenderTestMemo(){
   const wrap=$('lv-test-memo-wrap');
   if(!wrap) return;
@@ -6500,23 +6593,42 @@ function lvRenderTestMemo(){
     wrap.innerHTML = '';
     return;
   }
-  const memo = localStorage.getItem(LV_TEST_MEMO_KEY) || '';
-  const safeMemo = (typeof escapeHtml === 'function')
-    ? escapeHtml(memo)
-    : String(memo).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const slots = lvReadTestMemoSlots();
+  const esc = (v) => (typeof escapeHtml === 'function')
+    ? escapeHtml(v)
+    : String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   wrap.hidden = false;
   wrap.innerHTML = `
     <div class="lv-test-memo-head">
       <div>
         <div class="lv-test-memo-title">📝 운영팀 테스트 메모</div>
-        <div class="lv-test-memo-sub">테스트 배치에서만 표시 · 모든 기기 공유</div>
+        <div class="lv-test-memo-sub">짧은 메모 5칸 · 모든 기기 공유</div>
       </div>
       <span id="lv-test-memo-saved" class="lv-test-memo-sub">자동 저장</span>
     </div>
-    <textarea class="lv-test-memo-textarea" id="lv-test-memo-input" placeholder="운영팀 테스트 중 확인할 내용, 전제, 요청사항 등을 자유롭게 적어주세요." oninput="lvSetTestMemo(this.value)">${safeMemo}</textarea>`;
+    <div class="lv-test-memo-grid">
+      ${slots.map((memo, idx) => `
+        <div class="lv-test-memo-cell">
+          <div class="lv-test-memo-cell-head">메모 ${idx + 1}</div>
+          <textarea class="lv-test-memo-textarea" id="lv-test-memo-input-${idx}" placeholder="짧게 입력" oninput="lvSetTestMemoSlot(${idx}, this.value)">${esc(memo)}</textarea>
+        </div>
+      `).join('')}
+    </div>`;
 }
 function lvSetTestMemo(value){
-  try { localStorage.setItem(LV_TEST_MEMO_KEY, value || ''); } catch(_){}
+  const slots = lvReadTestMemoSlots();
+  slots[0] = String(value || '');
+  lvWriteTestMemoSlots(slots);
+  lvScheduleTestMemoSave();
+}
+function lvSetTestMemoSlot(idx, value){
+  const slots = lvReadTestMemoSlots();
+  const n = Math.max(0, Math.min(4, Number(idx) || 0));
+  slots[n] = String(value || '');
+  lvWriteTestMemoSlots(slots);
+  lvScheduleTestMemoSave();
+}
+function lvScheduleTestMemoSave(){
   const badge = $('lv-test-memo-saved');
   if(badge) badge.textContent = '저장 중...';
   clearTimeout(__lvMemoTimer);
@@ -6526,6 +6638,7 @@ function lvSetTestMemo(value){
   }, 350);
 }
 window.lvSetTestMemo = lvSetTestMemo;
+window.lvSetTestMemoSlot = lvSetTestMemoSlot;
 function lvMgrApplyDraftView(){
   __mgrOnly = false;
   lvSyncMgrButton();
@@ -6537,22 +6650,18 @@ function lvMgrApplyDraftView(){
 }
 window.lvMgrApplyDraftView = lvMgrApplyDraftView;
 function lvMgrDraftRoleForStore(role, storeKey){
-  if(role === '매니저'){
-    const ch = (typeof guessChannel === 'function') ? guessChannel(storeKey || '') : '';
-    if(ch === 'HAUS' || String(storeKey||'').includes('하우스')) return 'HAUS 매니저';
-  }
   return role;
 }
-function lvMgrSetDraftRole(empId, role){
+function lvMgrSetDraftRole(empId, role, storeOverride){
   const emp = EMPS.find(e=>e.id===empId);
   if(!emp) return;
   const draft = lvEnsureDraftData();
   const prev = draft[empId] || {};
-  const storeKey = prev.current_store !== undefined ? prev.current_store : (emp.current_store || '');
+  const storeKey = storeOverride !== undefined ? storeOverride : (prev.current_store !== undefined ? prev.current_store : (emp.current_store || ''));
   const nextRole = lvMgrDraftRoleForStore(role, storeKey);
   draft[empId] = Object.assign({}, prev, {
     current_store: storeKey,
-    channel: prev.channel || emp.channel || guessChannel(storeKey) || '',
+    channel: guessChannel(storeKey) || prev.channel || emp.channel || '',
     position: nextRole
   });
   lvWriteLayout(LV_DRAFT_KEY, draft);
@@ -6562,18 +6671,131 @@ function lvMgrSetDraftRole(empId, role){
   if(typeof lvToast === 'function') lvToast('🧪 ' + emp.name + ' → ' + nextRole + ' 테스트 반영');
   try { lvRender(); lvRenderSB(); } catch(_){}
 }
-function lvMgrPromoteFromRow(btn, role){
-  const wrap = btn && btn.closest ? btn.closest('.lv-mgr-promote-wrap') : null;
-  const sel = wrap ? wrap.querySelector('.lv-mgr-promote-select') : null;
-  const empId = sel ? sel.value : '';
-  if(!empId){
-    if(typeof lvToast === 'function') lvToast('승격할 팀원을 선택해주세요.');
-    return;
+function lvMgrCloseRoleMenu(){
+  const menu=document.getElementById('lv-mgr-role-menu');
+  if(menu) menu.style.display='none';
+}
+function lvMgrOpenRoleMenu(empId, x, y){
+  const emp=EMPS.find(e=>e.id===empId);
+  if(!emp) return;
+  let menu=document.getElementById('lv-mgr-role-menu');
+  if(!menu){
+    menu=document.createElement('div');
+    menu.id='lv-mgr-role-menu';
+    menu.className='lv-mgr-role-menu';
+    document.body.appendChild(menu);
   }
-  lvMgrSetDraftRole(empId, role);
+  const safeName=(typeof escapeHtml==='function') ? escapeHtml(emp.name||'') : String(emp.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const roles=['HAUS 매니저','매니저','부매니저','팀원'];
+  menu.innerHTML=`<div class="lv-mgr-role-menu-title">${safeName} 역할 변경</div>`+
+    roles.map(r=>`<button class="lv-mgr-role-menu-btn ${r==='팀원'?'team':''}" onclick="lvMgrSetDraftRole('${empId}','${r}');lvMgrCloseRoleMenu()"><span>${r}</span><span>›</span></button>`).join('');
+  menu.style.display='block';
+  const w=menu.offsetWidth||170, h=menu.offsetHeight||150;
+  menu.style.left=Math.max(8, Math.min(x, window.innerWidth-w-8))+'px';
+  menu.style.top=Math.max(8, Math.min(y, window.innerHeight-h-8))+'px';
+}
+function lvMgrRoleStoreOptions(){
+  try { return loadStoreList().filter(s=>s&&s.id).map(s=>({id:s.id,name:lvStoreName(s.id)})); } catch(_){ return []; }
+}
+function lvMgrResolveEmpInput(v){
+  const q=String(v||'').trim();
+  if(!q) return null;
+  return EMPS.find(e=>e.id===q) || EMPS.find(e=>String(e.name||'').trim()===q) || EMPS.find(e=>String(e.name||'').includes(q));
+}
+function lvMgrResolveStoreInput(v){
+  const q=String(v||'').trim();
+  if(!q) return '';
+  const stores=lvMgrRoleStoreOptions();
+  const exact=stores.find(s=>s.id===q || s.name===q);
+  if(exact) return exact.id;
+  const found=stores.find(s=>s.id.includes(q) || s.name.includes(q));
+  return found ? found.id : q;
+}
+function lvMgrEnsureRoleAssignModal(){
+  let modal=document.getElementById('lv-mgr-role-assign-modal');
+  if(modal) return modal;
+  modal=document.createElement('div');
+  modal.id='lv-mgr-role-assign-modal';
+  modal.className='lv-mgr-role-modal';
+  document.body.appendChild(modal);
+  return modal;
+}
+function lvMgrOpenRoleAssign(){
+  const modal=lvMgrEnsureRoleAssignModal();
+  const esc=(typeof escapeAttr==='function') ? escapeAttr : (v)=>String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const empOptions=EMPS.filter(e=>getEmpStatus(e)!=='deleted').sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko')).map(e=>`<option value="${esc(e.name||'')}" label="${esc((e.position||'')+' · '+(e.current_store||''))}"></option>`).join('');
+  const storeOptions=lvMgrRoleStoreOptions().map(s=>`<option value="${esc(s.id)}" label="${esc(s.name)}"></option>`).join('');
+  modal.innerHTML=`
+    <div class="lv-mgr-role-card" onclick="event.stopPropagation()">
+      <div class="lv-mgr-role-card-head">
+        <div>
+          <div class="lv-mgr-role-card-title">역할 부여</div>
+          <div class="lv-mgr-role-card-sub">이름을 검색하고 테스트 직책과 매장을 지정합니다</div>
+        </div>
+        <button class="lv-mgr-role-close" onclick="lvMgrCloseRoleAssign()">✕</button>
+      </div>
+      <div class="lv-mgr-role-body">
+        <div class="lv-mgr-role-field">
+          <label>이름 검색</label>
+          <input id="lv-mgr-role-emp-input" class="lv-mgr-role-input" list="lv-mgr-role-emp-list" placeholder="직원 이름 입력">
+          <datalist id="lv-mgr-role-emp-list">${empOptions}</datalist>
+        </div>
+        <div class="lv-mgr-role-field">
+          <label>직책</label>
+          <select id="lv-mgr-role-pos-input" class="lv-mgr-role-select">
+            <option value="HAUS 매니저">HAUS 매니저</option>
+            <option value="매니저">매니저</option>
+            <option value="부매니저">부매니저</option>
+            <option value="팀원">팀원</option>
+          </select>
+        </div>
+        <div class="lv-mgr-role-field">
+          <label>매장</label>
+          <input id="lv-mgr-role-store-input" class="lv-mgr-role-input" list="lv-mgr-role-store-list" placeholder="매장명 검색 또는 선택">
+          <datalist id="lv-mgr-role-store-list">${storeOptions}</datalist>
+        </div>
+        <div class="lv-mgr-role-actions">
+          <button class="lv-mgr-role-action" onclick="lvMgrCloseRoleAssign()">취소</button>
+          <button class="lv-mgr-role-action primary" onclick="lvMgrSubmitRoleAssign()">테스트에 반영</button>
+        </div>
+      </div>
+    </div>`;
+  modal.onclick=()=>lvMgrCloseRoleAssign();
+  modal.classList.add('show');
+  setTimeout(()=>document.getElementById('lv-mgr-role-emp-input')?.focus(), 30);
+}
+function lvMgrCloseRoleAssign(){
+  const modal=document.getElementById('lv-mgr-role-assign-modal');
+  if(modal) modal.classList.remove('show');
+}
+function lvMgrSubmitRoleAssign(){
+  const empInput=document.getElementById('lv-mgr-role-emp-input');
+  const posInput=document.getElementById('lv-mgr-role-pos-input');
+  const storeInput=document.getElementById('lv-mgr-role-store-input');
+  const emp=lvMgrResolveEmpInput(empInput ? empInput.value : '');
+  if(!emp){ alert('직원을 찾을 수 없습니다. 이름을 다시 입력해주세요.'); empInput&&empInput.focus(); return; }
+  const role=posInput ? posInput.value : '팀원';
+  const storeKey=lvMgrResolveStoreInput(storeInput ? storeInput.value : '');
+  if(!storeKey){ alert('매장을 선택하거나 입력해주세요.'); storeInput&&storeInput.focus(); return; }
+  lvMgrSetDraftRole(emp.id, role, storeKey);
+  lvMgrCloseRoleAssign();
 }
 window.lvMgrSetDraftRole = lvMgrSetDraftRole;
-window.lvMgrPromoteFromRow = lvMgrPromoteFromRow;
+window.lvMgrCloseRoleMenu = lvMgrCloseRoleMenu;
+window.lvMgrOpenRoleMenu = lvMgrOpenRoleMenu;
+window.lvMgrOpenRoleAssign = lvMgrOpenRoleAssign;
+window.lvMgrCloseRoleAssign = lvMgrCloseRoleAssign;
+window.lvMgrSubmitRoleAssign = lvMgrSubmitRoleAssign;
+document.addEventListener('click', e => {
+  const menu=document.getElementById('lv-mgr-role-menu');
+  if(menu && menu.style.display==='block' && !menu.contains(e.target)) lvMgrCloseRoleMenu();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    lvMgrCloseRoleMenu();
+    lvMgrCloseRoleAssign();
+  }
+});
 function lvSaveDraftMove(empId,storeKey){
   const draft=lvEnsureDraftData();
   const prev=draft[empId]||{};
@@ -8263,7 +8485,7 @@ function lvRender(){
     } else {
       const overviewBlock = document.createElement('div');
       overviewBlock.className='lv-mgr-pageblock';
-      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">왼쪽은 실제 배치, 오른쪽 테스트 배치만 드래그 가능</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button></div>`;
+      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">왼쪽은 실제 배치, 오른쪽 테스트 배치만 드래그 가능</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrOpenRoleAssign()">역할 부여</button><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button></div>`;
       mgrSecs.forEach(secKey=>{
         const section=_buildCompareSection(secKey);
         if(section) overviewBlock.appendChild(section);
@@ -8624,41 +8846,29 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
         const roleCls = isHaus ? 'role-HAUS' : ('role-' + pk);
         const roleLbl = isHaus ? 'HAUS매' : (pk === 'MG' ? '매' : '부매');
         const dragAttr = readonly ? '' : ' draggable="true"';
-        const roleTools = canRoleEdit ? `<span class="lv-mgr-role-tools">
-          <button class="lv-mgr-role-btn" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','매니저')" title="매니저로 테스트">매</button>
-          <button class="lv-mgr-role-btn" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','부매니저')" title="부매니저로 테스트">부</button>
-          <button class="lv-mgr-role-btn demote" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','팀원')" title="팀원으로 테스트">팀</button>
-        </span>` : '';
         return `<div class="lv-mgr-chip ${roleCls}"${dragAttr} data-id="${emp.id}" title="${escAttr(emp.name)} · ${escAttr(emp.position||'')}">
           <span>${escText(emp.name||'')}</span>
           <span class="lv-mgr-chip-role">${roleLbl}</span>
-          ${roleTools}
         </div>`;
       }).join('')
     : '<span class="lv-mgr-row-empty">매니저 미배치</span>';
-  const promoteCandidates = canRoleEdit ? emps.filter(e => {
-    const pk = lvPosKey(e.position);
-    return pk === 'SF' && getEmpStatus(e) === 'active';
-  }).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko')) : [];
-  const promoteHtml = canRoleEdit && promoteCandidates.length ? `
-    <span class="lv-mgr-promote-wrap" onclick="event.stopPropagation()">
-      <select class="lv-mgr-promote-select" title="승격할 팀원 선택">
-        <option value="">＋ 승격</option>
-        ${promoteCandidates.map(e=>`<option value="${escAttr(e.id)}">${escText(e.name||'')}</option>`).join('')}
-      </select>
-      <button class="lv-mgr-promote-btn" onclick="event.stopPropagation();lvMgrPromoteFromRow(this,'매니저')" title="선택 직원을 매니저로 테스트">매</button>
-      <button class="lv-mgr-promote-btn" onclick="event.stopPropagation();lvMgrPromoteFromRow(this,'부매니저')" title="선택 직원을 부매니저로 테스트">부</button>
-    </span>` : '';
   row.innerHTML = `
     <div class="lv-mgr-row-name">
       ${(typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.includes(storeKey)) ? '<span style="color:#e07b12;font-size:11px" title="중요 매장">⭐</span>' : ''}
       <span>${nm}</span>
       ${rg ? `<span class="lv-mgr-row-region">${rg}</span>` : ''}
     </div>
-    <div class="lv-mgr-row-chips">${chipsHtml}${promoteHtml}</div>
+    <div class="lv-mgr-row-chips">${chipsHtml}</div>
   `;
   // 칩 드래그/클릭 핸들러 (readonly 아닐 때만 드래그)
   row.querySelectorAll('.lv-mgr-chip').forEach(chip => {
+    if(canRoleEdit){
+      chip.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        lvMgrOpenRoleMenu(chip.dataset.id, e.clientX, e.clientY);
+      });
+    }
     if(!readonly){
       chip.addEventListener('dragstart', e => {
         lvDragType='chip'; lvDragId=chip.dataset.id;
