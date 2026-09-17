@@ -687,7 +687,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pos-label{font-size:9.5px; font-weight:600; color:#aab0be; letter-spacing:.5px; text-transform:uppercase; padding-left:2px; margin:6px 0 3px;}
 .lv-pos-label:first-child { margin-top:0; }
 .lv-pos-row { display:flex; flex-wrap:wrap; gap:4px; }
-.lv-card.draft-mode .lv-role-drop-row{min-height:30px;padding:4px;margin:0 -4px 2px;border:1px dashed transparent;border-radius:9px;transition:background .15s,border-color .15s,box-shadow .15s;}
+.lv-card.draft-mode .lv-role-drop-row{min-height:14px;padding:2px 4px;margin:0 -4px 1px;border:1px dashed transparent;border-radius:9px;transition:background .15s,border-color .15s,box-shadow .15s;}
+.lv-card.draft-mode .lv-role-drop-row:empty{min-height:12px;opacity:.5;background:repeating-linear-gradient(45deg,transparent 0 5px,#f0f2f7 5px 6px);}
+.lv-card.draft-mode .lv-role-drop-row:empty:hover{opacity:1;border-color:#c9d0e5}
 .lv-card.draft-mode .lv-role-drop-row.role-drop-over{background:#f5f7ff;border-color:#5b6cf8;box-shadow:0 0 0 2px rgba(91,108,248,.12) inset;}
 .lv-card.draft-mode .lv-role-drop-row[data-pos="BM"].role-drop-over{background:#fff8eb;border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.12) inset;}
 .lv-role-drop-empty{display:inline-flex;align-items:center;height:22px;padding:0 8px;border:1px dashed #dfe3ee;border-radius:14px;background:#fbfcff;color:#aab0be;font-size:10.5px;font-weight:600;}
@@ -1370,7 +1372,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v110</span><script>window.__APP_VERSION=110;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v111</span><script>window.__APP_VERSION=111;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9613,12 +9615,12 @@ function buildCard(storeKey,emps,secKey,accent){
   // [MGR ONLY] __mgrOnly가 true면 매니저(MG) + 부매니저(BM)만 표시
   const _activePosKeys = (typeof __mgrOnly !== 'undefined' && __mgrOnly) ? ['MG','BM'] : POS_ORDER;
   _activePosKeys.forEach(pk=>{
-    if(!byPos[pk].length && !_showDraftRoleDrops) return;
-    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row${_showDraftRoleDrops?' lv-role-drop-row':''}" data-pos="${pk}">`;
+    // [INTERN SKIP] 인턴은 드롭 기능 불필요 - 실 인원 없으면 아예 표시 안 함
+    const _showDrop = _showDraftRoleDrops && pk !== 'IN';
+    if(!byPos[pk].length && !_showDrop) return;
+    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row${_showDrop?' lv-role-drop-row':''}" data-pos="${pk}">`;
     byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
-    if(_showDraftRoleDrops && !byPos[pk].length){
-      chips+=`<span class="lv-role-drop-empty">여기에 드롭하면 ${POS_LABEL[pk]}</span>`;
-    }
+    // 비어있어도 안내 텍스트/빈 공간 없이 얇은 드롭 영역만 유지
     chips+='</div>';
   });
   // 2단계: 비-재직 직원을 카드 하단에 상태(status)별로 묶어서 렌더링
