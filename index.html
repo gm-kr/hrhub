@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 96;
+  window.__APP_VERSION = 98;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 96);
+    var appVersion = String(window.__APP_VERSION || 98);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -150,7 +150,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
       'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH',
       'last_selected_store','layoutMode','lvCustomStores','lvMgrImpSlots',
       'lvMgrImpStoreOrder','lvStoreLinks','store_criteria_v1','__fbScheduleCache',
-      '__pendingStoreList','__lastPullResult'
+      'lvTestMemo','__pendingStoreList','__lastPullResult'
     ];
     if(!opts.preserveDraft) keys.push('layoutDraftData');
     ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(function(k){ keys.push('lvOrder_'+k); });
@@ -193,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=96">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=96">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=96">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=96">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=96">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=96">
-<link rel="icon" type="image/png" href="icon.png?v=96">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=96">
-<link rel="manifest" href="manifest.json?v=96">
+<link rel="apple-touch-icon" href="icon.png?v=98">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=98">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=98">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=98">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=98">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=98">
+<link rel="icon" type="image/png" href="icon.png?v=98">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=98">
+<link rel="manifest" href="manifest.json?v=98">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=96">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=96">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=98">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=98">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -599,6 +599,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-chip.role-BM{background:#fef8e7;color:#9a6a00;border-color:#fce8a0;}
 .lv-mgr-chip.role-HAUS{background:#fee2e2;color:#a91414;border-color:#fcb5b5;}
 .lv-mgr-chip-role{font-size:9px;opacity:.7;font-weight:500;margin-left:2px;}
+.lv-mgr-role-tools{display:inline-flex;align-items:center;gap:2px;margin-left:4px;padding-left:4px;border-left:1px solid rgba(0,0,0,.08);}
+.lv-mgr-role-btn{height:18px;min-width:22px;border:1px solid #dde1ee;background:#fff;color:#687087;border-radius:5px;padding:0 5px;font-size:9.5px;font-weight:800;line-height:16px;cursor:pointer;}
+.lv-mgr-role-btn:hover{border-color:#5b6cf8;color:#4d5df0;background:#f5f6ff;}
+.lv-mgr-role-btn.demote:hover{border-color:#e84040;color:#e84040;background:#fff0f0;}
+.lv-mgr-promote-wrap{display:inline-flex;align-items:center;gap:3px;margin-left:3px;padding:2px 4px;border:1px dashed #d9deeb;border-radius:8px;background:#fbfcff;max-width:100%;}
+.lv-mgr-promote-select{height:22px;max-width:118px;border:1px solid #e1e5f0;border-radius:6px;background:#fff;color:#4c5368;font-size:10.5px;font-weight:600;padding:0 4px;outline:none;}
+.lv-mgr-promote-select:focus{border-color:#5b6cf8;}
+.lv-mgr-promote-btn{height:22px;border:1px solid #e1e5f0;border-radius:6px;background:#fff;color:#5b6378;font-size:10px;font-weight:800;padding:0 6px;cursor:pointer;}
+.lv-mgr-promote-btn:hover{background:#eef0fe;border-color:#5b6cf8;color:#4d5df0;}
 
 /* 샌드박스 영역: 드래그 자유, 매장 행도 드래그 가능 */
 .lv-mgr-sandbox{margin-top:2px;background:#fffaf2;border:1px dashed #f4d2a6;border-radius:8px;padding:5px;}
@@ -622,6 +631,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-slot-store:hover{border-color:#5b6cf8;background:#eef0fe;}
 .lv-mgr-slot-store.dragging{opacity:.4;}
 .lv-mgr-slot-mgrs{display:flex;flex-wrap:wrap;gap:3px;flex:0 1 auto;min-width:0;align-items:center;}
+.lv-mgr-compare-section{background:#fff;border:1px solid #eaecf2;border-radius:8px;overflow:hidden;margin-bottom:8px;}
+.lv-mgr-compare-head{font-size:12px;font-weight:700;color:#1a1d23;background:#fafbff;padding:7px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #eaecf2;}
+.lv-mgr-compare-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;border-top:0;}
+.lv-mgr-compare-col{min-width:0;border-right:1px solid #edf0f6;background:#fff;}
+.lv-mgr-compare-col:last-child{border-right:none;background:#fffdf8;}
+.lv-mgr-compare-col-title{padding:6px 10px;font-size:11px;font-weight:700;color:#5b6378;background:#fafbff;border-bottom:1px solid #eef0f6;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.lv-mgr-compare-col-title.test{color:#d66b00;background:#fff7eb;}
+.lv-mgr-compare-col .lv-mgr-row-name{width:132px;}
+.lv-mgr-compare-col .lv-mgr-row{padding:5px 10px;}
+.lv-mgr-apply-view-btn{height:26px;border:1px solid #f0c47f;background:#fff8eb;color:#c35f00;border-radius:6px;padding:0 10px;font-size:11px;font-weight:700;cursor:pointer;}
+.lv-mgr-apply-view-btn:hover{background:#fff1d8;border-color:#e99b35;}
+.lv-test-memo-wrap{margin:12px 20px 0;background:#fff;border:1px solid #eaecf2;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;}
+.lv-test-memo-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 7px;background:#fffaf2;border-bottom:1px solid #f4eadc;}
+.lv-test-memo-title{font-size:12px;font-weight:800;color:#2a2f42;}
+.lv-test-memo-sub{font-size:10px;color:#9aa0b3;font-weight:500;}
+.lv-test-memo-textarea{width:100%;min-height:74px;max-height:180px;resize:vertical;border:0;outline:none;padding:10px 12px;font-family:inherit;font-size:12px;line-height:1.55;color:#2f3547;background:#fff;box-sizing:border-box;}
+.lv-test-memo-textarea::placeholder{color:#bdc2d0;}
+@media (max-width: 900px){
+  .lv-mgr-compare-grid{grid-template-columns:1fr;}
+  .lv-mgr-compare-col{border-right:none;border-bottom:1px solid #edf0f6;}
+  .lv-mgr-compare-col:last-child{border-bottom:none;}
+}
 
 .lv-card{background:#fff; border-radius:12px; border:1.5px solid #eaecf2; overflow:hidden; transition:all .2s; box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .lv-card:hover{border-color:#c8ccf0; box-shadow:0 4px 16px rgba(91,108,248,.10); transform:translateY(-1px);}
@@ -1314,7 +1345,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v096</span><script>window.__APP_VERSION=96;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v098</span><script>window.__APP_VERSION=98;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3532,6 +3563,7 @@ window.openMoveChannel = openMoveChannel;
     <div id="lv-main-layout">
       <div id="lv-content-area">
         <div id="lv-sb-wrap" class="lv-sb-wrap" style="margin:16px 20px 0"></div>
+        <div id="lv-test-memo-wrap" class="lv-test-memo-wrap" hidden></div>
         <div class="lv-scroll" id="lv-scroll"></div>
       </div>
       <div class="lv-pp-resizer" id="lv-pp-resizer" title="드래그해서 폭 조절"></div>
@@ -6325,7 +6357,15 @@ function lvReadLayout(key){
 function lvWriteLayout(key,data){localStorage.setItem(key,JSON.stringify(data||{}));}
 function lvActualSnapshot(){
   const map={};
-  EMPS.forEach(e=>{if(e&&e.id) map[e.id]={current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||''};});
+  EMPS.forEach(e=>{if(e&&e.id) map[e.id]={current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||'',position:e.position||''};});
+  return map;
+}
+function lvDraftSnapshotFromActual(){
+  const map={};
+  EMPS.forEach(e=>{
+    if(!e||!e.id) return;
+    map[e.id]={current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||'',position:e.position||''};
+  });
   return map;
 }
 function lvEnsureActualData(){
@@ -6368,6 +6408,7 @@ function lvEnsureDraftData(){
     if(!e||!e.id) return;
     if(!draft[e.id]){
       draft[e.id]=Object.assign({},actual[e.id]||{current_store:e.current_store||'',channel:e.channel||guessChannel(e.current_store||'')||''});
+      if(draft[e.id].position === undefined) draft[e.id].position = e.position || '';
       changed=true;
     } else if(validStoreIds && e.current_store){
       const cs=draft[e.id].current_store;
@@ -6404,12 +6445,139 @@ function lvViewEmp(emp){
   const copy=Object.assign({},emp);
   copy.current_store=lvEmpStore(emp);
   copy.channel=lvEmpChannel(emp);
+  if(lvMode === 'draft'){
+    const row=lvLayoutMap()[emp.id];
+    if(row && row.position !== undefined) copy.position = row.position;
+  }
   return copy;
 }
 function lvModeEmployees(){return EMPS.map(lvViewEmp);}
+function lvViewEmpForMode(emp, mode){
+  if(!emp) return emp;
+  const copy=Object.assign({}, emp);
+  if(mode === 'draft'){
+    const draft = lvEnsureDraftData();
+    const row = draft[emp.id];
+    copy.current_store = (row && row.current_store !== undefined) ? row.current_store : (emp.current_store || '');
+    copy.channel = (row && row.channel !== undefined) ? row.channel : (emp.channel || guessChannel(copy.current_store) || '');
+    copy.position = (row && row.position !== undefined) ? row.position : (emp.position || '');
+  } else {
+    copy.current_store = emp.current_store || '';
+    copy.channel = emp.channel || guessChannel(copy.current_store) || '';
+  }
+  return copy;
+}
+function lvEmployeesForMode(mode){
+  return EMPS.map(emp => lvViewEmpForMode(emp, mode));
+}
+function lvBuildSectionsForMode(mode, layoutStores){
+  const secs={FSMALL:{},DS:{},DFS:{},ATS:{},NUF:{},ETC:{}};
+  const stores = layoutStores || loadStoreList();
+  const layoutStoreIds = new Set((stores||[]).map(s=>s&&s.id).filter(Boolean));
+  (stores||[]).forEach(store=>{
+    if(typeof isPocketStoreEntry === 'function' && isPocketStoreEntry(store)) return;
+    const fakeEmp={id:'__store__',current_store:store.id,channel:store.channel||guessChannel(store.id),brand:store.brand||parseStoreName(store.id).brand||'GM',position:''};
+    const sec=lvSection(fakeEmp);
+    if(!secs[sec][store.id]) secs[sec][store.id]=[];
+  });
+  lvEmployeesForMode(mode).filter(emp=>getEmpStatus(emp)!=='deleted').forEach(emp=>{
+    const sk=emp.current_store||'미배정';
+    if(typeof isPocketStoreKey === 'function' && isPocketStoreKey(sk)) return;
+    if(!layoutStoreIds.has(sk)) return;
+    const sec=lvSection(emp);
+    if(!secs[sec][sk]) secs[sec][sk]=[];
+    secs[sec][sk].push(emp);
+  });
+  return secs;
+}
+const LV_TEST_MEMO_KEY='lvTestMemo';
+let __lvMemoTimer=null;
+function lvRenderTestMemo(){
+  const wrap=$('lv-test-memo-wrap');
+  if(!wrap) return;
+  if(lvMode !== 'draft'){
+    wrap.hidden = true;
+    wrap.innerHTML = '';
+    return;
+  }
+  const memo = localStorage.getItem(LV_TEST_MEMO_KEY) || '';
+  const safeMemo = (typeof escapeHtml === 'function')
+    ? escapeHtml(memo)
+    : String(memo).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  wrap.hidden = false;
+  wrap.innerHTML = `
+    <div class="lv-test-memo-head">
+      <div>
+        <div class="lv-test-memo-title">📝 운영팀 테스트 메모</div>
+        <div class="lv-test-memo-sub">테스트 배치에서만 표시 · 모든 기기 공유</div>
+      </div>
+      <span id="lv-test-memo-saved" class="lv-test-memo-sub">자동 저장</span>
+    </div>
+    <textarea class="lv-test-memo-textarea" id="lv-test-memo-input" placeholder="운영팀 테스트 중 확인할 내용, 전제, 요청사항 등을 자유롭게 적어주세요." oninput="lvSetTestMemo(this.value)">${safeMemo}</textarea>`;
+}
+function lvSetTestMemo(value){
+  try { localStorage.setItem(LV_TEST_MEMO_KEY, value || ''); } catch(_){}
+  const badge = $('lv-test-memo-saved');
+  if(badge) badge.textContent = '저장 중...';
+  clearTimeout(__lvMemoTimer);
+  __lvMemoTimer = setTimeout(()=>{
+    if(badge) badge.textContent = '자동 저장';
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  }, 350);
+}
+window.lvSetTestMemo = lvSetTestMemo;
+function lvMgrApplyDraftView(){
+  __mgrOnly = false;
+  lvSyncMgrButton();
+  _lvSyncMgrButtonsVisibility();
+  window.__layoutDraftDirty = true;
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  try { lvRender(); lvRenderSB(); } catch(_){}
+  if(typeof lvToast === 'function') lvToast('🧪 테스트 배치를 프로필 카드 화면에 반영했습니다.');
+}
+window.lvMgrApplyDraftView = lvMgrApplyDraftView;
+function lvMgrDraftRoleForStore(role, storeKey){
+  if(role === '매니저'){
+    const ch = (typeof guessChannel === 'function') ? guessChannel(storeKey || '') : '';
+    if(ch === 'HAUS' || String(storeKey||'').includes('하우스')) return 'HAUS 매니저';
+  }
+  return role;
+}
+function lvMgrSetDraftRole(empId, role){
+  const emp = EMPS.find(e=>e.id===empId);
+  if(!emp) return;
+  const draft = lvEnsureDraftData();
+  const prev = draft[empId] || {};
+  const storeKey = prev.current_store !== undefined ? prev.current_store : (emp.current_store || '');
+  const nextRole = lvMgrDraftRoleForStore(role, storeKey);
+  draft[empId] = Object.assign({}, prev, {
+    current_store: storeKey,
+    channel: prev.channel || emp.channel || guessChannel(storeKey) || '',
+    position: nextRole
+  });
+  lvWriteLayout(LV_DRAFT_KEY, draft);
+  window.__layoutDraftDirty = true;
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+  showSaved();
+  if(typeof lvToast === 'function') lvToast('🧪 ' + emp.name + ' → ' + nextRole + ' 테스트 반영');
+  try { lvRender(); lvRenderSB(); } catch(_){}
+}
+function lvMgrPromoteFromRow(btn, role){
+  const wrap = btn && btn.closest ? btn.closest('.lv-mgr-promote-wrap') : null;
+  const sel = wrap ? wrap.querySelector('.lv-mgr-promote-select') : null;
+  const empId = sel ? sel.value : '';
+  if(!empId){
+    if(typeof lvToast === 'function') lvToast('승격할 팀원을 선택해주세요.');
+    return;
+  }
+  lvMgrSetDraftRole(empId, role);
+}
+window.lvMgrSetDraftRole = lvMgrSetDraftRole;
+window.lvMgrPromoteFromRow = lvMgrPromoteFromRow;
 function lvSaveDraftMove(empId,storeKey){
   const draft=lvEnsureDraftData();
-  draft[empId]={current_store:storeKey,channel:guessChannel(storeKey)||''};
+  const prev=draft[empId]||{};
+  draft[empId]=Object.assign({}, prev, {current_store:storeKey,channel:guessChannel(storeKey)||prev.channel||''});
   lvWriteLayout(LV_DRAFT_KEY,draft);
   window.__layoutDraftDirty = true;
   // [SHARE] 운영팀 테스트도 모든 사용자에게 실시간 공유
@@ -6526,7 +6694,7 @@ function bindLvModeButtons(){
 }
 function lvResetDraft(){
   if(!confirm('테스트 배치 상태를 현재 실제 배치 기준으로 다시 불러올까요?\n(모든 사용자에게 공유됩니다)')) return;
-  lvWriteLayout(LV_DRAFT_KEY,lvEnsureActualData());
+  lvWriteLayout(LV_DRAFT_KEY,lvDraftSnapshotFromActual());
   window.__layoutDraftDirty = true;
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   lvToast('↩ 테스트 배치를 실제 배치 기준으로 초기화했습니다.');
@@ -6534,7 +6702,7 @@ function lvResetDraft(){
   lvRender(); lvRenderSB();
 }
 function lvApplyDraftToActual(){
-  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 이동 후 10일 지나면 이전 매장이 자동으로 근무이력에 기록됩니다.\n• 현재 배치 매장은 상세 화면에 "진행중"으로 자동 표시됩니다.')) return;
+  if(!confirm('현재 테스트 배치 상태를 정직원에게 적용하시겠습니까?\n\n• 정직원 소속 매장과 테스트 직책이 실제로 변경됩니다.\n• 파트타이머(PT)는 적용 대상에서 제외됩니다.\n• 이동 후 10일 지나면 이전 매장이 자동으로 근무이력에 기록됩니다.\n• 현재 배치 매장은 상세 화면에 "진행중"으로 자동 표시됩니다.')) return;
   let _ptSnapshot = null;
   try { _ptSnapshot = localStorage.getItem('hrPT_v1'); } catch(_){}
   const draft = lvEnsureDraftData();
@@ -6548,8 +6716,10 @@ function lvApplyDraftToActual(){
     if(!row) return;
     const prevStore = emp.current_store || '';
     const newStore  = row.current_store || '';
+    const newPosition = row.position !== undefined ? row.position : emp.position;
     emp.current_store = newStore;
     emp.channel = row.channel || guessChannel(newStore) || '';
+    if(newPosition !== undefined) emp.position = newPosition;
     lvSaveToHrEdits(emp);
     applied++;
     // [HISTORY] 이동한 경우 → 이전(떠난) 매장을 pending으로 저장. 현재 매장은 뷰에만 "진행중"
@@ -6805,9 +6975,11 @@ function lvSaveToHrEdits(emp){
   if(!emp||!emp.id) return;
   lvPersistEdit(emp.id, 'current_store', emp.current_store);
   lvPersistEdit(emp.id, 'channel', emp.channel);
+  if(emp.position !== undefined) lvPersistEdit(emp.id, 'position', emp.position);
   if(window.fbSetEdit){
     window.fbSetEdit(emp.id, 'current_store', emp.current_store);
     window.fbSetEdit(emp.id, 'channel', emp.channel);
+    if(emp.position !== undefined) window.fbSetEdit(emp.id, 'position', emp.position);
   }
   /* [FINAL FIX G] 배치 변경 후 이중 캐시 저장 보장 */
   try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e){}
@@ -6817,6 +6989,7 @@ function lvSaveToHrEdits(emp){
       const _hrFb = window.__HR_STRICT_SERVER ? {} : JSON.parse(localStorage.getItem('hr_fb_'+emp.id)||'{}');
       if(emp.current_store !== undefined) _hrFb.current_store = emp.current_store;
       if(emp.channel !== undefined) _hrFb.channel = emp.channel;
+      if(emp.position !== undefined) _hrFb.position = emp.position;
       localStorage.setItem('hr_fb_'+emp.id, JSON.stringify(_hrFb));
     }
   } catch(e){}
@@ -7960,38 +8133,32 @@ function lvRender(){
   const allEl=$('lv-cnt-ALL');if(allEl)allEl.textContent=total;
   const pill=$('lv-total-pill');if(pill)pill.textContent='전체 '+total+'명';
   lvRenderSB();
+  lvRenderTestMemo();
   ppRender();
   const scroll=$('lv-scroll'); if(!scroll) return;
   const frag = document.createDocumentFragment();
   const active=lvCurTab==='ALL'?['FSMALL','DS','DFS','ATS','NUF','ETC']:[lvCurTab];
   // ─── 매니저 현황 모드 ───
-  //   - 배치현황 모드(actual): 상단 overview만 (읽기 전용)
-  //   - 운영팀 테스트 모드(draft): 상단 overview (편집 가능) + 하단 중요 매장 샌드박스 (매니저+매장 자유 드래그)
+  //   - 배치현황 모드(actual): 기존 매니저 현황 + 하단 중요 매장 모음 (읽기 전용)
+  //   - 운영팀 테스트 모드(draft): 왼쪽 현재 배치(actual) / 오른쪽 테스트 배치(draft) 비교
   if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
     const isEditMode = (lvMode === 'draft');
-    const readOnly = !isEditMode;
-    // 매니저 현황에서 표시할 섹션 필터링
-    // - 육아휴직(ETC)은 항상 제외 (매니저 검토 무관)
-    // - 운영팀 테스트 모드에선 ATS/NUF도 제외 (운영팀 정직원 검토에 집중)
-    // - 배치현황 모드에선 ATS/NUF는 메인 그리드에서 빼서 별도 하단 블록으로 표시
-    const mainSecs = active.filter(s => {
-      if(s === 'ETC') return false;
-      if(isEditMode && (s === 'ATS' || s === 'NUF')) return false;
-      if(!isEditMode && (s === 'ATS' || s === 'NUF')) return false; // 배치현황도 메인에서 빼고 아래에서 따로
-      return true;
-    });
-    const tailSecs = isEditMode ? [] : active.filter(s => s === 'ATS' || s === 'NUF');
-
-    // ① 상단 overview: 모든 매장 매니저/부매니저
-    const overviewBlock = document.createElement('div');
-    overviewBlock.className='lv-mgr-pageblock';
-    const title = isEditMode ? '🧪 매니저 현황 (운영팀 테스트 · 편집 가능)' : '📋 매니저 현황 (배치현황 · 읽기 전용)';
-    const subtitle = isEditMode ? '매니저 칩을 다른 매장으로 드래그하면 즉시 반영됩니다' : '운영팀 테스트 모드에서 편집할 수 있어요';
-    overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">${title}<span class="lv-mgr-pageblock-sub">${subtitle}</span></div>`;
-    const grid2 = document.createElement('div');
-    grid2.className='lv-mgr-grid2';
-    overviewBlock.appendChild(grid2);
-    const _buildSecCard = (secKey) => {
+    const mgrSecs = active.filter(s => s !== 'ETC');
+    const actualSecs = isEditMode ? lvBuildSectionsForMode('actual', layoutStores) : secs;
+    const draftSecs  = isEditMode ? lvBuildSectionsForMode('draft',  layoutStores) : secs;
+    const collectMaps = (sourceSecs) => {
+      const storeMap = {}, secMap = {};
+      Object.keys(sourceSecs||{}).forEach(secKey=>{
+        Object.keys(sourceSecs[secKey]||{}).forEach(k=>{
+          storeMap[k] = sourceSecs[secKey][k];
+          secMap[k] = secKey;
+        });
+      });
+      return {storeMap, secMap};
+    };
+    const actualMaps = collectMaps(actualSecs);
+    const draftMaps = collectMaps(draftSecs);
+    const _buildActualSecCard = (secKey) => {
       const cfg=SEC_CFG[secKey];
       const stores=secs[secKey]||{};
       const allKeys=Object.keys(stores);
@@ -8012,68 +8179,107 @@ function lvRender(){
       sec.innerHTML = `<div class="lv-mgr-sec-header"><div class="lv-sec-dot" style="background:${cfg.dot}"></div><span>${cfg.icon} ${cfg.label}</span><span class="lv-mgr-sec-meta">${keys.length}개 · 매니저 ${mgrCount}</span></div>`;
       const table = document.createElement('div');
       table.className='lv-mgr-table';
-      keys.forEach(k => table.appendChild(buildMgrRow(k, stores[k], secKey, cfg.accent, readOnly, false)));
+      keys.forEach(k => table.appendChild(buildMgrRow(k, stores[k], secKey, cfg.accent, true, false)));
       sec.appendChild(table);
       return sec;
     };
-    mainSecs.forEach(secKey => { const card = _buildSecCard(secKey); if(card) grid2.appendChild(card); });
-    frag.appendChild(overviewBlock);
-
-    // ①-2 배치현황 모드: ATS/NUF는 별도 하단 블록으로 (작게)
-    if(tailSecs.length){
-      const tailBlock = document.createElement('div');
-      tailBlock.className = 'lv-mgr-pageblock';
-      tailBlock.innerHTML = `<div class="lv-mgr-pageblock-title" style="font-size:11.5px;color:#7a8299">🔻 기타 브랜드 (ATS · NUF)</div>`;
-      const tailGrid = document.createElement('div');
-      tailGrid.className = 'lv-mgr-grid2';
-      tailBlock.appendChild(tailGrid);
-      tailSecs.forEach(secKey => { const card = _buildSecCard(secKey); if(card) tailGrid.appendChild(card); });
-      frag.appendChild(tailBlock);
-    }
-
-    // ② 하단: 운영팀 테스트 + 매니저 현황일 때만 중요 매장 영역
-    //   - 좌측: 현재 배치 (읽기 전용, 참고용)
-    //   - 우측: 자유 재배치 영역 (슬롯 모델 - 매장 드래그시 매니저는 슬롯에 고정)
-    if(isEditMode && typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.length){
-      const sandboxBlock = document.createElement('div');
-      sandboxBlock.className='lv-mgr-pageblock';
-      sandboxBlock.innerHTML = `<div class="lv-mgr-pageblock-title">⭐ 중요 매장 — 자유 재배치 영역<span class="lv-mgr-pageblock-sub">좌측 참고하며 우측에서 자유롭게 드래그</span></div>`;
-      // 모든 섹션의 매장→emps 매핑
-      const allStoresMap = {};
-      const allSecMap = {};
-      active.forEach(secKey=>{
-        const stores=secs[secKey]||{};
-        Object.keys(stores).forEach(k=>{ allStoresMap[k] = stores[k]; allSecMap[k] = secKey; });
+    const _buildCompareSection = (secKey, storeKeys, titleOverride) => {
+      const cfg=SEC_CFG[secKey] || SEC_CFG.FSMALL;
+      const keys=(storeKeys&&storeKeys.length?storeKeys:Array.from(new Set([
+        ...Object.keys(actualSecs[secKey]||{}),
+        ...Object.keys(draftSecs[secKey]||{})
+      ])));
+      if(!keys.length) return null;
+      const sorted = titleOverride ? keys : sortedStoreKeys(secKey, keys);
+      const section=document.createElement('div');
+      section.className='lv-mgr-compare-section';
+      const actualCount=sorted.reduce((sum,k)=>sum+((actualMaps.storeMap[k]||[]).filter(e=>{
+        const pk=lvPosKey(e.position); return (pk==='MG'||pk==='BM') && getEmpStatus(e)==='active';
+      }).length),0);
+      const draftCount=sorted.reduce((sum,k)=>sum+((draftMaps.storeMap[k]||[]).filter(e=>{
+        const pk=lvPosKey(e.position); return (pk==='MG'||pk==='BM') && getEmpStatus(e)==='active';
+      }).length),0);
+      section.innerHTML = `<div class="lv-mgr-compare-head"><div class="lv-sec-dot" style="background:${cfg.dot}"></div><span>${titleOverride || (cfg.icon+' '+cfg.label)}</span><span class="lv-mgr-sec-meta">${sorted.length}개 · 현재 ${actualCount} / 테스트 ${draftCount}</span></div>`;
+      const grid=document.createElement('div');
+      grid.className='lv-mgr-compare-grid';
+      const left=document.createElement('div');
+      left.className='lv-mgr-compare-col';
+      left.innerHTML='<div class="lv-mgr-compare-col-title">📋 현재 배치 <span>읽기 전용</span></div>';
+      const leftTable=document.createElement('div');
+      leftTable.className='lv-mgr-table';
+      sorted.forEach(k=>{
+        const rowSec=actualMaps.secMap[k] || draftMaps.secMap[k] || secKey;
+        const rowCfg=SEC_CFG[rowSec] || cfg;
+        leftTable.appendChild(buildMgrRow(k, actualMaps.storeMap[k] || [], rowSec, rowCfg.accent, true, false));
       });
-      // 2단 그리드 컨테이너
-      const split = document.createElement('div');
-      split.className = 'lv-mgr-imp-split';
-      // ⓐ 좌측 (참고 - 읽기 전용)
-      const leftCol = document.createElement('div');
-      leftCol.className = 'lv-mgr-imp-col';
-      leftCol.innerHTML = `<div class="lv-mgr-imp-col-title">📋 현재 배치 (참고)</div>`;
-      const leftTable = document.createElement('div');
-      leftTable.className = 'lv-mgr-table';
-      // 좌측은 IMPORTANT_STORE_IDS 원본 순서 + emp.current_store 기준
-      IMPORTANT_STORE_IDS.forEach(storeId=>{
-        const emps = allStoresMap[storeId] || [];
-        const secKey = allSecMap[storeId] || 'FSMALL';
-        const cfg = SEC_CFG[secKey] || SEC_CFG.FSMALL;
-        leftTable.appendChild(buildMgrRow(storeId, emps, secKey, cfg.accent, /*readonly*/ true, /*sandbox*/ false));
+      left.appendChild(leftTable);
+      const right=document.createElement('div');
+      right.className='lv-mgr-compare-col';
+      right.innerHTML='<div class="lv-mgr-compare-col-title test">🧪 테스트 배치 <span>드래그 가능</span></div>';
+      const rightTable=document.createElement('div');
+      rightTable.className='lv-mgr-table';
+      sorted.forEach(k=>{
+        const rowSec=draftMaps.secMap[k] || actualMaps.secMap[k] || secKey;
+        const rowCfg=SEC_CFG[rowSec] || cfg;
+        rightTable.appendChild(buildMgrRow(k, draftMaps.storeMap[k] || [], rowSec, rowCfg.accent, false, false));
       });
-      leftCol.appendChild(leftTable);
-      split.appendChild(leftCol);
-      // ⓑ 우측 (자유 재배치 - 슬롯 모델)
-      const rightCol = document.createElement('div');
-      rightCol.className = 'lv-mgr-imp-col lv-mgr-imp-col-right';
-      rightCol.innerHTML = `<div class="lv-mgr-imp-col-title test">🧪 자유 재배치 (즉시 저장)</div>`;
-      const rightContainer = document.createElement('div');
-      rightContainer.className = 'lv-mgr-sandbox';
-      rightContainer.appendChild(buildImpSlotsTable(allStoresMap, allSecMap));
-      rightCol.appendChild(rightContainer);
-      split.appendChild(rightCol);
-      sandboxBlock.appendChild(split);
-      frag.appendChild(sandboxBlock);
+      right.appendChild(rightTable);
+      grid.appendChild(left);
+      grid.appendChild(right);
+      section.appendChild(grid);
+      return section;
+    };
+
+    if(!isEditMode){
+      const overviewBlock = document.createElement('div');
+      overviewBlock.className='lv-mgr-pageblock';
+      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">📋 매니저 현황 (배치현황 · 읽기 전용)<span class="lv-mgr-pageblock-sub">운영팀 테스트 모드에서만 편집 가능</span></div>`;
+      const grid2 = document.createElement('div');
+      grid2.className='lv-mgr-grid2';
+      overviewBlock.appendChild(grid2);
+      mgrSecs.forEach(secKey => { const card = _buildActualSecCard(secKey); if(card) grid2.appendChild(card); });
+      frag.appendChild(overviewBlock);
+      if(typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.length){
+        const impKeys = IMPORTANT_STORE_IDS.filter(id => actualMaps.storeMap[id] !== undefined);
+        if(impKeys.length){
+          const impBlock = document.createElement('div');
+          impBlock.className='lv-mgr-pageblock';
+          impBlock.innerHTML = `<div class="lv-mgr-pageblock-title">⭐ 중요 매장 매니저 현황<span class="lv-mgr-pageblock-sub">중요 매장만 따로 모아 보기</span></div>`;
+          const impSection=document.createElement('div');
+          impSection.className='lv-mgr-section';
+          impSection.innerHTML='<div class="lv-mgr-sec-header"><span>⭐ 중요 매장</span><span class="lv-mgr-sec-meta">'+impKeys.length+'개</span></div>';
+          const impTable=document.createElement('div');
+          impTable.className='lv-mgr-table';
+          impKeys.forEach(storeId=>{
+            const secKey=actualMaps.secMap[storeId] || 'FSMALL';
+            const cfg=SEC_CFG[secKey] || SEC_CFG.FSMALL;
+            impTable.appendChild(buildMgrRow(storeId, actualMaps.storeMap[storeId] || [], secKey, cfg.accent, true, false));
+          });
+          impSection.appendChild(impTable);
+          impBlock.appendChild(impSection);
+          frag.appendChild(impBlock);
+        }
+      }
+    } else {
+      const overviewBlock = document.createElement('div');
+      overviewBlock.className='lv-mgr-pageblock';
+      overviewBlock.innerHTML = `<div class="lv-mgr-pageblock-title">🧪 매니저 현황 (운영팀 테스트)<span class="lv-mgr-pageblock-sub">왼쪽은 실제 배치, 오른쪽 테스트 배치만 드래그 가능</span><button class="lv-mgr-apply-view-btn" onclick="lvMgrApplyDraftView()">프로필 배치에 반영</button></div>`;
+      mgrSecs.forEach(secKey=>{
+        const section=_buildCompareSection(secKey);
+        if(section) overviewBlock.appendChild(section);
+      });
+      frag.appendChild(overviewBlock);
+      if(typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.length){
+        const impKeys = IMPORTANT_STORE_IDS.filter(id => actualMaps.storeMap[id] !== undefined || draftMaps.storeMap[id] !== undefined);
+        if(impKeys.length){
+          const impBlock=document.createElement('div');
+          impBlock.className='lv-mgr-pageblock';
+          impBlock.innerHTML='<div class="lv-mgr-pageblock-title">⭐ 중요 매장 비교<span class="lv-mgr-pageblock-sub">위 전체 매장과 같은 테스트 배치 데이터로 연동</span></div>';
+          const impSection=_buildCompareSection('FSMALL', impKeys, '⭐ 중요 매장');
+          if(impSection) impBlock.appendChild(impSection);
+          frag.appendChild(impBlock);
+        }
+      }
     }
   } else {
     // 일반(매니저 모드 아님): 기존 카드 그리드 뷰
@@ -8333,12 +8539,13 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
       }
       return;
     }
-    // 매니저 칩 드롭 - 즉시 EMPS 업데이트 (actual+draft 동시)
+    // 매니저 칩 드롭 - actual/draft 모드별로 저장 범위 분리
     if(lvDragType !== 'chip' || !lvDragId) return;
     const emp = EMPS.find(x => x.id === lvDragId);
     if(!emp || lvEmpStore(emp) === storeKey) return;
     const _prevStore = lvEmpStore(emp) || emp.current_store || '';
-    if(_prevStore && _prevStore !== storeKey){
+    const isMgrDraftMove = (typeof __mgrOnly !== 'undefined' && __mgrOnly && lvMode === 'draft');
+    if(_prevStore && _prevStore !== storeKey && !isMgrDraftMove){
       emp._prev_store = _prevStore;
       if(!window.__fbEdits) window.__fbEdits={};
       if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
@@ -8346,23 +8553,22 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
       if(window.fbSetEdit) window.fbSetEdit(emp.id, '_prev_store', _prevStore);
       try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
     }
-    // 매니저 모드: 즉시 actual+draft 양쪽 저장 (전체 적용 불필요)
-    // 일반 모드(전체 직원): 기존 흐름 유지 - draft 모드면 draft에만, actual 모드면 actual에만
+    // 매니저 현황:
+    // - 운영팀 테스트(draft)는 테스트 배치만 변경한다.
+    // - 배치현황(actual)은 읽기 전용으로만 들어오지만, 안전하게 actual 저장 흐름을 유지한다.
     if(typeof __mgrOnly !== 'undefined' && __mgrOnly){
-      const _prev = emp.current_store || '';
-      emp.current_store = storeKey;
-      emp.channel = guessChannel(storeKey) || emp.channel || '';
-      lvSaveToHrEdits(emp);
-      try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prev, storeKey); } catch(_){}
-      try {
-        const actual = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+      if(lvMode === 'draft'){
+        lvSaveDraftMove(emp.id, storeKey);
+      } else {
+        const _prev = emp.current_store || '';
+        emp.current_store = storeKey;
+        emp.channel = guessChannel(storeKey) || emp.channel || '';
+        lvSaveToHrEdits(emp);
+        try { if(window.trackStoreChange) window.trackStoreChange(emp.id, _prev, storeKey); } catch(_){}
+        const actual = lvEnsureActualData();
         actual[emp.id] = {current_store: emp.current_store, channel: emp.channel};
-        localStorage.setItem('layoutActualData', JSON.stringify(actual));
-        const draft = JSON.parse(localStorage.getItem('layoutDraftData')||'{}');
-        draft[emp.id] = {current_store: emp.current_store, channel: emp.channel};
-        localStorage.setItem('layoutDraftData', JSON.stringify(draft));
-      } catch(_){}
-      try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+        lvWriteLayout(LV_ACTUAL_KEY, actual);
+      }
     } else if(lvMode==='draft'){
       lvSaveDraftMove(emp.id, storeKey);
     } else {
@@ -8408,6 +8614,9 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
   });
   const nm = lvStoreName(storeKey);
   const rg = lvRegion(storeKey);
+  const canRoleEdit = !readonly && (typeof __mgrOnly !== 'undefined' && __mgrOnly) && lvMode === 'draft';
+  const escAttr=(typeof escapeAttr==='function') ? escapeAttr : (v)=>String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const escText=(v)=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const chipsHtml = mgrs.length
     ? mgrs.map(emp => {
         const pk = lvPosKey(emp.position);
@@ -8415,19 +8624,38 @@ function buildMgrRow(storeKey, emps, secKey, accent, readonly, sandbox){
         const roleCls = isHaus ? 'role-HAUS' : ('role-' + pk);
         const roleLbl = isHaus ? 'HAUS매' : (pk === 'MG' ? '매' : '부매');
         const dragAttr = readonly ? '' : ' draggable="true"';
-        return `<div class="lv-mgr-chip ${roleCls}"${dragAttr} data-id="${emp.id}" title="${emp.name} · ${emp.position||''}">
-          <span>${emp.name||''}</span>
+        const roleTools = canRoleEdit ? `<span class="lv-mgr-role-tools">
+          <button class="lv-mgr-role-btn" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','매니저')" title="매니저로 테스트">매</button>
+          <button class="lv-mgr-role-btn" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','부매니저')" title="부매니저로 테스트">부</button>
+          <button class="lv-mgr-role-btn demote" onclick="event.stopPropagation();lvMgrSetDraftRole('${emp.id}','팀원')" title="팀원으로 테스트">팀</button>
+        </span>` : '';
+        return `<div class="lv-mgr-chip ${roleCls}"${dragAttr} data-id="${emp.id}" title="${escAttr(emp.name)} · ${escAttr(emp.position||'')}">
+          <span>${escText(emp.name||'')}</span>
           <span class="lv-mgr-chip-role">${roleLbl}</span>
+          ${roleTools}
         </div>`;
       }).join('')
     : '<span class="lv-mgr-row-empty">매니저 미배치</span>';
+  const promoteCandidates = canRoleEdit ? emps.filter(e => {
+    const pk = lvPosKey(e.position);
+    return pk === 'SF' && getEmpStatus(e) === 'active';
+  }).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko')) : [];
+  const promoteHtml = canRoleEdit && promoteCandidates.length ? `
+    <span class="lv-mgr-promote-wrap" onclick="event.stopPropagation()">
+      <select class="lv-mgr-promote-select" title="승격할 팀원 선택">
+        <option value="">＋ 승격</option>
+        ${promoteCandidates.map(e=>`<option value="${escAttr(e.id)}">${escText(e.name||'')}</option>`).join('')}
+      </select>
+      <button class="lv-mgr-promote-btn" onclick="event.stopPropagation();lvMgrPromoteFromRow(this,'매니저')" title="선택 직원을 매니저로 테스트">매</button>
+      <button class="lv-mgr-promote-btn" onclick="event.stopPropagation();lvMgrPromoteFromRow(this,'부매니저')" title="선택 직원을 부매니저로 테스트">부</button>
+    </span>` : '';
   row.innerHTML = `
     <div class="lv-mgr-row-name">
       ${(typeof IMPORTANT_STORE_IDS !== 'undefined' && IMPORTANT_STORE_IDS.includes(storeKey)) ? '<span style="color:#e07b12;font-size:11px" title="중요 매장">⭐</span>' : ''}
       <span>${nm}</span>
       ${rg ? `<span class="lv-mgr-row-region">${rg}</span>` : ''}
     </div>
-    <div class="lv-mgr-row-chips">${chipsHtml}</div>
+    <div class="lv-mgr-row-chips">${chipsHtml}${promoteHtml}</div>
   `;
   // 칩 드래그/클릭 핸들러 (readonly 아닐 때만 드래그)
   row.querySelectorAll('.lv-mgr-chip').forEach(chip => {
@@ -10511,9 +10739,10 @@ window.fbSetSchedule = async function(data) {
       if(typeof d.deletedEmps   === 'string') localStorage.setItem('hrDeletedEmpIds_v1', d.deletedEmps);
       if(typeof d.sbBase        === 'string') localStorage.setItem('lvSbBaseOverrides', d.sbBase);
       if(typeof d.storeLinks    === 'string') localStorage.setItem('lvStoreLinks', d.storeLinks);
+      if(typeof d.testMemo      === 'string') localStorage.setItem('lvTestMemo', d.testMemo);
       // [RACE FIX] 부트스트랩 시 받은 값을 lastSharedSnap에 캐싱
       window.__lastSharedSnap = window.__lastSharedSnap || {};
-      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks'].forEach(k=>{
+      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
         if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
         if(typeof d[k] === 'string') window.__lastSharedSnap[k] = d[k];
       });
@@ -10854,7 +11083,8 @@ window.__flushAllPending = function(){
       const deletedEmps  = localStorage.getItem('hrDeletedEmpIds_v1') || '[]';
       const _last = window.__lastSharedSnap || {};
       const sbBase = localStorage.getItem('lvSbBaseOverrides') || '{}';
-      const cur = { storeBase, mgrImpSlots, mgrImpOrder, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase };
+      const testMemo = localStorage.getItem('lvTestMemo') || '';
+      const cur = { storeBase, mgrImpSlots, mgrImpOrder, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase, testMemo };
       if(window.__layoutDraftDirty === true){
         cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
       }
@@ -11003,6 +11233,9 @@ window._mobilePoll = async function(){
       if(typeof data.storeLinks === 'string' && localStorage.getItem('lvStoreLinks') !== data.storeLinks){
         localStorage.setItem('lvStoreLinks', data.storeLinks); changed = true;
       }
+      if(typeof data.testMemo === 'string' && localStorage.getItem('lvTestMemo') !== data.testMemo){
+        localStorage.setItem('lvTestMemo', data.testMemo); changed = true;
+      }
       if(typeof data.deletedStores === 'string' && localStorage.getItem('lvDeletedStores') !== data.deletedStores){
         localStorage.setItem('lvDeletedStores', data.deletedStores); changed = true;
       }
@@ -11146,7 +11379,7 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
             storeBase:'lvStoreBaseOverrides', mgrImpSlots:'lvMgrImpSlots',
             mgrImpOrder:'lvMgrImpStoreOrder', layoutDraft:'layoutDraftData',
             deletedStores:'lvDeletedStores', deletedEmps:'hrDeletedEmpIds_v1',
-            sbBase:'lvSbBaseOverrides', storeLinks:'lvStoreLinks'
+            sbBase:'lvSbBaseOverrides', storeLinks:'lvStoreLinks', testMemo:'lvTestMemo'
           };
           Object.keys(map).forEach(k => {
             if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
@@ -11389,7 +11622,8 @@ window.fbSetShared = function(){
         deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
         deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]',
         sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}',
-        storeLinks:   localStorage.getItem('lvStoreLinks')         || '{}'
+        storeLinks:   localStorage.getItem('lvStoreLinks')         || '{}',
+        testMemo:     localStorage.getItem('lvTestMemo')           || ''
       };
       if(window.__layoutDraftDirty === true){
         cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
@@ -11444,7 +11678,7 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     const skipIncomingLayoutDraft = !(window.__isStandalone || window.__isIOSStandaloneEarly) && incomingVer > 0 && incomingVer < DRAFT_SAFE_VERSION;
     if(skipIncomingLayoutDraft) console.warn('[SHARED] 옛 클라이언트(v'+incomingVer+') layoutDraft 무시');
     // [RACE FIX] 받은 값을 lastSharedSnap에 캐싱 (다음 push 시 비교용)
-    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks'].forEach(k=>{
+    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
       if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
       if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
     });
@@ -11542,6 +11776,12 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     if(typeof data.storeLinks === 'string'){
       if(localStorage.getItem('lvStoreLinks') !== data.storeLinks){
         localStorage.setItem('lvStoreLinks', data.storeLinks);
+        needRerender = true;
+      }
+    }
+    if(typeof data.testMemo === 'string'){
+      if(localStorage.getItem('lvTestMemo') !== data.testMemo){
+        localStorage.setItem('lvTestMemo', data.testMemo);
         needRerender = true;
       }
     }
