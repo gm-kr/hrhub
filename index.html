@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 116;
+  window.__APP_VERSION = 118;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -131,7 +131,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 116);
+    var appVersion = String(window.__APP_VERSION || 118);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -148,7 +148,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
       'lvStoreBaseOverrides','lvSbBaseOverrides','store_list_v2',
       'lvDeletedStores','hrDeletedEmpIds_v1','hrPT_v1','hrP',
       'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH',
-      'last_selected_store','layoutMode','lvCustomStores','lvMgrImpSlots','lvMgrSandboxDraft',
+      'last_selected_store','layoutMode','lvCustomStores','lvMgrImpSlots','lvMgrSandboxDraft','lvMgrSandboxText',
       'lvMgrImpStoreOrder','lvStoreLinks','store_criteria_v1','__fbScheduleCache',
       'lvTestMemo','__pendingStoreList','__lastPullResult'
     ];
@@ -193,29 +193,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=116">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=116">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=116">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=116">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=116">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=116">
-<link rel="icon" type="image/png" href="icon.png?v=116">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=116">
-<link rel="manifest" href="manifest.json?v=116">
+<link rel="apple-touch-icon" href="icon.png?v=118">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=118">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=118">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=118">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=118">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=118">
+<link rel="icon" type="image/png" href="icon.png?v=118">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=118">
+<link rel="manifest" href="manifest.json?v=118">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=116">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=116">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=118">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=118">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -628,6 +628,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-role-text-input::placeholder{color:#bdc2d0;}
 .lv-mgr-role-text-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
 .lv-mgr-text-row.drag-over .lv-mgr-role-text-input{border-color:#e07b12;background:#fff8eb;}
+.lv-mgr-role-slot-list{display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+.lv-mgr-role-slot-input{width:96px;height:27px;border:1px solid #e1e5f0;border-radius:7px;background:#fff;color:#2f3547;font-size:11px;font-family:inherit;padding:0 7px;outline:none;}
+.lv-mgr-role-slot-input::placeholder{color:#bdc2d0;}
+.lv-mgr-role-slot-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
+.lv-mgr-text-row.drag-over .lv-mgr-role-slot-input{border-color:#e07b12;background:#fff8eb;}
 .lv-mgr-role-menu{position:fixed;z-index:2147483647;background:#fff;border:1px solid #dde1ee;border-radius:10px;box-shadow:0 10px 32px rgba(0,0,0,.16);padding:6px;min-width:160px;display:none;}
 .lv-mgr-role-menu-title{font-size:11px;font-weight:800;color:#2a2f42;padding:6px 8px 7px;border-bottom:1px solid #eef0f6;margin-bottom:4px;white-space:nowrap;}
 .lv-mgr-role-menu-btn{display:flex;width:100%;height:30px;align-items:center;justify-content:space-between;border:0;background:#fff;color:#3a4053;border-radius:7px;padding:0 9px;font-size:12px;font-weight:700;cursor:pointer;text-align:left;}
@@ -1401,7 +1406,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v116</span><script>window.__APP_VERSION=116;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v118</span><script>window.__APP_VERSION=118;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6573,9 +6578,11 @@ let lvPPWidth = parseInt(localStorage.getItem('lvPPWidth')||'320',10);
 const LV_ACTUAL_KEY='layoutActualData';
 const LV_DRAFT_KEY='layoutDraftData';
 const LV_MGR_DRAFT_KEY='lvMgrSandboxDraft';
+const LV_MGR_TEXT_KEY='lvMgrSandboxText';
 let lvMode = 'actual'; // 항상 배치현황으로 시작. 운영팀 테스트는 사용자가 명시적 클릭해야 진입
 let __mgrSandboxDirty = false;
 let __lvMgrSandboxMem = null;
+let __lvMgrTextMem = null;
 function lvReadMgrDraftData(){
   try{
     const raw = localStorage.getItem(LV_MGR_DRAFT_KEY);
@@ -6636,6 +6643,40 @@ function lvWriteMgrDraftData(data){
       return false;
     }
   }
+}
+function lvReadMgrTextDraft(){
+  try{
+    const raw=localStorage.getItem(LV_MGR_TEXT_KEY);
+    if(!raw && __lvMgrTextMem) return __lvMgrTextMem;
+    const saved=raw ? JSON.parse(raw) : {};
+    if(saved && typeof saved === 'object'){
+      __lvMgrTextMem = saved;
+      return saved;
+    }
+  }catch(_){}
+  return __lvMgrTextMem || {};
+}
+function lvWriteMgrTextDraft(data){
+  const next=(data && typeof data === 'object') ? data : {};
+  __lvMgrTextMem = next;
+  const json=JSON.stringify(next);
+  try{
+    localStorage.setItem(LV_MGR_TEXT_KEY, json);
+    return true;
+  }catch(e){
+    try{
+      localStorage.removeItem(LV_MGR_TEXT_KEY);
+      localStorage.setItem(LV_MGR_TEXT_KEY, json);
+      return true;
+    }catch(e2){
+      console.warn('[lvMgrSandboxText] localStorage 저장 생략 - 메모리 초안 사용', e2 && (e2.message || e2.name));
+      return false;
+    }
+  }
+}
+function lvClearMgrTextDraft(){
+  __lvMgrTextMem = {};
+  try{ localStorage.removeItem(LV_MGR_TEXT_KEY); }catch(_){}
 }
 function lvReadLayout(key){
   if(key === LV_MGR_DRAFT_KEY) return lvReadMgrDraftData();
@@ -6751,6 +6792,8 @@ function lvSyncMgrDraftFromDraft(){
   const source=lvEnsureDraftData();
   const copy=JSON.parse(JSON.stringify(source||{}));
   lvWriteLayout(LV_MGR_DRAFT_KEY, copy);
+  lvClearMgrTextDraft();
+  if(typeof __mgrInvalidateRoleIndex === 'function') __mgrInvalidateRoleIndex();
   return copy;
 }
 function lvLayoutMap(){return lvMode==='draft'?lvEnsureDraftData():lvEnsureActualData();}
@@ -6899,6 +6942,8 @@ window.lvSetTestMemo = lvSetTestMemo;
 window.lvSetTestMemoSlot = lvSetTestMemoSlot;
 function lvMgrApplyDraftView(){
   try { if(typeof lvMgrCommitFreeTextInputs === 'function') lvMgrCommitFreeTextInputs(); } catch(_){}
+  let textReport=null;
+  try { if(typeof lvMgrApplyFreeTextToDraft === 'function') textReport=lvMgrApplyFreeTextToDraft({silent:true}); } catch(_){}
   const mgrDraft = lvEnsureMgrDraftData();
   lvWriteLayout(LV_DRAFT_KEY, JSON.parse(JSON.stringify(mgrDraft||{})));
   __mgrSandboxDirty = false;
@@ -6908,7 +6953,10 @@ function lvMgrApplyDraftView(){
   window.__layoutDraftDirty = true;
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   try { lvRender(); lvRenderSB(); } catch(_){}
-  if(typeof lvToast === 'function') lvToast('🧪 자유배치의 매장/직책을 운영팀 테스트 배치에 반영했습니다.');
+  if(typeof lvToast === 'function'){
+    const missCount=textReport && textReport.misses ? [...new Set(textReport.misses)].length : 0;
+    lvToast(missCount ? ('🧪 반영 완료 · 매칭 안 된 이름 '+missCount+'개 확인 필요') : '🧪 자유배치의 매장/직책을 운영팀 테스트 배치에 반영했습니다.');
+  }
 }
 window.lvMgrApplyDraftView = lvMgrApplyDraftView;
 function lvMgrResetFreeDraft(){
@@ -7223,16 +7271,26 @@ function lvMgrDirectEmpForMode(emp, mode){
   copy.position = row.position !== undefined ? row.position : (emp.position||'');
   return copy;
 }
+function lvMgrDirectEmpFromMap(emp, map){
+  if(!emp) return emp;
+  const copy=Object.assign({}, emp);
+  const row=(map&&map[emp.id]) || {};
+  copy.current_store = row.current_store !== undefined ? row.current_store : (emp.current_store||'');
+  copy.channel = row.channel !== undefined ? row.channel : (emp.channel || guessChannel(copy.current_store) || '');
+  copy.position = row.position !== undefined ? row.position : (emp.position||'');
+  return copy;
+}
 function lvMgrDirectSections(mode, stores){
   const secs={FSMALL:{},DS:{},DFS:{},ATS:{},NUF:{},ETC:{}};
   const layoutStores=(stores||[]).filter(s=>s&&s.id && !(typeof isPocketStoreEntry==='function' && isPocketStoreEntry(s)));
   const storeIds=new Set(layoutStores.map(s=>s.id));
+  const modeMap = mode === 'mgrDraft' ? lvEnsureMgrDraftData() : (mode === 'draft' ? lvEnsureDraftData() : lvEnsureActualData());
   layoutStores.forEach(store=>{
     const fake={current_store:store.id,channel:store.channel||guessChannel(store.id),brand:store.brand||parseStoreName(store.id).brand||'GM',position:''};
     const sec=lvSection(fake);
     if(!secs[sec][store.id]) secs[sec][store.id]=[];
   });
-  EMPS.map(emp=>lvMgrDirectEmpForMode(emp, mode)).forEach(emp=>{
+  EMPS.map(emp=>lvMgrDirectEmpFromMap(emp, modeMap)).forEach(emp=>{
     if(!emp || getEmpStatus(emp)==='deleted') return;
     const sk=emp.current_store||'미배정';
     if(typeof isPocketStoreKey==='function' && isPocketStoreKey(sk)) return;
@@ -7249,15 +7307,23 @@ function lvMgrSafeText(v){
 function lvMgrSafeAttr(v){
   return lvMgrSafeText(v).replace(/"/g,'&quot;');
 }
-function lvMgrEnsureEmpOptions(){
+// [PERF] datalist는 EMPS가 바뀌지 않으면 재생성 안 함 (전체 렌더 사이클 캐시)
+let __mgrEmpOptionsSig = null;
+function lvMgrEnsureEmpOptions(force){
   try{
     let list=document.getElementById('lv-mgr-emp-options');
     if(!list){
       list=document.createElement('datalist');
       list.id='lv-mgr-emp-options';
       document.body.appendChild(list);
+      __mgrEmpOptionsSig = null;
     }
-    list.innerHTML=(EMPS||[]).filter(emp=>emp&&emp.id&&getEmpStatus(emp)!=='deleted').map(emp=>{
+    // 캐시 시그니처: 직원 수 + 첫/마지막 id + 이름 총합 길이
+    const emps = (EMPS||[]);
+    const sig = emps.length + '|' + (emps[0]?.id||'') + '|' + (emps[emps.length-1]?.id||'');
+    if(!force && sig === __mgrEmpOptionsSig && list.children.length) return;
+    __mgrEmpOptionsSig = sig;
+    list.innerHTML=emps.filter(emp=>emp&&emp.id&&getEmpStatus(emp)!=='deleted').map(emp=>{
       const storeName=emp.current_store ? lvStoreName(emp.current_store) : '미배정';
       const meta=[emp.position||'직책 없음', storeName].filter(Boolean).join(' · ');
       return `<option value="${lvMgrSafeAttr(emp.name||'')}" label="${lvMgrSafeAttr(meta)}"></option>`;
@@ -7335,67 +7401,143 @@ function lvMgrFindEmpForTextName(name){
   if(partial.length>1) return {emp:null, error:'ambiguous'};
   return {emp:null, error:'missing'};
 }
+// [PERF] mgrDraft 매장별-역할별 그룹 인덱스 - 한 번 만들어놓고 여러 행에서 재사용
+let __mgrRoleIndex = null;
+function __mgrInvalidateRoleIndex(){ __mgrRoleIndex = null; }
+window.__mgrInvalidateRoleIndex = __mgrInvalidateRoleIndex;
+function __mgrBuildRoleIndex(){
+  const idx = new Map();
+  const mgrMap = lvEnsureMgrDraftData();
+  (EMPS||[]).forEach(rawEmp=>{
+    const emp = lvMgrDirectEmpFromMap(rawEmp, mgrMap);
+    if(!emp || getEmpStatus(emp)==='deleted') return;
+    const sk = emp.current_store||'';
+    if(!sk) return;
+    const rk = lvMgrFreeRoleKeyFromPosition(emp.position);
+    const key = sk+''+rk;
+    let arr = idx.get(key);
+    if(!arr){ arr = []; idx.set(key, arr); }
+    arr.push(emp);
+  });
+  idx.forEach(arr=>arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko')));
+  __mgrRoleIndex = idx;
+}
 function lvMgrRoleTextEmps(storeKey, roleKey){
-  return (EMPS||[]).map(emp=>lvMgrDirectEmpForMode(emp,'mgrDraft')).filter(emp=>{
-    if(!emp || getEmpStatus(emp)==='deleted') return false;
-    if((emp.current_store||'')!==storeKey) return false;
-    return lvMgrFreeRoleKeyFromPosition(emp.position)===roleKey;
-  }).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
+  if(!__mgrRoleIndex) __mgrBuildRoleIndex();
+  return __mgrRoleIndex.get(storeKey+''+roleKey) || [];
+}
+function lvMgrGetFreeRoleText(storeKey, roleKey){
+  const text=lvReadMgrTextDraft();
+  const storeText=text && text[storeKey];
+  if(storeText && Object.prototype.hasOwnProperty.call(storeText, roleKey)){
+    return String(storeText[roleKey]||'');
+  }
+  return lvMgrRoleTextEmps(storeKey, roleKey).map(emp=>emp.name||'').join(' / ');
+}
+function lvMgrSaveFreeRoleText(storeKey, roleKey, value){
+  if(!storeKey || !roleKey) return;
+  const text=lvReadMgrTextDraft();
+  if(!text[storeKey] || typeof text[storeKey] !== 'object') text[storeKey]={};
+  text[storeKey][roleKey]=String(value||'').trim();
+  lvWriteMgrTextDraft(text);
+  __mgrSandboxDirty=true;
+  showSaved();
 }
 function lvMgrSetFreeRoleText(storeKey, roleKey, text, opts){
   opts=opts||{};
-  const roleName=lvMgrPositionForFreeRole(roleKey);
-  const draft=lvEnsureMgrDraftData();
-  const prevEmps=lvMgrRoleTextEmps(storeKey, roleKey);
-  const names=lvMgrSplitNames(text);
-  const selected=[];
-  const selectedIds=new Set();
-  const misses=[];
-  names.forEach(name=>{
-    const found=lvMgrFindEmpForTextName(name);
-    if(found.emp && !selectedIds.has(found.emp.id)){
-      selected.push(found.emp);
-      selectedIds.add(found.emp.id);
-    } else if(!found.emp){
-      misses.push(name);
-    }
-  });
-  prevEmps.forEach(emp=>{
-    if(selectedIds.has(emp.id)) return;
-    const prev=draft[emp.id]||{};
-    draft[emp.id]=Object.assign({}, prev, {
-      current_store: storeKey,
-      channel: guessChannel(storeKey)||prev.channel||emp.channel||'',
-      position: '팀원'
-    });
-  });
-  selected.forEach(emp=>{
-    const prev=draft[emp.id]||{};
-    draft[emp.id]=Object.assign({}, prev, {
-      current_store: storeKey,
-      channel: guessChannel(storeKey)||prev.channel||emp.channel||'',
-      position: roleName
-    });
-  });
-  lvWriteLayout(LV_MGR_DRAFT_KEY,draft);
-  __mgrSandboxDirty=true;
-  showSaved();
-  if(misses.length && !opts.silent && typeof lvToast==='function'){
-    lvToast('이름 확인 필요: ' + misses.slice(0,3).join(', ') + (misses.length>3?' 외 '+(misses.length-3)+'명':''));
-  }
+  lvMgrSaveFreeRoleText(storeKey, roleKey, text);
   if(!opts.noRender){
     try { lvRenderMgrOnlyDirect(); } catch(_){}
   }
 }
+function lvMgrRoleRowText(roleRow){
+  if(!roleRow) return '';
+  const slotInputs=[...roleRow.querySelectorAll('.lv-mgr-role-slot-input')];
+  if(slotInputs.length){
+    return slotInputs.map(input=>String(input.value||'').trim()).filter(Boolean).join(' / ');
+  }
+  const input=roleRow.querySelector('.lv-mgr-role-text-input');
+  return input ? String(input.value||'').trim() : '';
+}
 function lvMgrCommitFreeTextInputs(){
   try{
-    document.querySelectorAll('.lv-mgr-role-text-input').forEach(input=>{
-      const row=input.closest('.lv-mgr-row');
-      const roleRow=input.closest('.lv-mgr-text-row');
+    const text=lvReadMgrTextDraft();
+    let changed=false;
+    document.querySelectorAll('.lv-mgr-text-row').forEach(roleRow=>{
+      const row=roleRow.closest('.lv-mgr-row');
       if(!row || !roleRow) return;
-      lvMgrSetFreeRoleText(row.dataset.store, roleRow.dataset.roleKey, input.value, {silent:true,noRender:true});
+      const storeKey=row.dataset.store;
+      const roleKey=roleRow.dataset.roleKey;
+      if(!text[storeKey] || typeof text[storeKey] !== 'object') text[storeKey]={};
+      text[storeKey][roleKey]=lvMgrRoleRowText(roleRow);
+      changed=true;
     });
+    if(changed){
+      lvWriteMgrTextDraft(text);
+      __mgrSandboxDirty=true;
+      showSaved();
+    }
   }catch(_){}
+}
+function lvMgrApplyFreeTextToDraft(opts){
+  opts=opts||{};
+  const text=lvReadMgrTextDraft();
+  const stores=Object.keys(text||{}).filter(k=>text[k]&&typeof text[k]==='object');
+  const report={misses:[], applied:0};
+  if(!stores.length) return report;
+  const draft=lvEnsureMgrDraftData();
+  const findPrevRoleEmps=(storeKey, roleKey)=>{
+    return (EMPS||[]).filter(emp=>{
+      if(!emp || !emp.id || getEmpStatus(emp)==='deleted') return false;
+      const row=draft[emp.id]||{};
+      const sk=(row.current_store !== undefined) ? row.current_store : (emp.current_store||'');
+      const pos=(row.position !== undefined) ? row.position : (emp.position||'');
+      return sk===storeKey && lvMgrFreeRoleKeyFromPosition(pos)===roleKey;
+    });
+  };
+  stores.forEach(storeKey=>{
+    const roles=text[storeKey]||{};
+    lvMgrFreeRoleDefs().forEach(def=>{
+      if(!Object.prototype.hasOwnProperty.call(roles, def.key)) return;
+      const selected=[];
+      const selectedIds=new Set();
+      lvMgrSplitNames(roles[def.key]).forEach(name=>{
+        const found=lvMgrFindEmpForTextName(name);
+        if(found.emp && !selectedIds.has(found.emp.id)){
+          selected.push(found.emp);
+          selectedIds.add(found.emp.id);
+        } else if(!found.emp){
+          report.misses.push(name);
+        }
+      });
+      findPrevRoleEmps(storeKey, def.key).forEach(emp=>{
+        if(selectedIds.has(emp.id)) return;
+        const prev=draft[emp.id]||{};
+        draft[emp.id]=Object.assign({}, prev, {
+          current_store: storeKey,
+          channel: guessChannel(storeKey)||prev.channel||emp.channel||'',
+          position: '팀원'
+        });
+        report.applied++;
+      });
+      selected.forEach(emp=>{
+        const prev=draft[emp.id]||{};
+        draft[emp.id]=Object.assign({}, prev, {
+          current_store: storeKey,
+          channel: guessChannel(storeKey)||prev.channel||emp.channel||'',
+          position: def.role
+        });
+        report.applied++;
+      });
+    });
+  });
+  lvWriteLayout(LV_MGR_DRAFT_KEY,draft);
+  __mgrInvalidateRoleIndex();
+  if(report.misses.length && !opts.silent && typeof lvToast==='function'){
+    const unique=[...new Set(report.misses)];
+    lvToast('이름 확인 필요: ' + unique.slice(0,3).join(', ') + (unique.length>3?' 외 '+(unique.length-3)+'명':''));
+  }
+  return report;
 }
 function lvMgrDirectRow(storeKey, emps, secKey, readonly){
   const row=document.createElement('div');
@@ -7447,10 +7589,16 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
   };
   const chips=readonly ? (mgrs.length ? mgrs.map(makeMgrChip).join('') : '<span class="lv-mgr-row-empty">매니저 미배치</span>') : '';
   const roleTextRows=readonly ? '' : lvMgrFreeRoleDefs().map(def=>{
-    const value=lvMgrRoleTextEmps(storeKey, def.key).map(emp=>emp.name||'').join(' / ');
+    const value=lvMgrGetFreeRoleText(storeKey, def.key);
+    const names=lvMgrSplitNames(value);
+    const slotCount=Math.max(5, names.length + 1);
+    const slots=Array.from({length:slotCount}, (_,i)=>{
+      const slotValue=names[i] || '';
+      return `<input class="lv-mgr-role-slot-input" list="lv-mgr-emp-options" value="${escAttr(slotValue)}" placeholder="이름" title="${escAttr(def.role)} ${i+1}번">`;
+    }).join('');
     return `<div class="lv-mgr-text-row" data-role-key="${escAttr(def.key)}">
       <div class="lv-mgr-text-label">${escText(def.label)}</div>
-      <input class="lv-mgr-role-text-input" list="lv-mgr-emp-options" value="${escAttr(value)}" placeholder="이름 / 이름" title="${escAttr(def.role)} 이름 직접 입력">
+      <div class="lv-mgr-role-slot-list">${slots}</div>
     </div>`;
   }).join('');
   const bodyHtml=readonly
@@ -7487,11 +7635,10 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
   if(!readonly){
     row.querySelectorAll('.lv-mgr-text-row').forEach(roleRow=>{
       const roleKey=roleRow.dataset.roleKey;
-      const input=roleRow.querySelector('.lv-mgr-role-text-input');
       const roleName=lvMgrPositionForFreeRole(roleKey);
       const commit=()=>{
-        if(!input) return;
-        lvMgrSetFreeRoleText(storeKey, roleKey, input.value);
+        // [FIX] blur 시 재렌더 스킵 - 편집 중 DOM 통째로 교체되며 포커스/입력 사라지는 문제 방지
+        lvMgrSetFreeRoleText(storeKey, roleKey, lvMgrRoleRowText(roleRow), {noRender:true});
       };
       roleRow.addEventListener('dragover', e=>{
         if(lvDragType!=='chip') return;
@@ -7510,20 +7657,29 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
         roleRow.classList.remove('drag-over');
         row.classList.remove('drag-over');
         const emp=EMPS.find(x=>x.id===lvDragId);
-        if(!emp || !input) return;
-        const names=lvMgrSplitNames(input.value);
+        if(!emp) return;
+        const slotInputs=[...roleRow.querySelectorAll('.lv-mgr-role-slot-input')];
+        const targetInput=(e.target&&e.target.classList&&e.target.classList.contains('lv-mgr-role-slot-input')) ? e.target : slotInputs.find(input=>!String(input.value||'').trim());
+        const names=slotInputs.map(input=>String(input.value||'').trim()).filter(Boolean);
         if(!names.includes(emp.name||'')) names.push(emp.name||'');
-        input.value=names.join(' / ');
-        lvMgrSetFreeRoleText(storeKey, roleKey, input.value);
+        if(targetInput && !String(targetInput.value||'').trim() && !slotInputs.some(input=>input!==targetInput && String(input.value||'').trim()===(emp.name||''))){
+          targetInput.value=emp.name||'';
+        }
+        lvMgrSetFreeRoleText(storeKey, roleKey, names.join(' / '));
         if(typeof lvToast==='function') lvToast('🧪 초안 ' + (emp.name||'') + ' → ' + lvStoreName(storeKey) + ' · ' + roleName);
       });
-      if(input) input.addEventListener('blur', commit);
-      if(input) input.addEventListener('keydown', e=>{
-        if(e.key==='Enter'){
-          e.preventDefault();
-          e.stopPropagation();
-          input.blur();
-        }
+      roleRow.querySelectorAll('.lv-mgr-role-slot-input').forEach((input, idx, inputs)=>{
+        input.addEventListener('blur', commit);
+        input.addEventListener('input', ()=>lvMgrSaveFreeRoleText(storeKey, roleKey, lvMgrRoleRowText(roleRow)));
+        input.addEventListener('keydown', e=>{
+          if(e.key==='Enter'){
+            e.preventDefault();
+            e.stopPropagation();
+            const next=inputs[idx+1];
+            if(next) next.focus();
+            else input.blur();
+          }
+        });
       });
     });
   }
@@ -7535,6 +7691,7 @@ function lvRenderMgrOnlyDirect(){
     if(!scroll) return false;
     scroll.dataset.lvMgrOnly='1';
     __mgrOnly = true;
+    __mgrInvalidateRoleIndex();  // [PERF] 렌더 시작 시 인덱스 초기화 → 최신 데이터로 재구축
     if(lvMode === 'draft' && !__mgrSandboxDirty) lvSyncMgrDraftFromDraft();
     lvSyncMgrButton();
     _lvSyncMgrButtonsVisibility();
@@ -7768,6 +7925,7 @@ function lvResetDraft(){
   const resetData = lvDraftSnapshotFromActual();
   lvWriteLayout(LV_DRAFT_KEY,resetData);
   lvWriteLayout(LV_MGR_DRAFT_KEY,JSON.parse(JSON.stringify(resetData)));
+  lvClearMgrTextDraft();
   __mgrSandboxDirty = false;
   window.__layoutDraftDirty = true;
   try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
@@ -7782,6 +7940,7 @@ function lvApplyDraftToActual(){
   const draft = lvEnsureDraftData();
   lvWriteLayout(LV_ACTUAL_KEY, draft);
   lvWriteLayout(LV_MGR_DRAFT_KEY, JSON.parse(JSON.stringify(draft||{})));
+  lvClearMgrTextDraft();
   __mgrSandboxDirty = false;
   let applied = 0;
   let pendingCreated = 0;
