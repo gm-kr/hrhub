@@ -10,12 +10,13 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 118;
+  window.__APP_VERSION = 121;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
   window.__authResolved = false;
   window.__freshServerLoaded = false;
+  window.__photoServerLoaded = false;
   window.__mobileFirstPullDone = false;
   window.__needsStrictFirstPull = function(){
     try {
@@ -131,7 +132,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 118);
+    var appVersion = String(window.__APP_VERSION || 121);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -193,29 +194,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=118">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=118">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=118">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=118">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=118">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=118">
-<link rel="icon" type="image/png" href="icon.png?v=118">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=118">
-<link rel="manifest" href="manifest.json?v=118">
+<link rel="apple-touch-icon" href="icon.png?v=121">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=121">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=121">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=121">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=121">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=121">
+<link rel="icon" type="image/png" href="icon.png?v=121">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=121">
+<link rel="manifest" href="manifest.json?v=121">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=118">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=118">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=121">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=121">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -1406,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v118</span><script>window.__APP_VERSION=118;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v121</span><script>window.__APP_VERSION=121;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -4042,7 +4043,7 @@ function lvScheduleDraftProfileRender(mode){
 try { window.__EMPS_BASE = JSON.parse(JSON.stringify(EMPS)); } catch(_) { window.__EMPS_BASE = null; }
 function ac(n){const c=((n||'?')[0]||'A').toUpperCase();return'a'+(c>='A'&&c<='Z'?c:'A')}
 function avEl(e,sz){
-  const ph=getP()[e.id]||e.photo_b64||'';
+  const ph=getEmpPhotoSrc(e);
   const cl=ac(e.name);
   if(ph)return`<div class="${cl}" style="width:${sz}px;height:${sz}px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"></div>`;
   return`<div class="${cl}" style="width:${sz}px;height:${sz}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz*.38)}px;font-weight:700;flex-shrink:0">${(e.name||'?')[0]}</div>`;
@@ -4064,6 +4065,15 @@ function getP(){
     }
   }
   return local;
+}
+function getEmpPhotoSrc(e){
+  if(!e) return '';
+  const id = e.id || e.empId || '';
+  let photos = {};
+  try { photos = getP(); } catch(_){ photos = window.__photoMemCache || {}; }
+  if(id && photos && photos[id]) return photos[id];
+  if(window.__HR_STRICT_SERVER) return '';
+  return e.photo_b64 || '';
 }
 function setP(id,b){
   if(window.__HR_STRICT_SERVER){
@@ -5044,7 +5054,7 @@ function openP(emp){
   }
   document.getElementById('pdpos').textContent=emp.position||'';
   document.getElementById('pdtags').innerHTML=ctag(emp.channel)+` <span class="tag tgg">${emp.brand}</span><span class="tag tgg">${emp.tenure||''}</span>`;
-  const ph=getP();const src=ph[emp.id]||emp.photo_b64;
+  const src=getEmpPhotoSrc(emp);
   const ppEl=document.getElementById('pp');
   if(src){ppEl.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;ppEl.className='pp';}
   else{ppEl.innerHTML=emp.name[0];ppEl.className=`pp ${ac(emp.name)}`;}
@@ -6318,8 +6328,7 @@ window.showPhotoCtxMenu = function(e){
       } else if(act === 'file'){
         document.getElementById('avinput').click();
       } else if(act === 'view'){
-        const ph = getP();
-        const src = ph[curEmp.id] || curEmp.photo_b64;
+        const src = getEmpPhotoSrc(curEmp);
         if(src) window.openPhotoLightbox(src);
       }
     };
@@ -7594,7 +7603,7 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
     const slotCount=Math.max(5, names.length + 1);
     const slots=Array.from({length:slotCount}, (_,i)=>{
       const slotValue=names[i] || '';
-      return `<input class="lv-mgr-role-slot-input" list="lv-mgr-emp-options" value="${escAttr(slotValue)}" placeholder="이름" title="${escAttr(def.role)} ${i+1}번">`;
+      return `<input class="lv-mgr-role-slot-input" list="lv-mgr-emp-options" value="${escAttr(slotValue)}" title="${escAttr(def.role)} ${i+1}번">`;
     }).join('');
     return `<div class="lv-mgr-text-row" data-role-key="${escAttr(def.key)}">
       <div class="lv-mgr-text-label">${escText(def.label)}</div>
@@ -8350,9 +8359,7 @@ function ppFindEmp(rowOrEmp){
 function getLatestEmpPhoto(empOrRow){
   const emp = ppFindEmp(empOrRow) || empOrRow || {};
   const id = emp.empId || emp.id || '';
-  let photos = {};
-  try { photos = (typeof getP==='function') ? getP() : {}; } catch(_){ photos = window.__photoMemCache || {}; }
-  return (id && photos && photos[id]) || emp.photo_b64 || '';
+  return getEmpPhotoSrc(emp);
 }
 function ppAvatarHtml(rowOrEmp, fallbackName){
   const emp = ppFindEmp(rowOrEmp) || rowOrEmp || {};
@@ -10003,9 +10010,8 @@ function buildCard(storeKey,emps,secKey,accent){
       const scfg=STATUS_CFG[st]||STATUS_CFG.active;
       const memo=getEmpMemo(emp);
       const ac=aColor(emp.name);
-      // localStorage(hrP)의 사진 우선, 없으면 EMPS 초기 사진
-      const _ph = (typeof getP==='function') ? getP() : {};
-      const _pSrc = _ph[emp.id] || emp.photo_b64;
+      // 서버 모드에서는 Firebase 사진이 오기 전까지 내장된 옛 사진을 쓰지 않는다.
+      const _pSrc = getEmpPhotoSrc(emp);
       const av = _pSrc
         ?`<div class="lv-avatar"><img src="${_pSrc}" alt="${emp.name}"></div>`
         :`<div class="lv-avatar" style="background:${ac}">${emp.name.slice(-1)}</div>`;
@@ -11456,15 +11462,9 @@ onAuthStateChanged(_auth, (user)=>{
           if(typeof window.__showFreshLoading === 'function') window.__showFreshLoading();
           return;
         }
-        if(typeof getList === 'function' && typeof renderTbl === 'function'){
+        if(typeof window.__renderVisibleMainAfterFresh === 'function') window.__renderVisibleMainAfterFresh();
+        else if(typeof getList === 'function' && typeof renderTbl === 'function'){
           const l = getList(); renderBar(l); renderTbl(l);
-        }
-        try { window.lvInit && window.lvInit(); } catch(_){}
-        try { window.ppRender && window.ppRender(); } catch(_){}
-        const activeTab = document.querySelector('.tab.on');
-        if(activeTab && activeTab.dataset.tab === 'layout'){
-          try { window.lvRender && window.lvRender(); } catch(_){}
-          try { window.lvRenderSB && window.lvRenderSB(); } catch(_){}
         }
         if(typeof window.__hideMobileFreshOverlay === 'function') window.__hideMobileFreshOverlay();
       } catch(_){}
@@ -11949,37 +11949,64 @@ window.fbSetSchedule = async function(data) {
   }
   // [FIREBASE FIRST] 페이지 로드 시 Firebase에서 모든 공유 데이터를 먼저 fetch → localStorage 덮어쓰기
   // Firebase가 source of truth. localStorage는 오프라인 캐시 + 속도 fallback일 뿐.
+  const _renderVisibleMainAfterFresh = () => {
+    const activeTab = (document.querySelector('.tab.on') && document.querySelector('.tab.on').dataset.tab) || window.__currentTab || 'hr';
+    try {
+      if(activeTab === 'layout'){
+        window.lvInit?.();
+        return;
+      }
+      if(activeTab === 'store'){
+        if(typeof renderSidebar === 'function') renderSidebar();
+        return;
+      }
+      if(activeTab === 'invitation'){
+        window.invInit?.();
+        try { invBodyResize && invBodyResize(); } catch(_){}
+        return;
+      }
+      if(typeof getList === 'function' && typeof renderTbl === 'function'){
+        const l = getList(); renderBar(l); renderTbl(l);
+      }
+    } catch(e){ console.warn('[FRESH RENDER]', e); }
+  };
+  window.__renderVisibleMainAfterFresh = _renderVisibleMainAfterFresh;
   let _freshOk = false;
   try {
     // 첫 화면을 열기 전에 핵심 컬렉션을 모두 서버에서 직접 읽는다.
     // localStorage/onSnapshot 캐시에 의존하면 다른 계정에서 옛 정보가 먼저 보일 수 있다.
+    const requiredFresh = (promise, ms=4500) => Promise.race([
+      promise.catch(()=>null),
+      new Promise(resolve => setTimeout(() => resolve(null), ms))
+    ]);
     const optionalFresh = (promise, ms=900) => Promise.race([
       promise.catch(()=>null),
       new Promise(resolve => setTimeout(() => resolve(null), ms))
     ]);
-    const [
-      sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap,
-      editsSnap, photosSnap, storeHistorySnap, praiseSnap, invitationSnap,
-      invManagersSnap, invCandidatesSnap, storeEvalSnap
-    ] = await Promise.all([
-      getDocFromServer(doc(_db, 'sharedSettings', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'storeList', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'partTimers', 'ptData')).catch(()=>null),
-      getDocFromServer(doc(_db, 'scheduled', 'data')).catch(()=>null),
-      getDocFromServer(doc(_db, 'criteria', 'data')).catch(()=>null),
-      getDocsFromServer(collection(_db, 'hrEdits')).catch(()=>null),
-      optionalFresh(getDocsFromServer(collection(_db, 'empPhotos'))),
-      optionalFresh(getDocFromServer(doc(_db, 'storeHistory', 'data'))),
-      optionalFresh(getDocFromServer(doc(_db, 'praise', 'data'))),
-      optionalFresh(getDocFromServer(doc(_db, 'invitation', 'data'))),
-      optionalFresh(getDocsFromServer(collection(_db, 'inv_managers'))),
-      optionalFresh(getDocsFromServer(collection(_db, 'inv_candidates'))),
-      optionalFresh(getDocsFromServer(collection(_db, 'storeEvals')))
+    let ptSnap = null, scheduleSnap = null, criteriaSnap = null;
+    let photosSnap = null, storeHistorySnap = null, praiseSnap = null, invitationSnap = null;
+    let invManagersSnap = null, invCandidatesSnap = null, storeEvalSnap = null;
+    let [sharedSnap, storeListSnap, editsSnap] = await Promise.all([
+      requiredFresh(getDocFromServer(doc(_db, 'sharedSettings', 'data')), 3200),
+      requiredFresh(getDocFromServer(doc(_db, 'storeList', 'data')), 3200),
+      requiredFresh(getDocsFromServer(collection(_db, 'hrEdits')), 4200)
     ]);
     _freshOk = [
-      sharedSnap, storeListSnap, ptSnap, scheduleSnap, criteriaSnap,
-      editsSnap
+      sharedSnap, storeListSnap, editsSnap
     ].every(Boolean);
+    if(!_freshOk){
+      try {
+        const retry = await Promise.all([
+          sharedSnap ? Promise.resolve(sharedSnap) : requiredFresh(getDocFromServer(doc(_db, 'sharedSettings', 'data')), 3500),
+          storeListSnap ? Promise.resolve(storeListSnap) : requiredFresh(getDocFromServer(doc(_db, 'storeList', 'data')), 3500),
+          editsSnap ? Promise.resolve(editsSnap) : requiredFresh(getDocsFromServer(collection(_db, 'hrEdits')), 4500)
+        ]);
+        if(!sharedSnap) sharedSnap = retry[0];
+        if(!storeListSnap) storeListSnap = retry[1];
+        if(!editsSnap) editsSnap = retry[2];
+        _freshOk = [sharedSnap, storeListSnap, editsSnap].every(Boolean);
+      } catch(_){}
+    }
     if(sharedSnap && sharedSnap.exists()){
       const d = sharedSnap.data() || {};
       const incomingVer = Number(d._clientVersion || 0);
@@ -12101,6 +12128,7 @@ window.fbSetSchedule = async function(data) {
       applyEditsToEmps(edits);
     }
     if(photosSnap){
+      window.__photoServerLoaded = true;
       window.__photoMemCache = {};
       photosSnap.forEach(d => {
         const data = d.data();
@@ -12141,16 +12169,7 @@ window.fbSetSchedule = async function(data) {
   } catch(_){}
   // [AUTH FLUSH] 인증 전에 모인 pending 직원 편집 push
   try { if(window.__flushPendingEdits) await window.__flushPendingEdits(); } catch(_){}
-  if (typeof getList === 'function' && typeof renderTbl === 'function') {
-    try { const l = getList(); renderBar(l); renderTbl(l); } catch(e) {}
-  }
-  if(!_usedPendingMainTab) window.lvInit?.();
-  window.ppRender?.();
-  const activeTab = document.querySelector('.tab.on');
-  if (activeTab && activeTab.dataset.tab === 'layout') {
-    window.lvRender?.();
-    window.lvRenderSB?.();
-  }
+  if(!_usedPendingMainTab) _renderVisibleMainAfterFresh();
   try {
     const o = document.getElementById('fb-loading-overlay');
     if(o) o.remove();
@@ -12161,10 +12180,7 @@ window.fbSetSchedule = async function(data) {
       await Promise.all([loadAllEdits(), loadSchedule()]);
       startRealtimeListeners();
       startEmbedFastSyncIfNeeded();
-      if (typeof getList === 'function' && typeof renderTbl === 'function') {
-        const l = getList(); renderBar(l); renderTbl(l);
-      }
-      window.lvRender?.(); window.lvRenderSB?.(); window.ppRender?.();
+      _renderVisibleMainAfterFresh();
     } catch(e) { console.warn('[FB] 백그라운드 로드 오류:', e); }
   })();
   /* [FIX 1&2] 새로고침/탭 닫기 전 반드시 캐시 저장 보장 */
@@ -12539,6 +12555,7 @@ window._mobilePoll = async function(){
     if(getDocsFresh && window.__fbCollection){
       try {
         const snap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
+        window.__photoServerLoaded = true;
         window.__photoMemCache = window.__photoMemCache || {};
         let photoChanged = false;
         const affected = [];
@@ -12664,6 +12681,7 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
       // 2) empPhotos (전체)
       try {
         const photoSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
+        window.__photoServerLoaded = true;
         window.__photoMemCache = window.__photoMemCache || {};
         photoSnap.forEach(docSnap => {
           const d = docSnap.data();
@@ -13189,6 +13207,7 @@ window.fbSetEmpPhoto = function(empId, base64){
 let _fbPhotoInitialLoaded = false;
 onSnapshot(collection(_db, 'empPhotos'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'empPhotos')) return;
+  window.__photoServerLoaded = true;
   const remoteIds = new Set();
   let changed = false;
   const affected = [];
@@ -13256,12 +13275,17 @@ onSnapshot(collection(_db, 'empPhotos'), (snap) => {
         });
       }
     } catch(_){}
-    // 여러 방식으로 강제 재렌더
-    try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
-    try { if(typeof refresh==='function') refresh(); } catch(_){}
-    // 100ms, 500ms 추가 재렌더 (연속 스냅샷 배치 처리 안정성)
-    setTimeout(() => { try { window.lvRender && window.lvRender(); refresh && refresh(); } catch(_){} }, 100);
-    setTimeout(() => { try { window.lvRender && window.lvRender(); refresh && refresh(); } catch(_){} }, 500);
+    const renderVisible = () => {
+      try {
+        if(typeof window.__renderVisibleMainAfterFresh === 'function') window.__renderVisibleMainAfterFresh();
+        else {
+          try { if(typeof window.lvRender==='function') window.lvRender(); } catch(_){}
+          try { if(typeof refresh==='function') refresh(); } catch(_){}
+        }
+      } catch(_){}
+    };
+    renderVisible();
+    setTimeout(renderVisible, 160);
     // 열려있는 직원 상세 사진도 갱신
     try {
       if(typeof curEmp !== 'undefined' && curEmp && affected.includes(curEmp.id)){
