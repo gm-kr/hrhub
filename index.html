@@ -1372,7 +1372,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v111</span><script>window.__APP_VERSION=111;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v112</span><script>window.__APP_VERSION=112;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9615,12 +9615,10 @@ function buildCard(storeKey,emps,secKey,accent){
   // [MGR ONLY] __mgrOnly가 true면 매니저(MG) + 부매니저(BM)만 표시
   const _activePosKeys = (typeof __mgrOnly !== 'undefined' && __mgrOnly) ? ['MG','BM'] : POS_ORDER;
   _activePosKeys.forEach(pk=>{
-    // [INTERN SKIP] 인턴은 드롭 기능 불필요 - 실 인원 없으면 아예 표시 안 함
-    const _showDrop = _showDraftRoleDrops && pk !== 'IN';
-    if(!byPos[pk].length && !_showDrop) return;
-    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row${_showDrop?' lv-role-drop-row':''}" data-pos="${pk}">`;
+    if(!byPos[pk].length && !_showDraftRoleDrops) return;
+    chips+=`<div class="lv-pos-label">${POS_LABEL[pk]}</div><div class="lv-pos-row${_showDraftRoleDrops?' lv-role-drop-row':''}" data-pos="${pk}">`;
     byPos[pk].forEach(emp=>{ chips += renderChip(emp); });
-    // 비어있어도 안내 텍스트/빈 공간 없이 얇은 드롭 영역만 유지
+    // 안내 텍스트 없이 얇은 드롭 영역만 유지 (드롭 기능은 그대로)
     chips+='</div>';
   });
   // 2단계: 비-재직 직원을 카드 하단에 상태(status)별로 묶어서 렌더링
