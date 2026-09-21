@@ -10,7 +10,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 122;
+  window.__APP_VERSION = 126;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   window.__MOBILE_READ_ONLY = isMobile;
@@ -132,7 +132,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
   } catch(_){}
   try {
     var params = new URLSearchParams(location.search);
-    var appVersion = String(window.__APP_VERSION || 122);
+    var appVersion = String(window.__APP_VERSION || 126);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
       var u = new URL(location.href);
@@ -149,7 +149,7 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
       'lvStoreBaseOverrides','lvSbBaseOverrides','store_list_v2',
       'lvDeletedStores','hrDeletedEmpIds_v1','hrPT_v1','hrP',
       'praiseRecords','praiseRewards','inv_managers','inv_candidates','hrH',
-      'last_selected_store','layoutMode','lvCustomStores','lvMgrImpSlots','lvMgrSandboxDraft','lvMgrSandboxText',
+      'last_selected_store','layoutMode','lvCustomStores','lvMgrImpSlots',
       'lvMgrImpStoreOrder','lvStoreLinks','store_criteria_v1','__fbScheduleCache',
       'lvTestMemo','__pendingStoreList','__lastPullResult'
     ];
@@ -194,29 +194,29 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
 <title>HR 인사관리 시스템</title>
 <!-- [iOS 홈화면 바로가기 아이콘] 검정 배경 + Didot HR (인라인 data URL — 파일 경로/캐시 우회) -->
 <!-- [iOS 홈화면 바로가기 아이콘] icon.png 파일 사용 (누구든 홈화면 추가 시 자동 적용) -->
-<link rel="apple-touch-icon" href="icon.png?v=122">
-<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=122">
-<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=122">
-<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=122">
-<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=122">
-<link rel="apple-touch-icon-precomposed" href="icon.png?v=122">
-<link rel="icon" type="image/png" href="icon.png?v=122">
-<link rel="shortcut icon" type="image/png" href="icon.png?v=122">
-<link rel="manifest" href="manifest.json?v=122">
+<link rel="apple-touch-icon" href="icon.png?v=126">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.png?v=126">
+<link rel="apple-touch-icon" sizes="152x152" href="icon.png?v=126">
+<link rel="apple-touch-icon" sizes="167x167" href="icon.png?v=126">
+<link rel="apple-touch-icon" sizes="120x120" href="icon.png?v=126">
+<link rel="apple-touch-icon-precomposed" href="icon.png?v=126">
+<link rel="icon" type="image/png" href="icon.png?v=126">
+<link rel="shortcut icon" type="image/png" href="icon.png?v=126">
+<link rel="manifest" href="manifest.json?v=126">
 <meta name="theme-color" content="#f7f6f3">
-<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=122">
-<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=122">
+<link rel="apple-touch-startup-image" href="splash-1290x2796.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-750x1334.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1488x2266.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1668x2388.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1640x2360.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1620x2160.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-1536x2048.png?v=126">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-2048x2732.png?v=126">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HR Hub">
@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v125</span><script>window.__APP_VERSION=125;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v126</span><script>window.__APP_VERSION=126;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6592,6 +6592,8 @@ let lvMode = 'actual'; // 항상 배치현황으로 시작. 운영팀 테스트�
 let __mgrSandboxDirty = false;
 let __lvMgrSandboxMem = null;
 let __lvMgrTextMem = null;
+window.__lvMgrDraftLocalEditAt = window.__lvMgrDraftLocalEditAt || 0;
+window.__lvMgrTextLocalEditAt = window.__lvMgrTextLocalEditAt || 0;
 function lvReadMgrDraftData(){
   try{
     const raw = localStorage.getItem(LV_MGR_DRAFT_KEY);
@@ -6618,6 +6620,7 @@ function lvReadMgrDraftData(){
 function lvWriteMgrDraftData(data){
   const full = (data && typeof data === 'object') ? data : {};
   __lvMgrSandboxMem = full;
+  window.__lvMgrDraftLocalEditAt = Date.now();
   let base = {};
   try{ base = (typeof lvEnsureDraftData === 'function') ? lvEnsureDraftData() : {}; }catch(_){}
   const rows = {};
@@ -6668,6 +6671,7 @@ function lvReadMgrTextDraft(){
 function lvWriteMgrTextDraft(data){
   const next=(data && typeof data === 'object') ? data : {};
   __lvMgrTextMem = next;
+  window.__lvMgrTextLocalEditAt = Date.now();
   const json=JSON.stringify(next);
   try{
     localStorage.setItem(LV_MGR_TEXT_KEY, json);
@@ -6685,6 +6689,7 @@ function lvWriteMgrTextDraft(data){
 }
 function lvClearMgrTextDraft(){
   __lvMgrTextMem = {};
+  window.__lvMgrTextLocalEditAt = Date.now();
   try{ localStorage.removeItem(LV_MGR_TEXT_KEY); }catch(_){}
 }
 function lvReadLayout(key){
@@ -6797,11 +6802,12 @@ function lvEnsureMgrDraftData(){
   if(changed) lvWriteLayout(LV_MGR_DRAFT_KEY,draft);
   return draft;
 }
-function lvSyncMgrDraftFromDraft(){
+function lvSyncMgrDraftFromDraft(opts){
+  opts = opts || {};
   const source=lvEnsureDraftData();
   const copy=JSON.parse(JSON.stringify(source||{}));
   lvWriteLayout(LV_MGR_DRAFT_KEY, copy);
-  lvClearMgrTextDraft();
+  if(opts.clearText) lvClearMgrTextDraft();
   if(typeof __mgrInvalidateRoleIndex === 'function') __mgrInvalidateRoleIndex();
   return copy;
 }
@@ -6970,8 +6976,9 @@ function lvMgrApplyDraftView(){
 window.lvMgrApplyDraftView = lvMgrApplyDraftView;
 function lvMgrResetFreeDraft(){
   if(!confirm('매니저현황의 자유배치를 운영팀 테스트 배치 기준으로 다시 불러올까요?\n(운영팀 테스트 메인 배치는 변경되지 않습니다)')) return;
-  lvSyncMgrDraftFromDraft();
+  lvSyncMgrDraftFromDraft({clearText:true});
   __mgrSandboxDirty = false;
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   showSaved();
   if(typeof lvToast === 'function') lvToast('↩ 자유배치를 운영팀 테스트 배치 기준으로 초기화했습니다.');
   try {
@@ -7450,6 +7457,7 @@ function lvMgrSaveFreeRoleText(storeKey, roleKey, value){
   text[storeKey][roleKey]=String(value||'').trim();
   lvWriteMgrTextDraft(text);
   __mgrSandboxDirty=true;
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
   showSaved();
 }
 function lvMgrSetFreeRoleText(storeKey, roleKey, text, opts){
@@ -7487,6 +7495,7 @@ function lvMgrCommitFreeTextInputs(){
     if(changed){
       lvWriteMgrTextDraft(text);
       __mgrSandboxDirty=true;
+      try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
       showSaved();
     }
   }catch(_){}
@@ -12111,6 +12120,8 @@ window.fbSetSchedule = async function(data) {
       if(typeof d.storeBase    === 'string') localStorage.setItem('lvStoreBaseOverrides', d.storeBase);
       if(typeof d.mgrImpSlots  === 'string') localStorage.setItem('lvMgrImpSlots',        d.mgrImpSlots);
       if(typeof d.mgrImpOrder  === 'string') localStorage.setItem('lvMgrImpStoreOrder',   d.mgrImpOrder);
+      if(typeof d.mgrSandboxDraft === 'string') localStorage.setItem('lvMgrSandboxDraft', d.mgrSandboxDraft);
+      if(typeof d.mgrSandboxText  === 'string') localStorage.setItem('lvMgrSandboxText',  d.mgrSandboxText);
       if(!skipIncomingLayoutDraft && typeof d.layoutDraft  === 'string') localStorage.setItem('layoutDraftData', d.layoutDraft);
       if(typeof d.lvOrder      === 'string'){
         try {
@@ -12127,7 +12138,7 @@ window.fbSetSchedule = async function(data) {
       if(typeof d.testMemo      === 'string') localStorage.setItem('lvTestMemo', d.testMemo);
       // [RACE FIX] 부트스트랩 시 받은 값을 lastSharedSnap에 캐싱
       window.__lastSharedSnap = window.__lastSharedSnap || {};
-      ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
+      ['storeBase','mgrImpSlots','mgrImpOrder','mgrSandboxDraft','mgrSandboxText','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
         if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
         if(typeof d[k] === 'string') window.__lastSharedSnap[k] = d[k];
       });
@@ -12753,12 +12764,15 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
           const skipIncomingLayoutDraft = !(window.__isStandalone || window.__isIOSStandaloneEarly) && incomingVer > 0 && incomingVer < DRAFT_SAFE_VERSION;
           const map = {
             storeBase:'lvStoreBaseOverrides', mgrImpSlots:'lvMgrImpSlots',
-            mgrImpOrder:'lvMgrImpStoreOrder', layoutDraft:'layoutDraftData',
+            mgrImpOrder:'lvMgrImpStoreOrder', mgrSandboxDraft:'lvMgrSandboxDraft',
+            mgrSandboxText:'lvMgrSandboxText', layoutDraft:'layoutDraftData',
             deletedStores:'lvDeletedStores', deletedEmps:'hrDeletedEmpIds_v1',
             sbBase:'lvSbBaseOverrides', storeLinks:'lvStoreLinks', testMemo:'lvTestMemo'
           };
           Object.keys(map).forEach(k => {
             if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
+            if(k === 'mgrSandboxDraft' && Date.now() - (window.__lvMgrDraftLocalEditAt || 0) < 5000) return;
+            if(k === 'mgrSandboxText' && Date.now() - (window.__lvMgrTextLocalEditAt || 0) < 5000) return;
             if(typeof data[k] === 'string' && localStorage.getItem(map[k]) !== data[k]){
               try { localStorage.setItem(map[k], data[k]); anyChanged = true; } catch(_){}
             }
@@ -12998,6 +13012,8 @@ window.fbSetShared = function(){
         storeBase:    localStorage.getItem('lvStoreBaseOverrides') || '{}',
         mgrImpSlots:  localStorage.getItem('lvMgrImpSlots')        || '[]',
         mgrImpOrder:  localStorage.getItem('lvMgrImpStoreOrder')   || '[]',
+        mgrSandboxDraft: localStorage.getItem('lvMgrSandboxDraft') || '{}',
+        mgrSandboxText:  localStorage.getItem('lvMgrSandboxText')  || '{}',
         deletedStores:localStorage.getItem('lvDeletedStores')      || '[]',
         deletedEmps:  localStorage.getItem('hrDeletedEmpIds_v1')   || '[]',
         sbBase:       localStorage.getItem('lvSbBaseOverrides')    || '{}',
@@ -13057,20 +13073,12 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     const skipIncomingLayoutDraft = !(window.__isStandalone || window.__isIOSStandaloneEarly) && incomingVer > 0 && incomingVer < DRAFT_SAFE_VERSION;
     if(skipIncomingLayoutDraft) console.warn('[SHARED] 옛 클라이언트(v'+incomingVer+') layoutDraft 무시');
     // [RACE FIX] 받은 값을 lastSharedSnap에 캐싱 (다음 push 시 비교용)
-    ['storeBase','mgrImpSlots','mgrImpOrder','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
+    ['storeBase','mgrImpSlots','mgrImpOrder','mgrSandboxDraft','mgrSandboxText','layoutDraft','deletedStores','deletedEmps','lvOrder','sbBase','storeLinks','testMemo'].forEach(k=>{
       if(k === 'layoutDraft' && skipIncomingLayoutDraft) return;
       if(typeof data[k] === 'string') window.__lastSharedSnap[k] = data[k];
     });
     // [GUARD] 초기 로드 완료 표시 → 이제부터 로컬 편집 push 가능 (초기 로드 전 push는 오래된 로컬로 덮어쓰기 방지)
     window.__sharedInitLoaded = true;
-    // fresh server fetch가 끝난 뒤에만 강제 재렌더
-    try {
-      if(window.__freshServerLoaded){
-        if(typeof window.lvRender==='function') window.lvRender();
-        if(typeof window.lvRenderSB==='function') window.lvRenderSB();
-        if(typeof renderSidebar==='function') renderSidebar();
-      }
-    } catch(_){}
     let needRerender = false;
     if(typeof data.storeBase === 'string'){
       if(localStorage.getItem('lvStoreBaseOverrides') !== data.storeBase){
@@ -13087,6 +13095,21 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
     if(typeof data.mgrImpOrder === 'string'){
       if(localStorage.getItem('lvMgrImpStoreOrder') !== data.mgrImpOrder){
         localStorage.setItem('lvMgrImpStoreOrder', data.mgrImpOrder);
+        needRerender = true;
+      }
+    }
+    if(typeof data.mgrSandboxDraft === 'string'){
+      const localEditActive = Date.now() - (window.__lvMgrDraftLocalEditAt || 0) < 5000;
+      if(!localEditActive && localStorage.getItem('lvMgrSandboxDraft') !== data.mgrSandboxDraft){
+        localStorage.setItem('lvMgrSandboxDraft', data.mgrSandboxDraft);
+        needRerender = true;
+        try { if(typeof __mgrInvalidateRoleIndex === 'function') __mgrInvalidateRoleIndex(); } catch(_){}
+      }
+    }
+    if(typeof data.mgrSandboxText === 'string'){
+      const localTextActive = Date.now() - (window.__lvMgrTextLocalEditAt || 0) < 5000;
+      if(!localTextActive && localStorage.getItem('lvMgrSandboxText') !== data.mgrSandboxText){
+        localStorage.setItem('lvMgrSandboxText', data.mgrSandboxText);
         needRerender = true;
       }
     }
