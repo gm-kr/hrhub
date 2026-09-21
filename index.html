@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v127</span><script>window.__APP_VERSION=127;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v128</span><script>window.__APP_VERSION=127;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6949,7 +6949,6 @@ function lvRenderTestMemo(){
     <div class="lv-test-memo-head">
       <div>
         <div class="lv-test-memo-title">📝 운영팀 테스트 메모</div>
-        <div class="lv-test-memo-sub">짧은 메모 5칸 · 모든 기기 공유</div>
       </div>
       <span id="lv-test-memo-saved" class="lv-test-memo-sub">자동 저장</span>
     </div>
@@ -6957,7 +6956,7 @@ function lvRenderTestMemo(){
       ${slots.map((memo, idx) => `
         <div class="lv-test-memo-cell">
           <div class="lv-test-memo-cell-head">메모 ${idx + 1}</div>
-          <textarea class="lv-test-memo-textarea" id="lv-test-memo-input-${idx}" placeholder="짧게 입력" oninput="lvSetTestMemoSlot(${idx}, this.value)">${esc(memo)}</textarea>
+          <textarea class="lv-test-memo-textarea" id="lv-test-memo-input-${idx}" spellcheck="false" autocorrect="off" autocapitalize="off" oninput="lvSetTestMemoSlot(${idx}, this.value)">${esc(memo)}</textarea>
         </div>
       `).join('')}
     </div>`;
