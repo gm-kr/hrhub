@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v124</span><script>window.__APP_VERSION=124;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v125</span><script>window.__APP_VERSION=125;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -7762,6 +7762,29 @@ function lvRenderMgrOnlyDirect(){
   try{
     const scroll=$('lv-scroll');
     if(!scroll) return false;
+    // [FIX] 사용자가 자유배치 입력창에 타이핑 중이면 재렌더 스킵 (DOM 교체로 인한 값 깜빡임 방지)
+    // Firebase 스냅샷이 300ms/1500ms 지연 재렌더를 걸어놓기 때문에 편집 중 여러 번 리셋되는 문제 해결
+    if(scroll.dataset.lvMgrOnly==='1'){
+      const active = document.activeElement;
+      if(active && active.classList && active.classList.contains('lv-mgr-role-slot-input')){
+        // 다음 유휴 시점에 재시도 예약 (편집 끝나면 반영)
+        if(!window.__mgrRerenderPending){
+          window.__mgrRerenderPending = true;
+          const _retry = () => {
+            window.__mgrRerenderPending = false;
+            const a = document.activeElement;
+            if(a && a.classList && a.classList.contains('lv-mgr-role-slot-input')){
+              // 여전히 편집 중이면 다시 지연
+              setTimeout(_retry, 800);
+            } else {
+              try { lvRenderMgrOnlyDirect(); } catch(_){}
+            }
+          };
+          setTimeout(_retry, 800);
+        }
+        return true;
+      }
+    }
     scroll.dataset.lvMgrOnly='1';
     __mgrOnly = true;
     __mgrInvalidateRoleIndex();  // [PERF] 렌더 시작 시 인덱스 초기화 → 최신 데이터로 재구축
