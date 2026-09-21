@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v128</span><script>window.__APP_VERSION=127;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v129</span><script>window.__APP_VERSION=127;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6945,6 +6945,20 @@ function lvRenderTestMemo(){
     ? escapeHtml(v)
     : String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   wrap.hidden = false;
+  // [PERF] 이미 렌더된 상태면 textarea 값만 갱신 (포커스·입력 렉 방지)
+  //   - 포커스된 textarea는 절대 건드리지 않음
+  //   - 다른 textarea만 값이 다르면 조용히 업데이트
+  const existing = wrap.querySelectorAll('.lv-test-memo-textarea');
+  if(existing.length === 5){
+    const active = document.activeElement;
+    existing.forEach((ta, idx) => {
+      if(ta === active) return;  // 편집 중이면 건드리지 않음
+      const nextVal = String(slots[idx] || '');
+      if(ta.value !== nextVal) ta.value = nextVal;
+    });
+    return;
+  }
+  // 초기 렌더 (한 번만)
   wrap.innerHTML = `
     <div class="lv-test-memo-head">
       <div>
@@ -6967,11 +6981,18 @@ function lvSetTestMemo(value){
   lvWriteTestMemoSlots(slots);
   lvScheduleTestMemoSave();
 }
+// [PERF] 매 키 입력마다 localStorage/Firebase 쓰지 않고 메모리에만 즉시 반영
+let __lvMemoMem = null;
+let __lvMemoWriteTimer = null;
 function lvSetTestMemoSlot(idx, value){
-  const slots = lvReadTestMemoSlots();
+  if(!__lvMemoMem) __lvMemoMem = lvReadTestMemoSlots();
   const n = Math.max(0, Math.min(4, Number(idx) || 0));
-  slots[n] = String(value || '');
-  lvWriteTestMemoSlots(slots);
+  __lvMemoMem[n] = String(value || '');
+  // localStorage 쓰기는 150ms debounce
+  clearTimeout(__lvMemoWriteTimer);
+  __lvMemoWriteTimer = setTimeout(()=>{
+    try { lvWriteTestMemoSlots(__lvMemoMem); } catch(_){}
+  }, 150);
   lvScheduleTestMemoSave();
 }
 function lvScheduleTestMemoSave(){
@@ -6980,8 +7001,10 @@ function lvScheduleTestMemoSave(){
   clearTimeout(__lvMemoTimer);
   __lvMemoTimer = setTimeout(()=>{
     if(badge) badge.textContent = '자동 저장';
+    // 확실히 localStorage에 flush 후 Firebase push
+    try { if(__lvMemoMem) lvWriteTestMemoSlots(__lvMemoMem); } catch(_){}
     try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
-  }, 350);
+  }, 600);
 }
 window.lvSetTestMemo = lvSetTestMemo;
 window.lvSetTestMemoSlot = lvSetTestMemoSlot;
