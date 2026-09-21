@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v122</span><script>window.__APP_VERSION=122;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v124</span><script>window.__APP_VERSION=124;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -7472,7 +7472,10 @@ function lvMgrCommitFreeTextInputs(){
   try{
     const text=lvReadMgrTextDraft();
     let changed=false;
-    document.querySelectorAll('.lv-mgr-text-row').forEach(roleRow=>{
+    // [FIX] 사용자가 실제로 편집한 role row만 commit - dirty 표시된 것만
+    // 편집되지 않은 role은 화면에 뿌려진 값이 현재 mgrDraft 상태와 동일하므로 재적용 시 매칭 실패로
+    // 기존 매니저가 강등되는 문제를 원천 차단
+    document.querySelectorAll('.lv-mgr-text-row[data-edited="1"]').forEach(roleRow=>{
       const row=roleRow.closest('.lv-mgr-row');
       if(!row || !roleRow) return;
       const storeKey=row.dataset.store;
@@ -7492,9 +7495,12 @@ function lvMgrApplyFreeTextToDraft(opts){
   opts=opts||{};
   const text=lvReadMgrTextDraft();
   const stores=Object.keys(text||{}).filter(k=>text[k]&&typeof text[k]==='object');
-  const report={misses:[], applied:0};
+  const report={misses:[], applied:0, conflicts:[]};
   if(!stores.length) return report;
   const draft=lvEnsureMgrDraftData();
+  // [PRIORITY] 직급 우선순위: HAUS 매니저 > 매니저 > 부매니저
+  // 동일 store에 같은 사람이 여러 slot에 들어있으면 가장 높은 직급만 채택
+  const rolePriority = { 'HAUS':3, 'MG':2, 'BM':1 };
   const findPrevRoleEmps=(storeKey, roleKey)=>{
     return (EMPS||[]).filter(emp=>{
       if(!emp || !emp.id || getEmpStatus(emp)==='deleted') return false;
@@ -7506,21 +7512,66 @@ function lvMgrApplyFreeTextToDraft(opts){
   };
   stores.forEach(storeKey=>{
     const roles=text[storeKey]||{};
+    // [STEP 1] 편집된 role만 수집 + 이름→emp 매칭
+    const roleSelections = {};  // roleKey → {selected:[emps], misses:[names]}
     lvMgrFreeRoleDefs().forEach(def=>{
       if(!Object.prototype.hasOwnProperty.call(roles, def.key)) return;
       const selected=[];
       const selectedIds=new Set();
+      const localMisses=[];
       lvMgrSplitNames(roles[def.key]).forEach(name=>{
         const found=lvMgrFindEmpForTextName(name);
         if(found.emp && !selectedIds.has(found.emp.id)){
           selected.push(found.emp);
           selectedIds.add(found.emp.id);
         } else if(!found.emp){
+          localMisses.push(name);
           report.misses.push(name);
         }
       });
+      roleSelections[def.key] = {selected, misses:localMisses, def};
+    });
+    // [STEP 2] 충돌 해소 - 같은 emp가 여러 role에 있으면 최고 직급만 유지
+    const empToRoleKey = new Map();  // empId → 최고 우선순위 roleKey
+    Object.keys(roleSelections).forEach(rk=>{
+      const pri = rolePriority[rk] || 0;
+      roleSelections[rk].selected.forEach(emp=>{
+        const cur = empToRoleKey.get(emp.id);
+        if(!cur || pri > (rolePriority[cur]||0)){
+          if(cur) report.conflicts.push(emp.name+' → '+rk);
+          empToRoleKey.set(emp.id, rk);
+        }
+      });
+    });
+    // [STEP 3] 각 role별로 최종 selected 확정 (중복 제거)
+    const finalByRole = {};
+    Object.keys(roleSelections).forEach(rk=>{
+      finalByRole[rk] = roleSelections[rk].selected.filter(emp => empToRoleKey.get(emp.id) === rk);
+    });
+    // [STEP 4] 적용
+    Object.keys(roleSelections).forEach(rk=>{
+      const info = roleSelections[rk];
+      const def = info.def;
+      const selectedEmps = finalByRole[rk];
+      const selectedIds = new Set(selectedEmps.map(e=>e.id));
+      // 매칭 실패한 이름 있으면 파괴적 강등 skip - 기존 매니저 유지
+      if(info.misses.length){
+        selectedEmps.forEach(emp=>{
+          const prev=draft[emp.id]||{};
+          draft[emp.id]=Object.assign({}, prev, {
+            current_store: storeKey,
+            channel: guessChannel(storeKey)||prev.channel||emp.channel||'',
+            position: def.role
+          });
+          report.applied++;
+        });
+        return;
+      }
+      // 이 role에서 빠진 기존 매니저 처리 - 다른 role로 승/강등되지 않으면 '팀원'으로
       findPrevRoleEmps(storeKey, def.key).forEach(emp=>{
         if(selectedIds.has(emp.id)) return;
+        // 다른 role에도 있으면 그쪽에서 처리하므로 skip
+        if(empToRoleKey.has(emp.id)) return;
         const prev=draft[emp.id]||{};
         draft[emp.id]=Object.assign({}, prev, {
           current_store: storeKey,
@@ -7529,7 +7580,8 @@ function lvMgrApplyFreeTextToDraft(opts){
         });
         report.applied++;
       });
-      selected.forEach(emp=>{
+      // 선택된 emp 프로모션
+      selectedEmps.forEach(emp=>{
         const prev=draft[emp.id]||{};
         draft[emp.id]=Object.assign({}, prev, {
           current_store: storeKey,
@@ -7542,9 +7594,16 @@ function lvMgrApplyFreeTextToDraft(opts){
   });
   lvWriteLayout(LV_MGR_DRAFT_KEY,draft);
   __mgrInvalidateRoleIndex();
-  if(report.misses.length && !opts.silent && typeof lvToast==='function'){
-    const unique=[...new Set(report.misses)];
-    lvToast('이름 확인 필요: ' + unique.slice(0,3).join(', ') + (unique.length>3?' 외 '+(unique.length-3)+'명':''));
+  if(!opts.silent && typeof lvToast==='function'){
+    const msgs=[];
+    if(report.misses.length){
+      const unique=[...new Set(report.misses)];
+      msgs.push('❓ 이름 확인 필요: ' + unique.slice(0,2).join(', ') + (unique.length>2?' 외 '+(unique.length-2)+'명':''));
+    }
+    if(report.conflicts.length){
+      msgs.push('⚠️ 중복 이름은 최고 직급 유지: '+report.conflicts.slice(0,2).join(', '));
+    }
+    if(msgs.length) lvToast(msgs.join(' · '));
   }
   return report;
 }
@@ -7674,12 +7733,17 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
         if(targetInput && !String(targetInput.value||'').trim() && !slotInputs.some(input=>input!==targetInput && String(input.value||'').trim()===(emp.name||''))){
           targetInput.value=emp.name||'';
         }
+        roleRow.setAttribute('data-edited','1');  // [FIX] 드롭도 편집으로 표시
         lvMgrSetFreeRoleText(storeKey, roleKey, names.join(' / '));
         if(typeof lvToast==='function') lvToast('🧪 초안 ' + (emp.name||'') + ' → ' + lvStoreName(storeKey) + ' · ' + roleName);
       });
       roleRow.querySelectorAll('.lv-mgr-role-slot-input').forEach((input, idx, inputs)=>{
         input.addEventListener('blur', commit);
-        input.addEventListener('input', ()=>lvMgrSaveFreeRoleText(storeKey, roleKey, lvMgrRoleRowText(roleRow)));
+        input.addEventListener('input', ()=>{
+          // [FIX] 실제 편집 표시 - commit 시 이 role만 처리해 기존 매니저 오강등 방지
+          roleRow.setAttribute('data-edited','1');
+          lvMgrSaveFreeRoleText(storeKey, roleKey, lvMgrRoleRowText(roleRow));
+        });
         input.addEventListener('keydown', e=>{
           if(e.key==='Enter'){
             e.preventDefault();
@@ -7998,6 +8062,17 @@ function lvApplyDraftToActual(){
   } catch(_){}
   try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(e){}
   if(typeof refresh==='function') refresh();
+  // [PROFILE REFRESH] 열려있는 프로필 드로어가 변경된 emp면 즉시 갱신
+  try {
+    if(typeof curEmp !== 'undefined' && curEmp && curEmp.id && draft[curEmp.id]){
+      const el = document.getElementById('pdpos'); if(el) el.textContent = curEmp.position || '';
+      const el2 = document.getElementById('pposition'); if(el2) el2.textContent = curEmp.position || '';
+      const el3 = document.getElementById('pstore'); if(el3) el3.textContent = curEmp.current_store || '';
+      const el4 = document.getElementById('pch'); if(el4 && typeof ctag==='function') el4.innerHTML = ctag(curEmp.channel);
+      const tagEl = document.getElementById('pdtags');
+      if(tagEl && typeof ctag==='function') tagEl.innerHTML = ctag(curEmp.channel)+` <span class="tag tgg">${curEmp.brand||''}</span><span class="tag tgg">${curEmp.tenure||''}</span>`;
+    }
+  } catch(_){}
   lvMode='actual';
   lvSetMode('actual');
   showSaved();
