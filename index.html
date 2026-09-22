@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v135</span><script>window.__APP_VERSION=135;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v136</span><script>window.__APP_VERSION=136;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -8832,7 +8832,7 @@ window.lvProcessStatusDates = function(){
     const dt = ed._statusDate;
     if(!dt) return;
     if(!/^\d{4}-\d{2}-\d{2}$/.test(dt)) return;
-    if(st === 'joining' || st === 'transfer'){
+    if(st === 'joining' || st === 'transfer' || st === 'returning'){
       if(dt <= todayStr){
         autoActive.push(emp);
       }
@@ -8857,7 +8857,7 @@ window.lvProcessStatusDates = function(){
     if(typeof lvToast==='function') lvToast(`✅ ${autoActive.length}명 예정일 도래 → 재직중 전환`);
     try {
       const names = autoActive.map(e=>e.name).filter(Boolean).join(', ');
-      alert(`입사/이동 예정일이 도래했습니다.\n\n${names}\n\n재직중으로 자동 전환했습니다.`);
+      alert(`입사/이동/복직 예정일이 도래했습니다.\n\n${names}\n\n재직중으로 자동 전환했습니다.`);
     } catch(_){}
   }
   // 2) leaving 삭제 확인 알림 (한 명씩)
@@ -8904,7 +8904,7 @@ setInterval(()=>{ try { window.lvProcessStatusDates && window.lvProcessStatusDat
 async function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
   // [STATUS DATE] joining/transfer/leaving 지정 시 달력 모달로 예정일 입력
-  const needsDate = (status==='joining' || status==='transfer' || status==='leaving');
+  const needsDate = (status==='joining' || status==='transfer' || status==='leaving' || status==='returning');
   let statusDate = null;
   if(needsDate){
     hideCtxMenu();
@@ -14924,12 +14924,13 @@ let _sdmResolve = null;
 function openStatusDateModal(empName, statusKey, currentDate){
   return new Promise(resolve => {
     _sdmResolve = resolve;
-    const labelMap = { joining:'입사예정일', transfer:'이동예정일', leaving:'퇴사예정일' };
-    const titleMap = { joining:'📅 입사예정일 지정', transfer:'✈️ 이동예정일 지정', leaving:'🚪 퇴사예정일 지정' };
+    const labelMap = { joining:'입사예정일', transfer:'이동예정일', leaving:'퇴사예정일', returning:'복직예정일' };
+    const titleMap = { joining:'📅 입사예정일 지정', transfer:'✈️ 이동예정일 지정', leaving:'🚪 퇴사예정일 지정', returning:'🔁 복직예정일 지정' };
     const subMap = {
       joining:'예정일이 도래하면 자동으로 재직중 상태로 전환됩니다.',
       transfer:'예정일이 도래하면 자동으로 재직중 상태로 전환됩니다.',
-      leaving:'예정일이 도래하면 배치현황 진입 시 삭제 확인이 뜹니다.'
+      leaving:'예정일이 도래하면 배치현황 진입 시 삭제 확인이 뜹니다.',
+      returning:'예정일이 도래하면 자동으로 재직중 상태로 전환됩니다.'
     };
     document.getElementById('sdm-title').textContent = titleMap[statusKey] || '📅 예정일 지정';
     document.getElementById('sdm-sub').textContent  = subMap[statusKey] || '';
