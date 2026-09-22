@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v136</span><script>window.__APP_VERSION=136;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v137</span><script>window.__APP_VERSION=137;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5001,6 +5001,14 @@ async function editInternContractInline(){
   if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
   window.__fbEdits[curEmp.id]._internContract = newContract;
   try { if(window.fbSetEdit) window.fbSetEdit(curEmp.id, '_internContract', newContract); } catch(_){}
+  // [SYNC] 인턴 계약 시작일 = 입사일. hire_date 비어있거나 다르면 startAt으로 동기화
+  try {
+    if(startAt && curEmp.hire_date !== startAt){
+      curEmp.hire_date = startAt;
+      window.__fbEdits[curEmp.id].hire_date = startAt;
+      if(window.fbSetEdit) window.fbSetEdit(curEmp.id, 'hire_date', startAt);
+    }
+  } catch(_){}
   openP(curEmp);
 }
 window.editInternContractInline = editInternContractInline;
@@ -8900,6 +8908,36 @@ window.lvProcessStatusDates = function(){
   }
 })();
 setInterval(()=>{ try { window.lvProcessStatusDates && window.lvProcessStatusDates(); } catch(_){} }, 60*60*1000);
+// [BACKFILL] 기존 인턴 중 hire_date는 비었지만 _internContract.startAt이 있으면 자동 동기화
+window.lvBackfillInternHireDate = function(){
+  try {
+    if(!window.__fbEdits || typeof EMPS === 'undefined') return;
+    let filled = 0;
+    EMPS.forEach(emp => {
+      if(!emp || !emp.id) return;
+      const ed = window.__fbEdits[emp.id] || {};
+      const contract = ed._internContract || {};
+      const s = contract.startAt || '';
+      if(!s) return;
+      // hire_date 없으면 계약 시작일로 채움
+      if(!emp.hire_date){
+        emp.hire_date = s;
+        if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+        window.__fbEdits[emp.id].hire_date = s;
+        try { if(window.fbSetEdit) window.fbSetEdit(emp.id, 'hire_date', s); } catch(_){}
+        filled++;
+      }
+    });
+    if(filled > 0){
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      try { if(typeof refresh==='function') refresh(); } catch(_){}
+      try { if(typeof lvRender==='function') lvRender(); } catch(_){}
+      console.log('[BACKFILL] 인턴 hire_date 자동 동기화:', filled, '명');
+    }
+  } catch(e){ console.warn('[BACKFILL] 인턴 hire_date 동기화 오류:', e); }
+};
+// 페이지 로드 후 3초 뒤 1회 실행 (EMPS + __fbEdits 로드 완료 후)
+setTimeout(() => { try { window.lvBackfillInternHireDate(); } catch(_){} }, 3000);
 
 async function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
@@ -10985,7 +11023,7 @@ window.doAddEmp = async function(){
       window.fbSetEdit(newId, '_statusDate', _autoStatusDate);
       newEmp.status = 'joining';
     }
-    // 인턴 계약기간 저장
+    // 인턴 계약기간 저장 + 시작일을 입사일로 자동 세팅
     if(newEmp.position === '인턴'){
       const s = (document.getElementById('ae-intern-start')?.value||'').trim();
       const e = (document.getElementById('ae-intern-end')?.value||'').trim();
@@ -10994,6 +11032,12 @@ window.doAddEmp = async function(){
         if(!window.__fbEdits[newId]) window.__fbEdits[newId] = {};
         window.__fbEdits[newId]._internContract = contract;
         window.fbSetEdit(newId, '_internContract', contract);
+        // [SYNC] 인턴은 계약 시작일 = 입사일
+        if(!newEmp.hire_date){
+          newEmp.hire_date = s;
+          window.__fbEdits[newId].hire_date = s;
+          window.fbSetEdit(newId, 'hire_date', s);
+        }
       }
     }
   }
