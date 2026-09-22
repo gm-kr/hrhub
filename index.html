@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v133</span><script>window.__APP_VERSION=133;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v134</span><script>window.__APP_VERSION=134;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3695,26 +3695,6 @@ window.openMoveChannel = openMoveChannel;
           <div class="lv-pp-sec">
             <div class="lv-pp-sec-head">
               <span class="lv-pp-sec-title">
-                <span class="lv-pp-sec-dot" style="background:#8b5cf6"></span>
-                인턴 (계약 진행중)
-              </span>
-              <span style="font-size:10px;color:#9aa0b3;font-weight:500">직책=인턴 · 입사예정 제외</span>
-            </div>
-            <table class="lv-pp-tbl">
-              <thead><tr>
-                <th style="width:34px"></th>
-                <th style="width:64px">이름</th>
-                <th>매장</th>
-                <th style="width:150px">계약기간</th>
-                <th>비고</th>
-              </tr></thead>
-              <tbody id="lv-pp-intern-body"></tbody>
-            </table>
-            <div id="lv-pp-intern-empty" class="lv-pp-empty">인턴 없음</div>
-          </div>
-          <div class="lv-pp-sec" style="margin-top:16px">
-            <div class="lv-pp-sec-head">
-              <span class="lv-pp-sec-title">
                 <span class="lv-pp-sec-dot" style="background:#2daa72"></span>
                 입사예정
               </span>
@@ -3722,10 +3702,10 @@ window.openMoveChannel = openMoveChannel;
             </div>
             <table class="lv-pp-tbl">
               <thead><tr>
-                <th style="width:72px">이름</th>
-                <th>근무지</th>
-                <th style="width:84px">예정일</th>
-                <th style="width:130px">계약기간</th>
+                <th style="width:34px"></th>
+                <th style="width:64px">이름</th>
+                <th>매장</th>
+                <th style="width:150px">계약기간</th>
                 <th>비고</th>
                 <th style="width:18px"></th>
               </tr></thead>
@@ -8610,34 +8590,9 @@ function ppRowHtml(type, row){
   const safeNote=esc(row.note||'');
   const jsId=String(row.id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const jsType=String(type||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  // [CONTRACT] 이 행에 연결된 emp가 있으면 인턴 계약기간 배지 표시
-  let contractHtml = '';
-  try {
-    const linkedEmp = (row.empId ? EMPS.find(e=>e.id===row.empId) : null)
-                    || (row.name ? EMPS.find(e=>String(e.name||'').trim()===String(row.name||'').trim()) : null);
-    if(linkedEmp){
-      const ed = (window.__fbEdits && window.__fbEdits[linkedEmp.id]) || {};
-      const contract = ed._internContract || {};
-      const s = contract.startAt || '';
-      const en = contract.endAt || '';
-      if(s || en){
-        let leftBadge = '';
-        if(en){
-          try {
-            const today = new Date(); today.setHours(0,0,0,0);
-            const endD = new Date(en+'T00:00:00');
-            const diff = Math.round((endD - today)/86400000);
-            const color = diff<=7?'#e84040':(diff<=30?'#e07b12':'#5b6cf8');
-            leftBadge = ` <span style="background:${color}1a;color:${color};font-size:10px;font-weight:700;padding:1px 5px;border-radius:8px">${diff>=0?'D-'+diff:'D+'+(-diff)}</span>`;
-          } catch(_){}
-        }
-        contractHtml = `<div class="lv-pp-contract-line" style="font-size:11px;color:#5b6cf8;font-weight:600;padding:2px 6px;margin-top:2px;background:#eef2ff;border-radius:6px;display:inline-block">📋 인턴 ${s||'?'} ~ ${en||'?'}${leftBadge}</div>`;
-      }
-    }
-  } catch(_){}
   return `
     <tr data-ppid="${safeId}" data-type="${type}">
-      <td colspan="6">
+      <td colspan="5">
         <div class="lv-pp-row-card">
           <div class="lv-pp-person-line">
           ${av}
@@ -8655,7 +8610,6 @@ function ppRowHtml(type, row){
               oninput="ppUpdateField('${jsId}','note',this.value)">
             <button class="lv-pp-del-btn" onclick="ppDelete('${jsId}','${jsType}')" title="삭제">✕</button>
           </div>
-          ${contractHtml}
         </div>
       </td>
     </tr>`;
@@ -8670,7 +8624,8 @@ function getEmpPrevStore(emp){
 window.getEmpPrevStore=getEmpPrevStore;
 function ppRender(){
   const data=ppLoad();
-  ['joining','returning'].forEach(type=>{
+  // [RETURNING] 복직예정은 기존 수동 입력 방식 유지
+  ['returning'].forEach(type=>{
     const tbody=$('lv-pp-'+type+'-body');
     const empty=$('lv-pp-'+type+'-empty');
     if(!tbody||!empty) return;
@@ -8678,37 +8633,26 @@ function ppRender(){
     tbody.innerHTML=rows.map(r=>ppRowHtml(type,r)).join('');
     empty.style.display=rows.length?'none':'block';
   });
-  // [INTERN] 인턴 리스트 자동 렌더링 (position=인턴, status!=joining/deleted/leave, 계약기간 표시)
-  //   - 입사예정과 겹치지 않도록 status가 joining이거나 입사예정 리스트에 이미 있는 사람은 제외
-  const iBody=$('lv-pp-intern-body');
-  const iEmpty=$('lv-pp-intern-empty');
-  if(iBody && iEmpty){
-    const joiningEmpIds = new Set((data.joining||[]).map(r=>r.empId).filter(Boolean));
-    const joiningNames = new Set((data.joining||[]).map(r=>String(r.name||'').trim()).filter(Boolean));
-    const internEmps = EMPS.filter(e=>{
+  // [JOINING] 입사예정 자동 렌더링 (status==='joining'인 직원만) - 이동예정과 동일한 양식
+  //   사진 · 이름 · 매장 · 계약기간 · 비고
+  //   수동 입력 rows(data.joining)의 empId도 함께 집합에 포함해 EMPS와 중복 없이 보여줌
+  const jBody=$('lv-pp-joining-body');
+  const jEmpty=$('lv-pp-joining-empty');
+  if(jBody && jEmpty){
+    const joiningEmps = EMPS.filter(e=>{
       if(!e || !e.id) return false;
       if(typeof isDeletedEmpId==='function' && isDeletedEmpId(e.id)) return false;
       const st = (typeof getEmpStatus==='function') ? getEmpStatus(e) : (e.status||'active');
-      if(st === 'joining' || st === 'deleted' || st === 'leave') return false;
-      // 직책이 인턴인 사람만
-      const pk = (typeof lvPosKey==='function') ? lvPosKey(e.position) : '';
-      if(pk !== 'IN' && !String(e.position||'').includes('인턴')) return false;
-      // 입사예정 리스트와 중복 방지
-      if(joiningEmpIds.has(e.id)) return false;
-      if(joiningNames.has(String(e.name||'').trim())) return false;
-      return true;
+      return st === 'joining';
     });
-    // 계약 종료일 빠른 순 정렬 (없으면 뒤)
-    internEmps.sort((a,b)=>{
-      const ca=(window.__fbEdits&&window.__fbEdits[a.id]&&window.__fbEdits[a.id]._internContract)||{};
-      const cb=(window.__fbEdits&&window.__fbEdits[b.id]&&window.__fbEdits[b.id]._internContract)||{};
-      const ea=ca.endAt||'', eb=cb.endAt||'';
-      if(!ea && !eb) return 0;
-      if(!ea) return 1;
-      if(!eb) return -1;
-      return ea.localeCompare(eb);
+    // 예정일(_statusDate) 또는 계약 startAt 빠른 순
+    joiningEmps.sort((a,b)=>{
+      const da=(window.__fbEdits&&window.__fbEdits[a.id]&&window.__fbEdits[a.id]._statusDate)||'';
+      const db=(window.__fbEdits&&window.__fbEdits[b.id]&&window.__fbEdits[b.id]._statusDate)||'';
+      if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
+      return da.localeCompare(db);
     });
-    iBody.innerHTML = internEmps.map(e=>{
+    jBody.innerHTML = joiningEmps.map(e=>{
       const av = ppAvatarHtml(e, e.name);
       const storeName = e.current_store ? lvStoreName(e.current_store) : '<span style="color:#aab0be">미배정</span>';
       const contract = (window.__fbEdits && window.__fbEdits[e.id] && window.__fbEdits[e.id]._internContract) || {};
@@ -8716,7 +8660,6 @@ function ppRender(){
       const en = contract.endAt || '';
       let contractHtml = '<span style="color:#aab0be">-</span>';
       if(s || en){
-        // 남은 일수 배지
         let leftBadge = '';
         if(en){
           try {
@@ -8739,9 +8682,10 @@ function ppRender(){
         <td style="font-size:11px;color:#7a8299">${storeName}</td>
         <td style="font-size:11px">${contractHtml}${plannedBadge}</td>
         <td>${memoDisp}</td>
+        <td><button class="lv-pp-del-btn" onclick="event.stopPropagation();ppClearJoining('${e.id}')" title="입사예정 해제">✕</button></td>
       </tr>`;
     }).join('');
-    iEmpty.style.display = internEmps.length ? 'none' : 'block';
+    jEmpty.style.display = joiningEmps.length ? 'none' : 'block';
   }
   // [TRANSFER] 이동예정 자동 렌더링 (status==='transfer'인 직원만)
   const tBody=$('lv-pp-transfer-body');
@@ -8805,6 +8749,10 @@ window.ppClearTransfer=function(empId){
 };
 // [LEAVING] 퇴사예정 해제 (status를 active로 복귀)
 window.ppClearLeaving=function(empId){
+  if(typeof lvSetStatus==='function') lvSetStatus(empId, 'active');
+};
+// [JOINING] 입사예정 해제 (status를 active로 복귀)
+window.ppClearJoining=function(empId){
   if(typeof lvSetStatus==='function') lvSetStatus(empId, 'active');
 };
 function lvPPAdd(type){
