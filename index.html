@@ -1407,7 +1407,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v136</span><script>window.__APP_VERSION=136;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v139</span><script>window.__APP_VERSION=139;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5001,6 +5001,14 @@ async function editInternContractInline(){
   if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
   window.__fbEdits[curEmp.id]._internContract = newContract;
   try { if(window.fbSetEdit) window.fbSetEdit(curEmp.id, '_internContract', newContract); } catch(_){}
+  // [SYNC] 인턴 계약 시작일 = 입사일. hire_date 비어있거나 다르면 startAt으로 동기화
+  try {
+    if(startAt && curEmp.hire_date !== startAt){
+      curEmp.hire_date = startAt;
+      window.__fbEdits[curEmp.id].hire_date = startAt;
+      if(window.fbSetEdit) window.fbSetEdit(curEmp.id, 'hire_date', startAt);
+    }
+  } catch(_){}
   openP(curEmp);
 }
 window.editInternContractInline = editInternContractInline;
@@ -6725,7 +6733,41 @@ function lvReadLayout(key){
   if(key === LV_MGR_DRAFT_KEY) return lvReadMgrDraftData();
   try{const data=JSON.parse(localStorage.getItem(key)||'{}');return data&&typeof data==='object'?data:{};}catch(e){return{};}
 }
+// [PERF] 배치 맵 캐시 — lvEnsureActualData/DraftData/MgrDraftData가 직원 1명당 여러 번 호출되며
+//   매번 localStorage JSON.parse + 전체 EMPS 순회를 반복하던 O(N²) 병목 제거.
+//   같은 동기 실행 구간(한 번의 렌더) 안에서는 1회만 계산하고, 마이크로태스크 종료 시 / 쓰기 시 무효화.
+window.__lvMapCache = { actual:null, draft:null, mgr:null };
+let __lvMapCacheArmed = false;
+function __lvMapCacheInvalidate(){
+  window.__lvMapCache.actual = null;
+  window.__lvMapCache.draft = null;
+  window.__lvMapCache.mgr = null;
+}
+window.__lvMapCacheInvalidate = __lvMapCacheInvalidate;
+function __lvMapCacheArm(){
+  if(__lvMapCacheArmed) return;
+  __lvMapCacheArmed = true;
+  Promise.resolve().then(()=>{ __lvMapCacheArmed = false; __lvMapCacheInvalidate(); });
+}
+// Firebase 스냅샷 등에서 localStorage에 직접 쓰는 경우에도 캐시 무효화
+(function(){
+  if(Storage.prototype.__lvMapPatched) return;
+  const KEYS = { layoutDraftData:1, layoutActualData:1, lvMgrSandboxDraft:1 };
+  const _set = Storage.prototype.setItem;
+  const _rm = Storage.prototype.removeItem;
+  Storage.prototype.setItem = function(k, v){
+    if(KEYS[k]) __lvMapCacheInvalidate();
+    return _set.call(this, k, v);
+  };
+  Storage.prototype.removeItem = function(k){
+    if(KEYS[k]) __lvMapCacheInvalidate();
+    return _rm.call(this, k);
+  };
+  Storage.prototype.__lvMapPatched = true;
+})();
 function lvWriteLayout(key,data){
+  // 쓰기 발생 → 의존 캐시 무효화 (draft는 actual에, mgr는 draft에 의존)
+  __lvMapCacheInvalidate();
   if(key === LV_MGR_DRAFT_KEY) return lvWriteMgrDraftData(data);
   const json = JSON.stringify(data||{});
   if(typeof safeSetLocalStorage === 'function') return safeSetLocalStorage(key, json, {clearPhotoCache:true});
@@ -6745,6 +6787,13 @@ function lvDraftSnapshotFromActual(){
   return map;
 }
 function lvEnsureActualData(){
+  if(window.__lvMapCache.actual) return window.__lvMapCache.actual;
+  const _res = __lvEnsureActualDataRaw();
+  window.__lvMapCache.actual = _res;
+  __lvMapCacheArm();
+  return _res;
+}
+function __lvEnsureActualDataRaw(){
   let actual=lvReadLayout(LV_ACTUAL_KEY);
   let changed=false;
   // [FIX] 유효 매장 목록 확보(localStorage stale data 보정)
@@ -6778,6 +6827,13 @@ function lvEnsureActualData(){
   return actual;
 }
 function lvEnsureDraftData(){
+  if(window.__lvMapCache.draft) return window.__lvMapCache.draft;
+  const _res = __lvEnsureDraftDataRaw();
+  window.__lvMapCache.draft = _res;
+  __lvMapCacheArm();
+  return _res;
+}
+function __lvEnsureDraftDataRaw(){
   const actual=lvEnsureActualData();
   let draft=lvReadLayout(LV_DRAFT_KEY);
   let changed=false;
@@ -6805,6 +6861,13 @@ function lvEnsureDraftData(){
   return draft;
 }
 function lvEnsureMgrDraftData(){
+  if(window.__lvMapCache.mgr) return window.__lvMapCache.mgr;
+  const _res = __lvEnsureMgrDraftDataRaw();
+  window.__lvMapCache.mgr = _res;
+  __lvMapCacheArm();
+  return _res;
+}
+function __lvEnsureMgrDraftDataRaw(){
   const base=lvEnsureDraftData();
   let draft=lvReadLayout(LV_MGR_DRAFT_KEY);
   let changed=false;
@@ -8900,6 +8963,36 @@ window.lvProcessStatusDates = function(){
   }
 })();
 setInterval(()=>{ try { window.lvProcessStatusDates && window.lvProcessStatusDates(); } catch(_){} }, 60*60*1000);
+// [BACKFILL] 기존 인턴 중 hire_date는 비었지만 _internContract.startAt이 있으면 자동 동기화
+window.lvBackfillInternHireDate = function(){
+  try {
+    if(!window.__fbEdits || typeof EMPS === 'undefined') return;
+    let filled = 0;
+    EMPS.forEach(emp => {
+      if(!emp || !emp.id) return;
+      const ed = window.__fbEdits[emp.id] || {};
+      const contract = ed._internContract || {};
+      const s = contract.startAt || '';
+      if(!s) return;
+      // hire_date 없으면 계약 시작일로 채움
+      if(!emp.hire_date){
+        emp.hire_date = s;
+        if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id] = {};
+        window.__fbEdits[emp.id].hire_date = s;
+        try { if(window.fbSetEdit) window.fbSetEdit(emp.id, 'hire_date', s); } catch(_){}
+        filled++;
+      }
+    });
+    if(filled > 0){
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      try { if(typeof refresh==='function') refresh(); } catch(_){}
+      try { if(typeof lvRender==='function') lvRender(); } catch(_){}
+      console.log('[BACKFILL] 인턴 hire_date 자동 동기화:', filled, '명');
+    }
+  } catch(e){ console.warn('[BACKFILL] 인턴 hire_date 동기화 오류:', e); }
+};
+// 페이지 로드 후 3초 뒤 1회 실행 (EMPS + __fbEdits 로드 완료 후)
+setTimeout(() => { try { window.lvBackfillInternHireDate(); } catch(_){} }, 3000);
 
 async function lvSetStatus(empId, status){
   const emp=EMPS.find(x=>x.id===empId); if(!emp) return;
@@ -9610,11 +9703,50 @@ function buildHcBar(storeKey, counted, total, pendingBreakdown){
     <span class="lv-hc-tag ${tagCls}">${tagText}</span>
   </div></div>`;
 }
+// [DRAG STATE] 문서 단위 드래그 추적 — 드롭 후 원본 칩이 재렌더로 사라져 dragend가 안 오는 경우에도 확실히 해제
+(function(){
+  if(window.__lvDragTrackBound) return;
+  window.__lvDragTrackBound = true;
+  window.__lvDragActiveAt = 0;
+  const _end = () => {
+    window.__lvDragActiveAt = 0;
+    // 드롭 핸들러가 먼저 값을 읽도록 한 틱 뒤에 드래그 변수 정리
+    setTimeout(() => {
+      try { if(typeof lvDragType !== 'undefined' && !window.__lvDragActiveAt){ lvDragType = null; lvDragId = null; } } catch(_){}
+    }, 0);
+  };
+  document.addEventListener('dragstart', () => { window.__lvDragActiveAt = Date.now(); }, true);
+  document.addEventListener('drop', _end, true);
+  document.addEventListener('dragend', _end, true);
+})();
 function lvRender(){
   if(window.__isFreshRenderBlocked && window.__isFreshRenderBlocked()){
     if(window.__showFreshLoading) window.__showFreshLoading();
     return;
   }
+  // [PERF] 드래그 중에는 재렌더 금지 (Firebase 스냅샷이 DOM을 갈아엎어 드래그가 끊기고 렉 걸리던 문제)
+  //   드래그 상태는 문서 단위 dragstart/drop/dragend로 따로 추적 (lvDragType은 드롭 후 안 풀리는 경우가 있어 사용 안 함)
+  //   15초 넘게 풀리지 않으면 강제로 해제해서 렌더가 영영 막히지 않게 함
+  try {
+    const _evType = (window.event && window.event.type) || '';
+    const _dragAt = window.__lvDragActiveAt || 0;
+    const _dragging = _dragAt && (Date.now() - _dragAt < 15000);
+    if(_dragging && _evType !== 'drop' && _evType !== 'dragend'){
+      if(!window.__lvRenderAfterDrag){
+        window.__lvRenderAfterDrag = true;
+        const _waitDrag = () => {
+          const at = window.__lvDragActiveAt || 0;
+          if(at && Date.now() - at < 15000){ setTimeout(_waitDrag, 200); return; }
+          window.__lvRenderAfterDrag = false;
+          try { lvRender(); } catch(_){}
+        };
+        setTimeout(_waitDrag, 200);
+      }
+      return;
+    }
+  } catch(_){}
+  // [PERF] 렌더 시작 시 배치 맵 캐시 초기화 → 이번 렌더 동안 1회만 계산
+  try { __lvMapCacheInvalidate(); } catch(_){}
   // [PERF] 사용자가 메모/자유배치 텍스트 입력 중이면 재렌더 스킵 - 타이핑 렉 원인 제거
   try {
     const active = document.activeElement;
@@ -10985,7 +11117,7 @@ window.doAddEmp = async function(){
       window.fbSetEdit(newId, '_statusDate', _autoStatusDate);
       newEmp.status = 'joining';
     }
-    // 인턴 계약기간 저장
+    // 인턴 계약기간 저장 + 시작일을 입사일로 자동 세팅
     if(newEmp.position === '인턴'){
       const s = (document.getElementById('ae-intern-start')?.value||'').trim();
       const e = (document.getElementById('ae-intern-end')?.value||'').trim();
@@ -10994,6 +11126,12 @@ window.doAddEmp = async function(){
         if(!window.__fbEdits[newId]) window.__fbEdits[newId] = {};
         window.__fbEdits[newId]._internContract = contract;
         window.fbSetEdit(newId, '_internContract', contract);
+        // [SYNC] 인턴은 계약 시작일 = 입사일
+        if(!newEmp.hire_date){
+          newEmp.hire_date = s;
+          window.__fbEdits[newId].hire_date = s;
+          window.fbSetEdit(newId, 'hire_date', s);
+        }
       }
     }
   }
