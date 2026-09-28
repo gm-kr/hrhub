@@ -12,7 +12,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 146;
+  window.__APP_VERSION = 147;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -633,12 +633,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-role-text-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
 .lv-mgr-text-row.drag-over .lv-mgr-role-text-input{border-color:#e07b12;background:#fff8eb;}
 .lv-mgr-role-slot-list{display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
-.lv-mgr-text-label{display:inline-flex;align-items:center;gap:2px;}
-.lv-mgr-role-x{border:0;background:transparent;color:#c3c8d6;font-size:12px;line-height:1;padding:0 2px;cursor:pointer;border-radius:4px;}
-.lv-mgr-role-x:hover{color:#e5484d;background:#fdecec;}
-.lv-mgr-role-adds{display:inline-flex;gap:4px;flex-wrap:wrap;}
-.lv-mgr-role-add{border:1px dashed #d5dae6;background:#fafbfd;color:#8a91a6;font-size:10.5px;font-weight:700;height:24px;padding:0 8px;border-radius:7px;cursor:pointer;font-family:inherit;}
-.lv-mgr-role-add:hover{border-color:#e07b12;color:#b45f06;background:#fff8eb;}
+.lv-mgr-seat-edit{margin-left:auto;flex:0 0 auto;width:24px;height:24px;border:1px solid #e6e9f2;background:#fff;color:#9aa0b3;border-radius:7px;font-size:12px;cursor:pointer;line-height:1;}
+.lv-mgr-seat-edit:hover{border-color:#e07b12;color:#b45f06;background:#fff8eb;}
+.lv-mgr-seat-modal{position:fixed;inset:0;background:rgba(20,24,40,.35);display:none;align-items:center;justify-content:center;z-index:2147483600;}
+.lv-mgr-seat-modal.open{display:flex;}
+.lv-mgr-seat-box{background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);padding:18px 20px;min-width:340px;max-width:92vw;}
+.lv-mgr-seat-title{font-size:14px;font-weight:800;color:#2a2f42;}
+.lv-mgr-seat-sub{font-size:11px;color:#9aa0b3;margin:4px 0 12px;}
+.lv-mgr-seat-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f2f4f8;}
+.lv-mgr-seat-label{width:64px;font-size:12px;font-weight:800;color:#5b6378;}
+.lv-mgr-seat-step{width:26px;height:26px;border:1px solid #e1e5f0;background:#fafbfd;border-radius:7px;font-size:14px;font-weight:800;color:#5b6378;cursor:pointer;}
+.lv-mgr-seat-step:hover{border-color:#e07b12;color:#b45f06;}
+.lv-mgr-seat-num{min-width:18px;text-align:center;font-size:13px;font-weight:800;color:#2a2f42;}
+.lv-mgr-seat-names{font-size:11px;color:#8188a0;margin-left:6px;}
+.lv-mgr-seat-warn{font-size:11px;color:#c2410c;min-height:16px;margin-top:8px;}
+.lv-mgr-seat-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+.lv-mgr-seat-btns button{height:32px;padding:0 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid #e1e5f0;background:#fff;color:#5b6378;}
+.lv-mgr-seat-btns .lv-mgr-seat-save{background:#e07b12;border-color:#e07b12;color:#fff;}
 .lv-mgr-role-slot-input{width:84px;height:27px;border:1px solid #e1e5f0;border-radius:7px;background:#fff;color:#2f3547;font-size:11px;font-family:inherit;padding:0 7px;outline:none;}
 .lv-mgr-role-slot-input::placeholder{color:#bdc2d0;}
 .lv-mgr-role-slot-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
@@ -1416,7 +1427,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v146</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=146;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v147</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=147;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -7574,60 +7585,90 @@ function lvMgrFreeRoleDefs(){
     {key:'BM', label:'부매니저', role:'부매니저'}
   ];
 }
-// [ROLE SEATS] 매장별 매니저 자리(HAUS매/매니저/부매니저) 구성 - 운영팀 테스트에서 추가·삭제
-function lvMgrDefaultStoreRoles(storeKey){
-  const isHaus=/하우스|HAUS/i.test(String(storeKey||''));
-  return isHaus ? ['HAUS','MG','BM'] : ['MG','BM'];
+// [ROLE SEATS] 매장별 매니저 자리 수(HAUS매/매니저/부매니저) - 운영팀 테스트에서 ✎ 팝업으로 편집
+function lvMgrIsHausStore(storeKey){ return /하우스|HAUS/i.test(String(storeKey||'')); }
+function lvMgrDefaultSeatCounts(storeKey){
+  return { HAUS: lvMgrIsHausStore(storeKey) ? 1 : 0, MG: 1, BM: 1 };
 }
 function lvMgrGetStoreRoles(storeKey){
   try{
     const t=lvReadMgrTextDraft();
     const cfg=t && t.__storeRoles && t.__storeRoles[storeKey];
-    if(Array.isArray(cfg)) return cfg.slice();
+    if(Array.isArray(cfg)){ const o={HAUS:0,MG:0,BM:0}; cfg.forEach(k=>{ o[k]=1; }); return o; }
+    if(cfg && typeof cfg==='object') return Object.assign({HAUS:0,MG:0,BM:0}, cfg);
   }catch(_){}
   return null;
 }
-function lvMgrSetStoreRoles(storeKey, roles){
-  const t=lvReadMgrTextDraft();
-  if(!t.__storeRoles || typeof t.__storeRoles!=='object') t.__storeRoles={};
-  const order=lvMgrFreeRoleDefs().map(d=>d.key);
-  t.__storeRoles[storeKey]=order.filter(k=>roles.includes(k));
-  lvWriteMgrTextDraft(t);
-  __mgrSandboxDirty=true;
-  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
-  showSaved();
+function lvMgrSeatCount(storeKey, roleKey, namesLen){
+  const cfg=lvMgrGetStoreRoles(storeKey) || lvMgrDefaultSeatCounts(storeKey);
+  const n=Math.max(0, Number(cfg[roleKey])||0);
+  return Math.max(n, namesLen||0);
 }
-function lvMgrAddStoreRole(storeKey, roleKey){
-  const cur=lvMgrGetStoreRoles(storeKey) || lvMgrDefaultStoreRoles(storeKey).filter(k=>k!=='HAUS' || lvMgrSplitNames(lvMgrGetFreeRoleText(storeKey,'HAUS')).length || /하우스|HAUS/i.test(storeKey));
-  if(!cur.includes(roleKey)) cur.push(roleKey);
-  lvMgrSetStoreRoles(storeKey, cur);
-  const def=lvMgrFreeRoleDefs().find(d=>d.key===roleKey);
-  if(typeof lvToast==='function') lvToast('➕ '+lvStoreName(storeKey)+' · '+(def?def.label:roleKey)+' 자리 추가');
-  try { lvRenderMgrOnlyDirect(); } catch(_){}
+function lvMgrEnsureSeatModal(){
+  let m=document.getElementById('lv-mgr-seat-modal');
+  if(m) return m;
+  m=document.createElement('div');
+  m.id='lv-mgr-seat-modal';
+  m.className='lv-mgr-seat-modal';
+  m.innerHTML='<div class="lv-mgr-seat-box"><div class="lv-mgr-seat-title"></div><div class="lv-mgr-seat-sub">자리 수를 정하면 자유배치 초안에 그만큼 칸이 생겨요</div><div class="lv-mgr-seat-rows"></div><div class="lv-mgr-seat-warn"></div><div class="lv-mgr-seat-btns"><button type="button" class="lv-mgr-seat-cancel">취소</button><button type="button" class="lv-mgr-seat-save">저장</button></div></div>';
+  m.addEventListener('click', e=>{ if(e.target===m) lvMgrCloseSeatModal(); });
+  m.querySelector('.lv-mgr-seat-cancel').addEventListener('click', lvMgrCloseSeatModal);
+  document.body.appendChild(m);
+  return m;
 }
-function lvMgrRemoveStoreRole(storeKey, roleKey){
-  const def=lvMgrFreeRoleDefs().find(d=>d.key===roleKey);
-  const label=def?def.label:roleKey;
-  const names=lvMgrSplitNames(lvMgrGetFreeRoleText(storeKey, roleKey));
-  const msg = names.length
-    ? lvStoreName(storeKey)+'의 '+label+' 자리를 없앨까요?\n입력된 '+names.join(', ')+' 님은 이 자리에서 빠집니다.\n(프로필 배치에 반영 시 팀원으로 표시)'
-    : lvStoreName(storeKey)+'의 '+label+' 자리를 없앨까요?';
-  if(!confirm(msg)) return;
-  const shown=lvMgrGetStoreRoles(storeKey) || lvMgrFreeRoleDefs().map(d=>d.key).filter(k=>{
-    if(k!=='HAUS') return true;
-    return /하우스|HAUS/i.test(storeKey) || lvMgrSplitNames(lvMgrGetFreeRoleText(storeKey,'HAUS')).length>0;
+function lvMgrCloseSeatModal(){
+  const m=document.getElementById('lv-mgr-seat-modal');
+  if(m) m.classList.remove('open');
+}
+function lvMgrOpenSeatModal(storeKey){
+  try { lvMgrCommitFreeTextInputs(); } catch(_){}
+  const m=lvMgrEnsureSeatModal();
+  const defs=lvMgrFreeRoleDefs().filter(d=>d.key!=='HAUS' || lvMgrIsHausStore(storeKey) || lvMgrSplitNames(lvMgrGetFreeRoleText(storeKey,'HAUS')).length);
+  const namesBy={}, counts={};
+  defs.forEach(d=>{
+    namesBy[d.key]=lvMgrSplitNames(lvMgrGetFreeRoleText(storeKey, d.key));
+    counts[d.key]=lvMgrSeatCount(storeKey, d.key, namesBy[d.key].length);
   });
-  // 이름 비우기(자리 없어짐) → 저장
-  const t=lvReadMgrTextDraft();
-  if(!t[storeKey] || typeof t[storeKey]!=='object') t[storeKey]={};
-  t[storeKey][roleKey]='';
-  lvWriteMgrTextDraft(t);
-  lvMgrSetStoreRoles(storeKey, shown.filter(k=>k!==roleKey));
-  if(typeof lvToast==='function') lvToast('➖ '+lvStoreName(storeKey)+' · '+label+' 자리 삭제');
-  try { lvRenderMgrOnlyDirect(); } catch(_){}
+  m.querySelector('.lv-mgr-seat-title').textContent='✎ '+lvStoreName(storeKey)+' · 매니저 자리';
+  const rowsEl=m.querySelector('.lv-mgr-seat-rows');
+  const warnEl=m.querySelector('.lv-mgr-seat-warn');
+  const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const draw=()=>{
+    rowsEl.innerHTML=defs.map(d=>`<div class="lv-mgr-seat-row"><span class="lv-mgr-seat-label">${esc(d.label)}</span><button type="button" class="lv-mgr-seat-step" data-k="${d.key}" data-d="-1">−</button><span class="lv-mgr-seat-num">${counts[d.key]}</span><button type="button" class="lv-mgr-seat-step" data-k="${d.key}" data-d="1">+</button><span class="lv-mgr-seat-names">${esc(namesBy[d.key].join(', '))}</span></div>`).join('');
+    const cut=[];
+    defs.forEach(d=>{ namesBy[d.key].slice(counts[d.key]).forEach(n=>cut.push(n+'('+d.label+')')); });
+    warnEl.textContent = cut.length ? '⚠️ 자리가 줄어 빠지는 사람: '+cut.join(', ')+' — 반영 시 팀원으로 표시' : '';
+    rowsEl.querySelectorAll('.lv-mgr-seat-step').forEach(b=>b.addEventListener('click', ()=>{
+      const k=b.dataset.k; counts[k]=Math.max(0, Math.min(6, counts[k]+Number(b.dataset.d))); draw();
+    }));
+  };
+  draw();
+  const saveBtn=m.querySelector('.lv-mgr-seat-save');
+  const nb=saveBtn.cloneNode(true); saveBtn.replaceWith(nb);
+  nb.addEventListener('click', ()=>{
+    const t=lvReadMgrTextDraft();
+    if(!t.__storeRoles || typeof t.__storeRoles!=='object') t.__storeRoles={};
+    const cfg={HAUS:0,MG:0,BM:0};
+    defs.forEach(d=>{ cfg[d.key]=counts[d.key]; });
+    t.__storeRoles[storeKey]=cfg;
+    // 줄어든 자리만큼 뒤쪽 이름 제외
+    defs.forEach(d=>{
+      if(namesBy[d.key].length > counts[d.key]){
+        if(!t[storeKey] || typeof t[storeKey]!=='object') t[storeKey]={};
+        t[storeKey][d.key]=namesBy[d.key].slice(0, counts[d.key]).join(' / ');
+      }
+    });
+    lvWriteMgrTextDraft(t);
+    __mgrSandboxDirty=true;
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+    showSaved();
+    lvMgrCloseSeatModal();
+    if(typeof lvToast==='function') lvToast('✎ '+lvStoreName(storeKey)+' 매니저 자리 저장');
+    try { lvRenderMgrOnlyDirect(); } catch(_){}
+  });
+  m.classList.add('open');
 }
-window.lvMgrAddStoreRole = lvMgrAddStoreRole;
-window.lvMgrRemoveStoreRole = lvMgrRemoveStoreRole;
+window.lvMgrOpenSeatModal = lvMgrOpenSeatModal;
 function lvMgrPositionForFreeRole(roleKey){
   const found=lvMgrFreeRoleDefs().find(r=>r.key===roleKey || r.role===roleKey || r.label===roleKey);
   return found ? found.role : '팀원';
@@ -7905,30 +7946,24 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
   };
   const chips=readonly ? (mgrs.length ? mgrs.map(makeMgrChip).join('') : '<span class="lv-mgr-row-empty">매니저 미배치</span>') : '';
   const __isHausStore=/하우스|HAUS/i.test(String(storeKey||''));
-  const __roleCfg=readonly ? null : lvMgrGetStoreRoles(storeKey);
-  const __hiddenRoles=[];
   const roleTextRows=readonly ? '' : lvMgrFreeRoleDefs().map(def=>{
     const value=lvMgrGetFreeRoleText(storeKey, def.key);
     const names=lvMgrSplitNames(value);
-    // [ROLE SEATS] 매장별로 설정한 자리만 표시 (설정 전: HAUS매는 하우스 노웨어 매장·입력된 경우만)
-    if(__roleCfg){
-      if(!__roleCfg.includes(def.key)){ __hiddenRoles.push(def); return ''; }
-    } else if(def.key==='HAUS' && !__isHausStore && !names.length){ __hiddenRoles.push(def); return ''; }
-    // [COMPACT] 입력된 이름 수 + 빈칸 1개만 (다 채우면 자동으로 한 칸 추가)
-    const slotCount=Math.max(1, names.length + 1);
+    // [ROLE SEATS] 매장별 자리 수만큼 칸 표시 (기본: 매니저 1 · 부매니저 1 · HAUS매는 하우스 매장만 1)
+    const slotCount=lvMgrSeatCount(storeKey, def.key, names.length);
+    if(!slotCount) return '';
     const slots=Array.from({length:slotCount}, (_,i)=>{
       const slotValue=names[i] || '';
       return `<input class="lv-mgr-role-slot-input" list="lv-mgr-emp-options" value="${escAttr(slotValue)}" title="${escAttr(def.role)} ${i+1}번">`;
     }).join('');
     return `<div class="lv-mgr-text-row" data-role-key="${escAttr(def.key)}">
-      <div class="lv-mgr-text-label">${escText(def.label)}<button type="button" class="lv-mgr-role-x" data-rm-role="${escAttr(def.key)}" title="${escAttr(def.label)} 자리 없애기">×</button></div>
+      <div class="lv-mgr-text-label">${escText(def.label)}</div>
       <div class="lv-mgr-role-slot-list">${slots}</div>
     </div>`;
   }).join('');
-  const roleAddBtns=readonly ? '' : __hiddenRoles.map(def=>`<button type="button" class="lv-mgr-role-add" data-add-role="${escAttr(def.key)}" title="${escAttr(def.label)} 자리 추가">+ ${escText(def.label)}</button>`).join('');
   const bodyHtml=readonly
     ? `<div class="lv-mgr-row-chips">${chips}</div>`
-    : `<div class="lv-mgr-text-table">${roleTextRows || '<span class="lv-mgr-row-empty">매니저 자리 없음</span>'}${roleAddBtns ? '<span class="lv-mgr-role-adds">'+roleAddBtns+'</span>' : ''}</div>`;
+    : `<div class="lv-mgr-text-table">${roleTextRows || '<span class="lv-mgr-row-empty">매니저 자리 없음</span>'}</div><button type="button" class="lv-mgr-seat-edit" title="이 매장 매니저 자리 편집">✎</button>`;
   row.innerHTML=`
     <div class="lv-mgr-row-name">
       ${(typeof IMPORTANT_STORE_IDS!=='undefined' && IMPORTANT_STORE_IDS.includes(storeKey)) ? '<span style="color:#e07b12;font-size:11px" title="중요 매장">⭐</span>' : ''}
@@ -7991,7 +8026,6 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
           targetInput.value=emp.name||'';
         }
         roleRow.setAttribute('data-edited','1');  // [FIX] 드롭도 편집으로 표시
-        try { __ensureEmptySlot(); } catch(_){}
         const _joined = names.join(' / ');
         lvMgrSetFreeRoleText(storeKey, roleKey, _joined);
         // [SYNC] 같은 store+role의 다른 섹션 행도 즉시 동기화
@@ -8027,7 +8061,6 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
       const __wireSlot=(input)=>{
         input.addEventListener('blur', commit);
         input.addEventListener('input', ()=>{
-          __ensureEmptySlot();
           // [FIX] 실제 편집 표시 - commit 시 이 role만 처리해 기존 매니저 오강등 방지
           roleRow.setAttribute('data-edited','1');
           const curText = lvMgrRoleRowText(roleRow);
@@ -8064,16 +8097,8 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
       };
       roleRow.querySelectorAll('.lv-mgr-role-slot-input').forEach(input=>__wireSlot(input));
     });
-    row.querySelectorAll('[data-rm-role]').forEach(btn=>btn.addEventListener('click', e=>{
-      e.preventDefault(); e.stopPropagation();
-      try { lvMgrCommitFreeTextInputs(); } catch(_){}
-      lvMgrRemoveStoreRole(storeKey, btn.dataset.rmRole);
-    }));
-    row.querySelectorAll('[data-add-role]').forEach(btn=>btn.addEventListener('click', e=>{
-      e.preventDefault(); e.stopPropagation();
-      try { lvMgrCommitFreeTextInputs(); } catch(_){}
-      lvMgrAddStoreRole(storeKey, btn.dataset.addRole);
-    }));
+    const __seatBtn=row.querySelector('.lv-mgr-seat-edit');
+    if(__seatBtn) __seatBtn.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); lvMgrOpenSeatModal(storeKey); });
   }
   return row;
 }
