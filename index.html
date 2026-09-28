@@ -12,7 +12,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 144;
+  window.__APP_VERSION = 145;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -625,15 +625,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-mgr-role-cell-input:focus{border-color:#e07b12;background:#fff;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
 .lv-mgr-role-cell-btn{width:22px;height:22px;flex:0 0 22px;border:1px solid #f0c47f;background:#fff8eb;color:#b45f06;border-radius:6px;font-size:13px;font-weight:900;line-height:18px;cursor:pointer;}
 .lv-mgr-role-cell-btn:hover{background:#ffefd6;border-color:#e6a13d;}
-.lv-mgr-text-table{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;}
-.lv-mgr-text-row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:6px;align-items:center;min-height:28px;}
+.lv-mgr-text-table{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 12px;flex:1;min-width:0;}
+.lv-mgr-text-row{display:flex;gap:5px;align-items:center;min-height:28px;min-width:0;}
 .lv-mgr-text-label{font-size:10.5px;font-weight:900;color:#5b6378;line-height:1.2;white-space:nowrap;}
 .lv-mgr-role-text-input{width:100%;height:27px;border:1px solid #e1e5f0;border-radius:7px;background:#fff;color:#2f3547;font-size:11px;font-family:inherit;padding:0 8px;outline:none;}
 .lv-mgr-role-text-input::placeholder{color:#bdc2d0;}
 .lv-mgr-role-text-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
 .lv-mgr-text-row.drag-over .lv-mgr-role-text-input{border-color:#e07b12;background:#fff8eb;}
 .lv-mgr-role-slot-list{display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
-.lv-mgr-role-slot-input{width:96px;height:27px;border:1px solid #e1e5f0;border-radius:7px;background:#fff;color:#2f3547;font-size:11px;font-family:inherit;padding:0 7px;outline:none;}
+.lv-mgr-role-slot-input{width:84px;height:27px;border:1px solid #e1e5f0;border-radius:7px;background:#fff;color:#2f3547;font-size:11px;font-family:inherit;padding:0 7px;outline:none;}
 .lv-mgr-role-slot-input::placeholder{color:#bdc2d0;}
 .lv-mgr-role-slot-input:focus{border-color:#e07b12;box-shadow:0 0 0 2px rgba(224,123,18,.10);}
 .lv-mgr-text-row.drag-over .lv-mgr-role-slot-input{border-color:#e07b12;background:#fff8eb;}
@@ -1410,7 +1410,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v144</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=144;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v145</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=145;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -4002,7 +4002,7 @@ window.openMoveChannel = openMoveChannel;
     </div>
   </div>
 </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 const EMPS = [];
 let curEmp=null, curView='tbl', curBrand='ALL', searchQ='', sortCol='name', sortDir='asc', curStoreFilter=null;
 let __profileDraftMode = null;
@@ -7840,10 +7840,14 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
     return `<div class="lv-mgr-chip ${roleCls}"${dragAttr} data-id="${escAttr(emp.id)}" title="${escAttr(emp.name)} · ${escAttr(emp.position||'')}"><span>${escText(emp.name||'')}</span><span class="lv-mgr-chip-role">${roleLbl}</span></div>`;
   };
   const chips=readonly ? (mgrs.length ? mgrs.map(makeMgrChip).join('') : '<span class="lv-mgr-row-empty">매니저 미배치</span>') : '';
+  const __isHausStore=/하우스|HAUS/i.test(String(storeKey||''));
   const roleTextRows=readonly ? '' : lvMgrFreeRoleDefs().map(def=>{
     const value=lvMgrGetFreeRoleText(storeKey, def.key);
     const names=lvMgrSplitNames(value);
-    const slotCount=Math.max(3, names.length + 1);
+    // [COMPACT] HAUS매 칸은 하우스 노웨어 매장(또는 이미 입력된 경우)만 표시
+    if(def.key==='HAUS' && !__isHausStore && !names.length) return '';
+    // [COMPACT] 입력된 이름 수 + 빈칸 1개만 (다 채우면 자동으로 한 칸 추가)
+    const slotCount=Math.max(1, names.length + 1);
     const slots=Array.from({length:slotCount}, (_,i)=>{
       const slotValue=names[i] || '';
       return `<input class="lv-mgr-role-slot-input" list="lv-mgr-emp-options" value="${escAttr(slotValue)}" title="${escAttr(def.role)} ${i+1}번">`;
@@ -7918,6 +7922,7 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
           targetInput.value=emp.name||'';
         }
         roleRow.setAttribute('data-edited','1');  // [FIX] 드롭도 편집으로 표시
+        try { __ensureEmptySlot(); } catch(_){}
         const _joined = names.join(' / ');
         lvMgrSetFreeRoleText(storeKey, roleKey, _joined);
         // [SYNC] 같은 store+role의 다른 섹션 행도 즉시 동기화
@@ -7937,9 +7942,23 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
         } catch(_){}
         if(typeof lvToast==='function') lvToast('🧪 초안 ' + (emp.name||'') + ' → ' + lvStoreName(storeKey) + ' · ' + roleName);
       });
-      roleRow.querySelectorAll('.lv-mgr-role-slot-input').forEach((input, idx, inputs)=>{
+      const __slotList=roleRow.querySelector('.lv-mgr-role-slot-list');
+      const __ensureEmptySlot=()=>{
+        if(!__slotList) return;
+        const all=[...__slotList.querySelectorAll('.lv-mgr-role-slot-input')];
+        if(all.length && all.every(inp=>String(inp.value||'').trim())){
+          const last=all[all.length-1];
+          const ni=last.cloneNode(false);
+          ni.value='';
+          ni.title=(last.title||'').replace(/\d+번$/, (all.length+1)+'번');
+          __slotList.appendChild(ni);
+          __wireSlot(ni);
+        }
+      };
+      const __wireSlot=(input)=>{
         input.addEventListener('blur', commit);
         input.addEventListener('input', ()=>{
+          __ensureEmptySlot();
           // [FIX] 실제 편집 표시 - commit 시 이 role만 처리해 기존 매니저 오강등 방지
           roleRow.setAttribute('data-edited','1');
           const curText = lvMgrRoleRowText(roleRow);
@@ -7967,12 +7986,14 @@ function lvMgrDirectRow(storeKey, emps, secKey, readonly){
           if(e.key==='Enter'){
             e.preventDefault();
             e.stopPropagation();
-            const next=inputs[idx+1];
+            const inputs=[...roleRow.querySelectorAll('.lv-mgr-role-slot-input')];
+            const next=inputs[inputs.indexOf(input)+1];
             if(next) next.focus();
             else input.blur();
           }
         });
-      });
+      };
+      roleRow.querySelectorAll('.lv-mgr-role-slot-input').forEach(input=>__wireSlot(input));
     });
   }
   return row;
@@ -8116,6 +8137,24 @@ function lvRenderMgrOnlyDirect(){
         grid.appendChild(sec);
       });
       frag.appendChild(block);
+      // [IMPORTANT] 배치현황에서도 중요 매장만 따로 모아 보기 (읽기 전용)
+      if(typeof IMPORTANT_STORE_IDS!=='undefined' && IMPORTANT_STORE_IDS.length){
+        const impKeys=IMPORTANT_STORE_IDS.filter(id=>actualMaps.storeMap[id]!==undefined);
+        if(impKeys.length){
+          const impBlock=document.createElement('div');
+          impBlock.className='lv-mgr-pageblock';
+          impBlock.innerHTML='<div class="lv-mgr-pageblock-title">⭐ 중요 매장 매니저 현황<span class="lv-mgr-pageblock-sub">중요 매장만 따로 모아 보기</span></div>';
+          const impSec=document.createElement('div');
+          impSec.className='lv-mgr-section';
+          impSec.innerHTML='<div class="lv-mgr-sec-header"><span>⭐ 중요 매장</span><span class="lv-mgr-sec-meta">'+impKeys.length+'개</span></div>';
+          const impTable=document.createElement('div');
+          impTable.className='lv-mgr-table';
+          impKeys.forEach(k=>impTable.appendChild(lvMgrDirectRow(k, actualMaps.storeMap[k]||[], actualMaps.secMap[k]||'FSMALL', true)));
+          impSec.appendChild(impTable);
+          impBlock.appendChild(impSec);
+          frag.appendChild(impBlock);
+        }
+      }
     }
     scroll.innerHTML='';
     scroll.appendChild(frag);
