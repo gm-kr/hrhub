@@ -4,6 +4,12 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta charset="UTF-8">
+<!-- [PERF] Firebase 라이브러리를 페이지 읽는 동안 미리 받아둠 (모바일 로딩 단축) -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js">
 <meta id="vp" name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
 <!-- [CACHE] 모바일 Safari가 옛 버전 붙잡고 있는 문제 완화 -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -12,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 152;
+  window.__APP_VERSION = 154;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1477,7 +1483,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v152</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=152;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v154</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=154;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -12005,7 +12011,7 @@ function knExportChanges(){
 </script>
 <script type="module">
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocFromServer, onSnapshot, collection, getDocs, getDocsFromServer, writeBatch, serverTimestamp }
+import { getFirestore, initializeFirestore, doc, setDoc, getDoc, getDocFromServer, onSnapshot, collection, getDocs, getDocsFromServer, writeBatch, serverTimestamp }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -12018,7 +12024,13 @@ const firebaseConfig = {
   appId:             "1:870516993057:web:9a246acf4e02ec39e68760"
 };
 const _app  = initializeApp(firebaseConfig);
-const _db   = getFirestore(_app);
+try { window.__bootT = window.__bootT || {}; window.__bootT.sdk = Math.round(performance.now()); } catch(_){}
+// [PERF] 모바일은 실시간 스트리밍 연결을 자동 판별하느라 첫 요청이 수 초씩 멈추는 경우가 많음 → 롱폴링 고정
+let _db;
+try {
+  const _mob = !!(window.__MOBILE_READ_ONLY || window.__isIOSStandaloneEarly || /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent||''));
+  _db = _mob ? initializeFirestore(_app, { experimentalForceLongPolling: true }) : getFirestore(_app);
+} catch(_){ _db = getFirestore(_app); }
 window._db = _db;
 
 // ═══════════════════════════════════════════════════════════
@@ -12332,11 +12344,28 @@ onAuthStateChanged(_auth, async (user)=>{
     return;
   }
   // [ACCESS] 코드 목록에 있으면 바로 통과, 없으면 서버 허용 목록(config/access) 확인
+  //   [PERF] 이 기기에서 이미 허용 확인된 계정이면 기다리지 않고 바로 데이터 로딩 시작,
+  //   권한 재확인은 뒤에서 동시에 진행 (서버 보안 규칙이 어차피 허용 목록 밖 사용자의 읽기를 막음)
+  const _accKey = '__accessOk_' + String(user.email||'').toLowerCase();
   let _verdict = isEmailAllowed(user.email) ? 'allow' : null;
+  let _cachedAllow = false;
+  try { _cachedAllow = localStorage.getItem(_accKey) === '1'; } catch(_){}
+  if(_verdict !== 'allow' && _cachedAllow){
+    _verdict = 'allow';
+    __checkRemoteAccess(user.email).then(v => {
+      if(v === 'deny'){
+        try { localStorage.removeItem(_accKey); } catch(_){}
+        try { signOut(_auth); } catch(_){}
+        setTimeout(() => { try { location.reload(); } catch(_){} }, 300);
+      }
+    }).catch(()=>{});
+  }
   if(_verdict !== 'allow'){
     try { _setAuthStatus('접근 권한 확인 중...', ''); } catch(_){}
     _verdict = await __checkRemoteAccess(user.email);
   }
+  if(_verdict === 'allow'){ try { localStorage.setItem(_accKey, '1'); } catch(_){} }
+  else { try { localStorage.removeItem(_accKey); } catch(_){} }
   if(_verdict !== 'allow'){
     // 로그인했지만 허용 이메일이 아님 → 안내 화면
     window.__authResolved = true;
@@ -12943,6 +12972,8 @@ window.fbSetSchedule = async function(data) {
     if(!IS_LOCAL_DEV){
       try { await window.__authAllowedPromise; } catch(_){}
     }
+    window.__bootT = window.__bootT || {};
+    window.__bootT.authOk = Math.round(performance.now());
     let sharedSnap = null, storeListSnap = null, editsSnap = null, empBaseSnap = null;
     const _bootTimeouts = [4000, 5000, 6000, 8000, 10000, 12000, 15000, 20000];
     const _bootGaps     = [0, 400, 800, 1200, 2000, 3000, 4000, 5000];
@@ -12964,6 +12995,7 @@ window.fbSetSchedule = async function(data) {
       // 파일에 직원 데이터가 없는 버전(개인정보 제거판)은 직원 기본 정보도 필수
       const _needBase = !(window.__EMPS_EMBEDDED_COUNT > 0);
       _freshOk = [sharedSnap, storeListSnap].every(Boolean) && (!_needBase || !!empBaseSnap);
+      try { window.__bootT.reads = Math.round(performance.now()); window.__bootT.tries = _a+1; } catch(_){}
       if(_freshOk) break;
       console.warn('[BOOT] 서버 최신 데이터 실패 → 재시도', _a+1);
     }
@@ -13173,6 +13205,7 @@ window.fbSetSchedule = async function(data) {
     window.__mobileFirstPullDone = true;
   }
   window.__freshServerLoaded = true;
+  try { window.__bootT = window.__bootT || {}; window.__bootT.fresh = Math.round(performance.now()); console.log('[BOOT TIMING]', JSON.stringify(window.__bootT)); } catch(_){}
   window.__SERVER_BOOTSTRAP_DONE = true;
   window.__fbReady = true;
   let _usedPendingMainTab = false;
