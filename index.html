@@ -12,7 +12,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 149;
+  window.__APP_VERSION = 151;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -138,11 +138,11 @@ html.app-loading-fresh body > :not(#fb-loading-overlay){
     var appVersion = String(window.__APP_VERSION || 141);
     var isLocalUrl = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname);
     if(!isLocalUrl && params.get('appv') !== appVersion){
+      // [PERF] 이미 최신 파일을 받았으므로 페이지를 다시 받지 않고 주소만 바꿈 (모바일 이중 로딩 제거)
       var u = new URL(location.href);
       u.searchParams.set('appv', appVersion);
-      u.searchParams.set('ts', String(Date.now()));
-      location.replace(u.toString());
-      return;
+      u.searchParams.delete('ts');
+      try { history.replaceState(history.state, '', u.toString()); } catch(_){}
     }
   } catch(_){}
   window.__clearHRAppStorage = function(opts){
@@ -1477,7 +1477,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v149</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=149;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v151</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=151;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -13457,7 +13457,9 @@ window.__flushAllPending = function(){
   // 각 함수를 한 번씩 호출하면 새 디바운스가 100ms 후 push되는데, 페이지 닫히면 push 안 됨
   // 따라서 즉시 setDoc을 호출하는 동기 함수 별도 사용
   try {
-    if(window.__fbUser && window.__fbUser.email){
+    // [ERASE GUARD] 첫 서버 로딩이 끝나기 전(새 버전 로딩·새로고침 도중)에는 공유 설정을 절대 올리지 않음
+    //   → 로컬이 아직 비어 있는 상태로 페이지를 닫아도 서버의 메모·설정이 빈 값으로 덮이지 않음
+    if(window.__fbUser && window.__fbUser.email && window.__freshServerLoaded && window.__sharedInitLoaded){
       const storeBase    = localStorage.getItem('lvStoreBaseOverrides') || '{}';
       const mgrImpSlots  = localStorage.getItem('lvMgrImpSlots')        || '[]';
       const mgrImpOrder  = localStorage.getItem('lvMgrImpStoreOrder')   || '[]';
@@ -13478,6 +13480,8 @@ window.__flushAllPending = function(){
       }
       const diff = {};
       Object.keys(cur).forEach(k=>{ if(cur[k] !== (_last[k]||'')) diff[k] = cur[k]; });
+      // [MEMO GUARD] 메모는 이 화면에서 직접 고친 경우에만 올림
+      if(!window.__lvTestMemoLocalEditAt) delete diff.testMemo;
       if(Object.keys(diff).length){
         if(diff.layoutDraft !== undefined && typeof window.__backupLayoutDraft === 'function'){
           window.__backupLayoutDraft(diff.layoutDraft, 'flush before push').catch(()=>{});
@@ -13594,9 +13598,16 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
     }
   }, 30 * 60 * 1000);
 }
-// [MOBILE POLL] 모바일 실시간 폴링 — sharedSettings + PT + hrEdits + storeList
+// [PERF] 사진 전체(약 5MB·200여 문서)는 자주 받지 않음 — 10분에 한 번만 (실시간 리스너가 변경분은 따로 받음)
+window.__lastPhotoPullAt = window.__lastPhotoPullAt || 0;
+window.__photoPullDue = function(){
+  return !window.__photoServerLoaded || (Date.now() - (window.__lastPhotoPullAt||0)) > 10*60*1000;
+};
+// [MOBILE POLL] 모바일 실시간 폴링 — sharedSettings + PT (가벼운 문서만)
 window._mobilePoll = async function(){
   if(document.visibilityState !== 'visible') return;
+  // [PERF] 첫 화면 로딩이 끝나기 전에는 폴링하지 않음 (로딩과 대역폭 경쟁 방지)
+  if(!window.__freshServerLoaded) return;
   if(!window.__fbDb || !window.__fbGetDoc) return;
   const getDocFresh = window.__fbGetDocFresh || window.__fbGetDoc;
   const getDocsFresh = window.__fbGetDocsFresh || window.__fbGetDocs;
@@ -13661,9 +13672,10 @@ window._mobilePoll = async function(){
         }
       }
     }
-    // [FIX] empPhotos 폴링 - 홈화면앱에서 옛날 사진만 보이는 문제
-    if(getDocsFresh && window.__fbCollection){
+    // [FIX] empPhotos 폴링 - 홈화면앱에서 옛날 사진만 보이는 문제 (10분 간격으로 제한)
+    if(getDocsFresh && window.__fbCollection && window.__photoPullDue()){
       try {
+        window.__lastPhotoPullAt = Date.now();
         const snap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
         const wasPhotoLoaded = !!window.__photoServerLoaded;
         window.__photoServerLoaded = true;
@@ -13792,8 +13804,9 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
           }
         }
       } catch(e){ requiredOk = false; console.warn('[PULL] sharedSettings 실패:', e.code||e.message); }
-      // 2) empPhotos (전체)
-      try {
+      // 2) empPhotos (전체) — [PERF] 10분에 한 번만
+      if(window.__photoPullDue()) try {
+        window.__lastPhotoPullAt = Date.now();
         const photoSnap = await getDocsFresh(window.__fbCollection(window.__fbDb, 'empPhotos'));
         const wasPhotoLoaded = !!window.__photoServerLoaded;
         window.__photoServerLoaded = true;
@@ -13913,14 +13926,13 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
         }
       } catch(_){}
       // [FIX] 재렌더는 매 pull마다 실행하되, 모바일 조작 직후에는 클릭 이벤트가 먼저 끝나도록 살짝 미룸.
+      // [PERF] 바뀐 게 있을 때만 다시 그림 (매번 3번씩 다시 그리던 것 → 변경 시 1번)
+      const _firstPull = !window.__mobileFirstPullDone;
       window.__mobileFirstPullDone = true;
-      _mobileRenderAfterInteraction();
-      setTimeout(() => {
+      if(anyChanged || _firstPull){
         _mobileRenderAfterInteraction();
-      }, 300);
-      setTimeout(() => {
-        _mobileRenderAfterInteraction();
-      }, 1000);
+        if(_firstPull) setTimeout(() => { _mobileRenderAfterInteraction(); }, 600);
+      }
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
       const mm = String(now.getMinutes()).padStart(2,'0');
@@ -13935,7 +13947,7 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
     }
   };
   // 전체 pull은 사진/직원 컬렉션까지 읽으므로 과도하게 자주 돌리지 않는다.
-  setInterval(window._standalonePullAll, 12000);
+  setInterval(window._standalonePullAll, 30000);
   // 페이지 로드 후 빠른 초기 보정 (450ms 간격 × 4회 = 1.8초)
   let _initTries = 0;
   const _initTimer = setInterval(async () => {
@@ -14042,12 +14054,19 @@ window.fbSetShared = function(){
         const srv = window.__lastSharedSnap[k] || '';
         if(raw === null && srv && srv !== '{}' && srv !== '[]'){ delete cur[k]; }
       });
+      // [MEMO GUARD] 운영팀 테스트 메모는 이 화면에서 직접 입력한 경우에만 서버에 올림 (다른 설정 저장 때 빈 메모로 덮어쓰기 방지)
+      if(!window.__lvTestMemoLocalEditAt) delete cur.testMemo;
       Object.keys(cur).forEach(k=>{
         if(cur[k] !== (window.__lastSharedSnap[k]||'')){
           diff[k] = cur[k];
         }
       });
       if(Object.keys(diff).length === 0) return;
+      // [MEMO BACKUP] 메모를 바꿀 때 직전 메모를 testMemoPrev에 보관 (실수로 지워져도 복구 가능)
+      if(diff.testMemo !== undefined){
+        const prevMemo = window.__lastSharedSnap.testMemo || '';
+        if(prevMemo && prevMemo.replace(/[\[\]",\s]/g,'') !== '') diff.testMemoPrev = prevMemo;
+      }
       if(diff.layoutDraft !== undefined){
         await window.__backupLayoutDraft(diff.layoutDraft, 'fbSetShared before push');
       }
@@ -14351,6 +14370,7 @@ window.fbSetEmpPhoto = function(empId, base64){
 let _fbPhotoInitialLoaded = false;
 onSnapshot(collection(_db, 'empPhotos'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'empPhotos')) return;
+  window.__lastPhotoPullAt = Date.now();
   const wasPhotoLoaded = !!window.__photoServerLoaded;
   window.__photoServerLoaded = true;
   const remoteIds = new Set();
