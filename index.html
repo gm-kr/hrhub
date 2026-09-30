@@ -12,7 +12,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 147;
+  window.__APP_VERSION = 148;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -928,6 +928,42 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pp-tbl td{padding:4px 6px; border-bottom:1px solid #f8f9fc; vertical-align:top;}
 .lv-pp-tbl tr:last-child td { border-bottom:none; }
 .lv-pp-tbl tr:hover td { background:#fafbff; }
+.lv-pp-dday{display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:800;background:#f2f4f8;color:#7a8299;}
+.lv-pp-dday.soon{background:#fff1e6;color:#e07b12;}
+.lv-pp-dday.today{background:#fee2e2;color:#dc2626;}
+.lv-pp-dday.past{background:#f2f4f8;color:#aab0be;}
+.lv-pp-intern-summary{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px;}
+.lv-pp-intern-summary span{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;background:#f5f3ff;color:#6d28d9;}
+.lv-pp-intern-summary span.t{background:#fff4e6;color:#e07b12;}
+.lv-pp-intern-summary span.l{background:#fdecec;color:#e84040;}
+.lv-pp-intern-summary span.u{background:#f2f4f8;color:#7a8299;}
+.lv-pp-intern-row.is-transfer td:first-child{box-shadow:inset 3px 0 0 #e07b12;}
+.lv-pp-intern-row.is-leaving td:first-child{box-shadow:inset 3px 0 0 #e84040;}
+.lv-pp-intern-flag{display:inline-block;margin-top:2px;font-size:10px;font-weight:700;padding:0 6px;border-radius:8px;white-space:nowrap;}
+.lv-pp-intern-flag.t{background:#fff4e6;color:#e07b12;}
+.lv-pp-intern-flag.l{background:#fdecec;color:#e84040;}
+.lv-pp-res{display:inline-block;border:1px solid #e1e5f0;background:#fff;border-radius:8px;padding:2px 7px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;color:#8188a0;}
+.lv-pp-res:hover{border-color:#8b5cf6;}
+.lv-pp-res.pass{background:#ecfdf5;border-color:#a7f3d0;color:#047857;}
+.lv-pp-res.ext{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;}
+.lv-pp-res.fail{background:#fef2f2;border-color:#fecaca;color:#dc2626;}
+.lv-pp-res.none{border-style:dashed;}
+.intern-alert-modal{position:fixed;inset:0;z-index:2147483000;background:rgba(15,18,30,.45);display:flex;align-items:center;justify-content:center;font-family:'Pretendard','Apple SD Gothic Neo',sans-serif;}
+.intern-alert-box{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:440px;max-width:calc(100vw - 32px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+.intern-alert-head{padding:18px 20px 10px;}
+.intern-alert-title{font-size:15px;font-weight:800;color:#2a2f42;}
+.intern-alert-sub{font-size:11.5px;color:#8188a0;margin-top:4px;}
+.intern-alert-list{padding:4px 20px;overflow:auto;}
+.intern-alert-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f2f4f8;}
+.intern-alert-item:last-child{border-bottom:0;}
+.intern-alert-tag{flex:0 0 auto;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:9px;}
+.intern-alert-tag.t{background:#fff4e6;color:#e07b12;}
+.intern-alert-tag.l{background:#fdecec;color:#e84040;}
+.intern-alert-name{font-size:13px;font-weight:700;color:#2a2f42;}
+.intern-alert-detail{font-size:11px;color:#7a8299;margin-top:1px;}
+.intern-alert-btns{display:flex;gap:8px;justify-content:flex-end;padding:12px 20px 16px;border-top:1px solid #f2f4f8;}
+.intern-alert-btns button{height:34px;padding:0 16px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid #e1e5f0;background:#fff;color:#5b6378;}
+.intern-alert-btns .primary{background:#8b5cf6;border-color:#8b5cf6;color:#fff;}
 .lv-pp-input-name{width:100%; font-size:11.5px; border:1px solid #eaecf2; border-radius:5px; padding:3px 6px; color:#3a4053; background:#fafbff; outline:none; box-sizing:border-box;}
 .lv-pp-input-name:focus { border-color:#5b6cf8; background:#fff; }
 .lv-pp-row-card{display:flex;flex-direction:column;gap:5px;min-width:0;}
@@ -1427,7 +1463,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v147</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=147;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨" style="font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v148</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=148;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3744,6 +3780,7 @@ window.openMoveChannel = openMoveChannel;
                 <th style="width:34px"></th>
                 <th style="width:64px">이름</th>
                 <th>이동 경로</th>
+                <th style="width:84px">이동일</th>
               </tr></thead>
               <tbody id="lv-pp-transfer-body"></tbody>
             </table>
@@ -3786,6 +3823,26 @@ window.openMoveChannel = openMoveChannel;
               <tbody id="lv-pp-returning-body"></tbody>
             </table>
             <div id="lv-pp-returning-empty" class="lv-pp-empty">복직예정 없음</div>
+          </div>
+          <div class="lv-pp-sec" style="margin-top:16px">
+            <div class="lv-pp-sec-head">
+              <span class="lv-pp-sec-title">
+                <span class="lv-pp-sec-dot" style="background:#8b5cf6"></span>
+                인턴 현황 <span id="lv-pp-intern-count" style="color:#9aa0b3;font-weight:600;margin-left:2px"></span>
+              </span>
+              <span style="font-size:10px;color:#9aa0b3;font-weight:500">결과 칸 클릭→사전 결정</span>
+            </div>
+            <div id="lv-pp-intern-summary" class="lv-pp-intern-summary"></div>
+            <table class="lv-pp-tbl">
+              <thead><tr>
+                <th style="width:34px"></th>
+                <th style="width:64px">이름</th>
+                <th>매장 · 계약</th>
+                <th style="width:82px">결과</th>
+              </tr></thead>
+              <tbody id="lv-pp-intern-body"></tbody>
+            </table>
+            <div id="lv-pp-intern-empty" class="lv-pp-empty">재직 중인 인턴 없음</div>
           </div>
         </div>
       </div>
@@ -8960,7 +9017,15 @@ function ppRender(){
       if(isDeletedEmpId(e.id)) return false;
       return getEmpStatus(e)==='transfer';
     });
+    // 이동일 빠른 순 (미지정은 맨 뒤)
+    transferEmps.sort((a,b)=>{
+      const da=ppStatusDate(a), db=ppStatusDate(b);
+      if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
+      return da.localeCompare(db);
+    });
     tBody.innerHTML=transferEmps.map(e=>{
+      const tdt=ppStatusDate(e);
+      const tdtDisp=tdt?`<span style="color:#e07b12;font-weight:600">${tdt.slice(5)}</span>${ppDdayHtml(tdt)}`:'<span style="color:#aab0be">미지정</span>';
       const from=getEmpPrevStore(e);
       const to=e.current_store||'';
       const fromName=from?lvStoreName(from):'<span style="color:#aab0be">미기록</span>';
@@ -8974,10 +9039,13 @@ function ppRender(){
           <span style="color:#e07b12;margin:0 4px">→</span>
           <span style="color:#37352f;font-weight:600">${toName}</span>
         </td>
+        <td style="font-size:11px;white-space:nowrap">${tdtDisp}</td>
       </tr>`;
     }).join('');
     tEmpty.style.display=transferEmps.length?'none':'block';
   }
+  // [INTERN] 인턴 현황 - 재직 중 인턴 전원 + 이동/퇴사 예정 + 결과 사전 결정
+  try { ppRenderInterns(); } catch(err){ console.warn('[ppRenderInterns]', err); }
   // [LEAVING] 퇴사예정 자동 렌더링 (status==='leaving'인 직원만)
   const lBody=$('lv-pp-leaving-body');
   const lEmpty=$('lv-pp-leaving-empty');
@@ -9008,6 +9076,196 @@ function ppRender(){
     lEmpty.style.display=leavingEmps.length?'none':'block';
   }
 }
+function ppStatusDate(e){
+  return (window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._statusDate)||'';
+}
+function ppTodayStr(){
+  const t=new Date();
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+}
+function ppDdayNum(dateStr){
+  if(!dateStr) return null;
+  const a=new Date(ppTodayStr()+'T00:00:00'), b=new Date(String(dateStr).slice(0,10)+'T00:00:00');
+  if(isNaN(b.getTime())) return null;
+  return Math.round((b-a)/86400000);
+}
+function ppDdayHtml(dateStr){
+  const n=ppDdayNum(dateStr);
+  if(n===null) return '';
+  if(n===0) return '<span class="lv-pp-dday today">D-DAY</span>';
+  if(n<0) return '<span class="lv-pp-dday past">D+'+(-n)+'</span>';
+  return '<span class="lv-pp-dday'+(n<=7?' soon':'')+'">D-'+n+'</span>';
+}
+function ppIsIntern(e){ return String((e&&e.position)||'').includes('인턴'); }
+function ppInternList(){
+  return EMPS.filter(e=>{
+    if(!e||!e.id) return false;
+    if(isDeletedEmpId(e.id)) return false;
+    if(!ppIsIntern(e)) return false;
+    const st=getEmpStatus(e);
+    return st!=='deleted' && st!=='joining';
+  });
+}
+function ppInternResultInfo(e){
+  const c=(window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._internContract)||{};
+  const r=c.plannedResult||'';
+  if(r==='합격') return {cls:'pass', label:'🎉 합격 예정'};
+  if(r==='연장') return {cls:'ext', label:'⏰ 연장'+(c.plannedExtendEnd?' ~'+c.plannedExtendEnd.slice(5):'')};
+  if(r==='불합격') return {cls:'fail', label:'❌ 불합격 예정'};
+  return {cls:'none', label:'결과 미정'};
+}
+function ppRenderInterns(){
+  const body=$('lv-pp-intern-body'), empty=$('lv-pp-intern-empty');
+  if(!body||!empty) return;
+  const list=ppInternList();
+  const rank=e=>{ const st=getEmpStatus(e); return st==='leaving'?0:(st==='transfer'?1:2); };
+  const endOf=e=>(((window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._internContract)||{}).endAt)||'9999';
+  list.sort((a,b)=>{
+    const r=rank(a)-rank(b); if(r) return r;
+    if(rank(a)<2){ const da=ppStatusDate(a)||'9999', db=ppStatusDate(b)||'9999'; if(da!==db) return da.localeCompare(db); }
+    return endOf(a).localeCompare(endOf(b));
+  });
+  let nT=0,nL=0,nU=0,nP=0,nE=0,nF=0;
+  body.innerHTML=list.map(e=>{
+    const st=getEmpStatus(e);
+    const c=(window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._internContract)||{};
+    const res=ppInternResultInfo(e);
+    if(res.cls==='none') nU++; else if(res.cls==='pass') nP++; else if(res.cls==='ext') nE++; else nF++;
+    const storeName=e.current_store?lvStoreName(e.current_store):'<span style="color:#aab0be">미배정</span>';
+    const period=(c.startAt||c.endAt)
+      ? `<span style="color:#8188a0">${(c.startAt||'?').slice(2)} ~ </span><span style="color:#5b6378;font-weight:700">${(c.endAt||'?').slice(2)}</span>${c.endAt?ppDdayHtml(c.endAt):''}`
+      : '<span style="color:#aab0be">계약기간 미입력</span>';
+    let flag='';
+    const dt=ppStatusDate(e);
+    if(st==='transfer'){
+      nT++;
+      const to=e.current_store?lvStoreName(e.current_store):'미지정';
+      flag=`<div><span class="lv-pp-intern-flag t">✈️ 이동예정 ${dt?dt.slice(5):'날짜 미지정'} → ${to}</span></div>`;
+    } else if(st==='leaving'){
+      nL++;
+      flag=`<div><span class="lv-pp-intern-flag l">🚪 중도 퇴사예정 ${dt?dt.slice(5):'날짜 미지정'}</span>${dt?ppDdayHtml(dt):''}</div>`;
+    }
+    const rowCls='lv-pp-intern-row'+(st==='transfer'?' is-transfer':'')+(st==='leaving'?' is-leaving':'');
+    return `<tr class="${rowCls}" style="cursor:pointer" onclick="try{openP(EMPS.find(x=>x.id==='${e.id}'))}catch(_){}">
+      <td>${ppAvatarHtml(e, e.name)}</td>
+      <td style="font-size:12px;font-weight:600;white-space:nowrap">${e.name||''}</td>
+      <td style="font-size:10.5px;line-height:1.45"><div style="color:#5b6378;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st==='transfer'?(getEmpPrevStore(e)?lvStoreName(getEmpPrevStore(e)):storeName):storeName}</div><div style="white-space:nowrap">${period}</div>${flag}</td>
+      <td><button type="button" class="lv-pp-res ${res.cls}" onclick="event.stopPropagation();ppEditInternResult('${e.id}')" title="결과 사전 결정 편집">${res.label}</button></td>
+    </tr>`;
+  }).join('');
+  empty.style.display=list.length?'none':'block';
+  const cnt=$('lv-pp-intern-count'); if(cnt) cnt.textContent=list.length?list.length+'명':'';
+  const sum=$('lv-pp-intern-summary');
+  if(sum){
+    const parts=[];
+    if(nT) parts.push('<span class="t">✈️ 이동예정 '+nT+'</span>');
+    if(nL) parts.push('<span class="l">🚪 퇴사예정 '+nL+'</span>');
+    if(nP) parts.push('<span>🎉 합격 '+nP+'</span>');
+    if(nE) parts.push('<span>⏰ 연장 '+nE+'</span>');
+    if(nF) parts.push('<span>❌ 불합격 '+nF+'</span>');
+    if(nU) parts.push('<span class="u">결과 미정 '+nU+'</span>');
+    sum.innerHTML=parts.join('');
+  }
+}
+// 인턴 현황에서 결과 사전 결정 편집 (직원 상세의 계약 편집과 같은 팝업·같은 저장)
+window.ppEditInternResult=async function(empId){
+  const emp=EMPS.find(x=>x.id===empId);
+  if(!emp || typeof window.openInternExtendModal!=='function') return;
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone){ if(typeof lvToast==='function') lvToast('모바일에서는 보기만 가능해요'); return; }
+  const ed=(window.__fbEdits&&window.__fbEdits[emp.id])||{};
+  const contract=ed._internContract||{};
+  const res=await window.openInternExtendModal(emp.name, contract.endAt||'', {
+    mode:'edit', plannedResult:contract.plannedResult||'', plannedExtendEnd:contract.plannedExtendEnd||'', startAt:contract.startAt||emp.hire_date||''
+  });
+  if(!res || !res.endAt) return;
+  const startAt=res.startAt||contract.startAt||emp.hire_date||ppTodayStr();
+  const newContract={...contract, startAt, endAt:res.endAt, extensions:contract.extensions||[], plannedResult:res.plannedResult||'', plannedExtendEnd:res.plannedExtendEnd||''};
+  if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
+  window.__fbEdits[emp.id]._internContract=newContract;
+  try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_internContract', newContract); } catch(_){}
+  try {
+    if(startAt && emp.hire_date!==startAt){
+      emp.hire_date=startAt; window.__fbEdits[emp.id].hire_date=startAt;
+      if(window.fbSetEdit) window.fbSetEdit(emp.id, 'hire_date', startAt);
+    }
+  } catch(_){}
+  if(typeof lvToast==='function') lvToast('📋 '+emp.name+' · '+ppInternResultInfo(emp).label);
+  try { ppRender(); } catch(_){}
+};
+// [INTERN ALERT] 지정된 담당자가 로그인하면, 인턴 이동/퇴사 예정일이 새로 입력·변경된 건을 팝업으로 알림
+const INTERN_ALERT_EMAILS=['monster120@gentlemonster.com','monster544@gentlemonster.com','monster1246@gentlemonster.com'];
+function internAlertItems(){
+  return ppInternList().filter(e=>{
+    const st=getEmpStatus(e);
+    return (st==='transfer'||st==='leaving') && ppStatusDate(e);
+  }).map(e=>{
+    const st=getEmpStatus(e), dt=ppStatusDate(e);
+    return {e, st, dt, sig:e.id+'|'+st+'|'+dt+'|'+(st==='transfer'?(e.current_store||''):'')};
+  });
+}
+function internAlertSeenKey(email){ return '__internAlertSeen_'+String(email||'').toLowerCase(); }
+function internAlertReadSeen(email){
+  try { const v=JSON.parse(localStorage.getItem(internAlertSeenKey(email))||'[]'); return new Set(Array.isArray(v)?v:[]); } catch(_){ return new Set(); }
+}
+window.internAlertCheck=function(force){
+  const email=String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
+  if(!email || !INTERN_ALERT_EMAILS.includes(email)) return;
+  if(document.getElementById('intern-alert-modal')) return;
+  const seen=internAlertReadSeen(email);
+  const all=internAlertItems();
+  const items=force?all:all.filter(x=>!seen.has(x.sig));
+  if(!items.length) return;
+  items.sort((a,b)=>a.dt.localeCompare(b.dt));
+  const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const m=document.createElement('div');
+  m.id='intern-alert-modal'; m.className='intern-alert-modal';
+  m.innerHTML=`<div class="intern-alert-box">
+    <div class="intern-alert-head">
+      <div class="intern-alert-title">🔔 인턴 이동·퇴사 예정 알림 <span style="color:#8b5cf6">${items.length}건</span></div>
+      <div class="intern-alert-sub">새로 입력되거나 날짜가 바뀐 건만 보여드려요</div>
+    </div>
+    <div class="intern-alert-list">${items.map(x=>{
+      const from=x.st==='transfer'?(getEmpPrevStore(x.e)||''):(x.e.current_store||'');
+      const detail=x.st==='transfer'
+        ? esc(from?lvStoreName(from):'미기록')+' → <b style="color:#37352f">'+esc(x.e.current_store?lvStoreName(x.e.current_store):'미지정')+'</b>'
+        : esc(from?lvStoreName(from):'매장 미배정');
+      return `<div class="intern-alert-item">
+        <span class="intern-alert-tag ${x.st==='transfer'?'t':'l'}">${x.st==='transfer'?'✈️ 이동':'🚪 퇴사'}</span>
+        <div style="flex:1;min-width:0"><div class="intern-alert-name">${esc(x.e.name)} <span style="font-size:11px;color:#8188a0;font-weight:600">${esc(x.dt)}</span>${ppDdayHtml(x.dt)}</div><div class="intern-alert-detail">${detail}</div></div>
+      </div>`;
+    }).join('')}</div>
+    <div class="intern-alert-btns">
+      <button type="button" data-act="view">인턴 현황 보기</button>
+      <button type="button" class="primary" data-act="ok">확인했어요</button>
+    </div>
+  </div>`;
+  const done=()=>{
+    try {
+      const s2=internAlertReadSeen(email);
+      internAlertItems().forEach(x=>s2.add(x.sig));
+      localStorage.setItem(internAlertSeenKey(email), JSON.stringify([...s2].slice(-300)));
+    } catch(_){}
+    m.remove();
+  };
+  m.querySelector('[data-act="ok"]').addEventListener('click', done);
+  m.querySelector('[data-act="view"]').addEventListener('click', ()=>{
+    done();
+    try { if(typeof switchMain==='function') switchMain('layout'); } catch(_){}
+    setTimeout(()=>{ const el=$('lv-pp-intern-body'); if(el && el.closest('.lv-pp-sec')) el.closest('.lv-pp-sec').scrollIntoView({behavior:'smooth', block:'start'}); }, 400);
+  });
+  document.body.appendChild(m);
+};
+(function(){
+  // 로그인 + 최신 데이터 로드가 끝난 뒤 한 번 확인
+  let tries=0;
+  const t=setInterval(()=>{
+    tries++;
+    if(window.__fbUser && window.__freshServerLoaded && window.__fbEdits && typeof EMPS!=='undefined' && EMPS.length){
+      clearInterval(t);
+      setTimeout(()=>{ try { window.internAlertCheck(); } catch(e){ console.warn('[internAlert]', e); } }, 1500);
+    } else if(tries>240){ clearInterval(t); }
+  }, 500);
+})();
 // [TRANSFER] 이동예정 해제 (status를 active로 복귀)
 window.ppClearTransfer=function(empId){
   if(typeof lvSetStatus==='function') lvSetStatus(empId, 'active');
