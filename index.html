@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 156;
+  window.__APP_VERSION = 158;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -944,7 +944,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pp-tab.active{color:#1a1d23;border-bottom-color:#5b6cf8;}
 .lv-pp-tab[data-pp-tab="intern"].active{border-bottom-color:#8b5cf6;}
 .lv-pp-tab-count{font-size:10px;color:#8b5cf6;font-weight:800;}
-.lv-pp-intern-summary{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 6px;}
+.lv-pp-intern-brands{display:flex;gap:0;margin:10px 0 2px;border:1px solid #e1e5f0;border-radius:9px;overflow:hidden;width:max-content;max-width:100%;}
+.lv-pp-intern-brands button{border:0;border-right:1px solid #e1e5f0;background:#fff;color:#7a8299;font-family:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;cursor:pointer;white-space:nowrap;}
+.lv-pp-intern-brands button:last-child{border-right:0;}
+.lv-pp-intern-brands button.on{background:#2a2f42;color:#fff;}
+.lv-pp-brand-head td{background:#f5f6fa !important;font-size:11px;font-weight:800;color:#3a4053;padding:5px 8px !important;letter-spacing:.3px;}
+.lv-pp-brand-head td span{color:#9aa0b3;font-weight:700;margin-left:4px;}
+.lv-pp-intern-summary{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 6px;}
 .lv-pp-intern-summary button{border:1px solid transparent;font-family:inherit;cursor:pointer;}
 .lv-pp-intern-summary button.on{box-shadow:0 0 0 1.5px currentColor inset;}
 .lv-pp-intern-summary button{font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;background:#f5f3ff;color:#6d28d9;}
@@ -1483,7 +1489,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v156</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=156;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v158</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=158;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3848,6 +3854,7 @@ window.openMoveChannel = openMoveChannel;
         </div>
         <div class="lv-pp-body" id="lv-pp-intern-view" style="display:none">
           <div class="lv-pp-sec">
+            <div id="lv-pp-intern-brands" class="lv-pp-intern-brands"></div>
             <div id="lv-pp-intern-summary" class="lv-pp-intern-summary"></div>
             <table class="lv-pp-tbl">
               <thead><tr>
@@ -6318,6 +6325,25 @@ function trigPhoto(){
   const input = document.getElementById('avinput');
   if(input) input.click();
 }
+// [QUALITY] 사진 고화질 변환: 큰 사진은 단계적으로 줄여 계단현상 방지, 투명 배경은 흰색, JPEG 품질 0.9
+window.__encodePhotoHQ = function(img, w, h){
+  let src = img, sw = img.width, sh = img.height;
+  // 절반씩 줄이며 목표 크기에 접근 (한 번에 크게 줄이면 뭉개짐)
+  while(sw / 2 >= w && sh / 2 >= h){
+    const c = document.createElement('canvas');
+    c.width = Math.round(sw / 2); c.height = Math.round(sh / 2);
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(src, 0, 0, c.width, c.height);
+    src = c; sw = c.width; sh = c.height;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', 0.9);
+};
 // [CLIPBOARD] File 객체를 받아서 사진 처리 (파일 선택 + 클립보드 붙여넣기 공용)
 function _processPhotoFile(file){
   if(!curEmp || !file) return;
@@ -6328,15 +6354,16 @@ function _processPhotoFile(file){
     const img = new Image();
     img.onload = function(){
       let w = img.width, h = img.height;
-      const MAX = 500;  // 800 → 500 (localStorage 절약)
+      const srcW = w, srcH = h;
+      const MAX = 640;  // [QUALITY] 500 → 640 (사진은 Firebase 저장이라 용량 여유 있음)
       if(w > MAX || h > MAX){
         if(w > h){ h = Math.round(h * MAX / w); w = MAX; }
         else { w = Math.round(w * MAX / h); h = MAX; }
       }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b = canvas.toDataURL('image/jpeg', 0.75);  // 0.85 → 0.75 (용량 30% 감소)
+      const b = window.__encodePhotoHQ(img, w, h);
+      if(Math.max(srcW, srcH) < 300 && typeof window.lvToast === 'function'){
+        window.lvToast('⚠️ 붙여넣은 사진이 작아요 ('+srcW+'×'+srcH+'px) · 엑셀에서 사진을 원래 크기로 키운 뒤 복사하면 선명해져요');
+      }
       console.log('[Photo] 압축 완료:', empId, w+'x'+h, Math.round(b.length/1024)+'KB');
       setP(empId, b);
       // EMPS 배열에도 즉시 반영 (다른 렌더에서 emp.photo_b64로 접근하는 경우 대응)
@@ -9203,6 +9230,18 @@ function ppInternResultInfo(e){
   return {cls:'none', label:'결과 미정'};
 }
 let __ppInternFilter='all';
+let __ppInternBrand='all';
+window.ppSetInternBrand=function(b){
+  __ppInternBrand = (__ppInternBrand===b) ? 'all' : b;
+  try { ppRenderInterns(); } catch(_){}
+};
+function ppBrandKey(e){
+  const b=String((e&&e.brand)||'').toUpperCase();
+  if(b==='AT'||b==='ATS'||b.indexOf('ATS')===0) return 'ATS';
+  if(b.indexOf('NUF')===0) return 'NUF';
+  if(b==='GM'||!b) return 'GM';
+  return b;
+}
 window.ppSwitchTab=function(tab){
   const plan=$('lv-pp-plan-view'), intern=$('lv-pp-intern-view');
   if(!plan||!intern) return;
@@ -9233,7 +9272,18 @@ function ppInternMatches(e, f){
 function ppRenderInterns(){
   const body=$('lv-pp-intern-body'), empty=$('lv-pp-intern-empty');
   if(!body||!empty) return;
-  const all=ppInternList();
+  const everyone=ppInternList();
+  // [BRAND] 브랜드 구분 버튼 (전체 / GM / ATS / NUF)
+  const brandOrder=['GM','ATS','NUF'];
+  const brandCounts={}; everyone.forEach(e=>{ const k=ppBrandKey(e); brandCounts[k]=(brandCounts[k]||0)+1; });
+  const brandKeys=[...brandOrder.filter(k=>brandCounts[k]), ...Object.keys(brandCounts).filter(k=>!brandOrder.includes(k))];
+  if(__ppInternBrand!=='all' && !brandCounts[__ppInternBrand]) __ppInternBrand='all';
+  const bWrap=$('lv-pp-intern-brands');
+  if(bWrap){
+    bWrap.innerHTML=[`<button type="button" class="${__ppInternBrand==='all'?'on':''}" onclick="ppSetInternBrand('all')">전체 ${everyone.length}</button>`]
+      .concat(brandKeys.map(k=>`<button type="button" class="${__ppInternBrand===k?'on':''}" onclick="ppSetInternBrand('${k}')">${k} ${brandCounts[k]}</button>`)).join('');
+  }
+  const all=everyone.filter(e=>__ppInternBrand==='all' || ppBrandKey(e)===__ppInternBrand);
   // 입사예정 인턴 맨 위 → 나머지는 입사(계약 시작) 순
   all.sort((a,b)=>{
     const ja=getEmpStatus(a)==='joining'?0:1, jb=getEmpStatus(b)==='joining'?0:1;
@@ -9256,9 +9306,30 @@ function ppRenderInterns(){
   if(sum){
     sum.innerHTML=defs.filter(d=>d.k==='all'||counts[d.k]).map(d=>`<button type="button" class="${d.cls}${__ppInternFilter===d.k?' on':''}" onclick="ppSetInternFilter('${d.k}')">${d.label} ${counts[d.k]}</button>`).join('');
   }
-  const tc=$('lv-pp-intern-tabcount'); if(tc) tc.textContent=all.length?String(all.length):'';
+  const tc=$('lv-pp-intern-tabcount'); if(tc) tc.textContent=everyone.length?String(everyone.length):'';
   const list=all.filter(e=>ppInternMatches(e, __ppInternFilter));
+  // 전체 보기일 때는 브랜드별로 묶어서 표시 (브랜드 안에서는 입사순 유지)
+  if(__ppInternBrand==='all' && brandKeys.length>1){
+    const rank=k=>{ const i=brandKeys.indexOf(k); return i<0?99:i; };
+    list.sort((a,b)=>rank(ppBrandKey(a))-rank(ppBrandKey(b)));
+  }
+  let __lastBrand=null;
   body.innerHTML=list.map(e=>{
+    let head='';
+    if(__ppInternBrand==='all' && brandKeys.length>1){
+      const bk=ppBrandKey(e);
+      if(bk!==__lastBrand){
+        __lastBrand=bk;
+        const n=list.filter(x=>ppBrandKey(x)===bk).length;
+        head=`<tr class="lv-pp-brand-head"><td colspan="4">${bk} <span>${n}명</span></td></tr>`;
+      }
+    }
+    return head+ppInternRowHtml(e);
+  }).join('');
+  empty.style.display=list.length?'none':'block';
+}
+function ppInternRowHtml(e){
+  {
     const st=getEmpStatus(e);
     const c=ppInternContract(e);
     const res=ppInternResultInfo(e);
@@ -9279,8 +9350,7 @@ function ppRenderInterns(){
       <td style="font-size:10.5px;line-height:1.45"><div style="color:#5b6378;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${storeName}</div><div style="white-space:nowrap">${period}</div>${flag}</td>
       <td><button type="button" class="lv-pp-res ${res.cls}" onclick="event.stopPropagation();ppEditInternResult('${e.id}')" title="결과 사전 결정 편집">${res.label}</button></td>
     </tr>`;
-  }).join('');
-  empty.style.display=list.length?'none':'block';
+  }
 }
 // 인턴 현황에서 결과 사전 결정 편집 (직원 상세의 계약 편집과 같은 팝업·같은 저장)
 window.ppEditInternResult=async function(empId){
@@ -11462,15 +11532,16 @@ window._processAePhotoFile = function(file){
     const img = new Image();
     img.onload = function(){
       let w = img.width, h = img.height;
-      const MAX = 500;
+      const srcW = w, srcH = h;
+      const MAX = 640;
       if(w > MAX || h > MAX){
         if(w > h){ h = Math.round(h*MAX/w); w = MAX; }
         else { w = Math.round(w*MAX/h); h = MAX; }
       }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b = canvas.toDataURL('image/jpeg', 0.75);
+      const b = window.__encodePhotoHQ(img, w, h);
+      if(Math.max(srcW, srcH) < 300){
+        try { alert('⚠️ 붙여넣은 사진이 작아요 ('+srcW+'×'+srcH+'px)\n\n엑셀에서 사진을 원래 크기로 키운 뒤 복사하면 선명해져요.\n(사진 클릭 → 그림 서식 → 크기 → "원래대로")'); } catch(_){}
+      }
       _aePhoto = b;
       const wrap=document.getElementById('ae-photo-wrap');
       if(wrap) wrap.innerHTML='<img src="'+b+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
