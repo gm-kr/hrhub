@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 158;
+  window.__APP_VERSION = 159;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1489,7 +1489,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v158</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=158;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v159</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=159;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5083,6 +5083,31 @@ async function editGenderInline(){
 }
 window.editEmpNoInline = editEmpNoInline;
 window.editGenderInline = editGenderInline;
+// [INTERN CONTRACT] 계약 정리: 같은 연장 중복 제거 + 이미 지난 종료일에 '연장'을 고르면 바로 연장 반영
+//   (예: 종료 09-23 + 연장 10-26 입력 → 즉시 '07-28~09-23 · 연장 ~10-26'로 저장. 새로고침 때 바뀌어 보이는 혼란 방지)
+window.__normInternContract = function(c){
+  c = Object.assign({}, c||{});
+  const t=new Date(); const today=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  const seen=new Set();
+  c.extensions = (Array.isArray(c.extensions)?c.extensions:[]).filter(x=>{
+    if(!x||!x.endAt) return false;
+    const k=(x.startAt||'')+'|'+x.endAt; if(seen.has(k)) return false; seen.add(k); return true;
+  });
+  if(c.plannedResult==='연장' && c.plannedExtendEnd && c.endAt && c.endAt<=today){
+    const k=c.endAt+'|'+c.plannedExtendEnd;
+    if(!seen.has(k)) c.extensions.push({startAt:c.endAt, endAt:c.plannedExtendEnd});
+    c.endAt=c.plannedExtendEnd; c.plannedResult=''; c.plannedExtendEnd='';
+  }
+  return c;
+};
+// 계약기간 보기용 문구: 원 계약 종료 + 연장 종료
+window.__internPeriodText = function(c, short){
+  if(!c) return '';
+  const f=v=>v?(short?String(v).slice(2):v):'?';
+  const exts=Array.isArray(c.extensions)?c.extensions.filter(x=>x&&x.endAt):[];
+  const origEnd = exts.length ? (exts[0].startAt||c.endAt) : c.endAt;
+  return f(c.startAt)+' ~ '+f(origEnd) + (exts.length ? ' · 연장'+(exts.length>1?exts.length+'회':'')+' ~'+f(c.endAt) : '');
+};
 async function editInternContractInline(){
   if(!curEmp) return;
   const ed = (window.__fbEdits && window.__fbEdits[curEmp.id]) || {};
@@ -5094,14 +5119,14 @@ async function editInternContractInline(){
   });
   if(!res || !res.endAt) return;
   const startAt = res.startAt || contract.startAt || new Date().toISOString().slice(0,10);
-  const newContract = {
+  const newContract = window.__normInternContract({
     ...contract,
     startAt,
     endAt: res.endAt,
     extensions: contract.extensions || [],
     plannedResult: res.plannedResult || '',
     plannedExtendEnd: res.plannedExtendEnd || ''
-  };
+  });
   if(!window.__fbEdits[curEmp.id]) window.__fbEdits[curEmp.id] = {};
   window.__fbEdits[curEmp.id]._internContract = newContract;
   try { if(window.fbSetEdit) window.fbSetEdit(curEmp.id, '_internContract', newContract); } catch(_){}
@@ -5156,7 +5181,8 @@ function openP(emp){
       if(planned === '합격') plannedBadge = ' <span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:8px;font-size:10px">합격예정</span>';
       else if(planned === '연장') plannedBadge = ' <span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:8px;font-size:10px">연장예정</span>';
       else if(planned === '불합격') plannedBadge = ' <span style="background:#fecaca;color:#991b1b;padding:1px 6px;border-radius:8px;font-size:10px">불합격예정</span>';
-      _pdinternEl.innerHTML = `<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px" title="시작 ${contract.startAt}${exts}">📋 ~${contract.endAt}</span>${plannedBadge}`;
+      const _pt = window.__internPeriodText ? window.__internPeriodText(contract, true) : ('~'+contract.endAt);
+      _pdinternEl.innerHTML = `<span style="background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:10px;font-weight:600;font-size:11.5px" title="시작 ${contract.startAt}${exts}">📋 ${_pt}</span>${plannedBadge}`;
     } else if(isIntern){
       _pdinternEl.innerHTML = '<span style="color:#9aa0b3;font-size:11px;border:1px dashed #dfe3ee;padding:1px 8px;border-radius:10px">+ 계약기간</span>';
     } else {
@@ -9336,7 +9362,7 @@ function ppInternRowHtml(e){
     const storeKey = st==='transfer' ? (getEmpPrevStore(e)||e.current_store) : e.current_store;
     const storeName=storeKey?lvStoreName(storeKey):'<span style="color:#aab0be">미배정</span>';
     const period=(c.startAt||c.endAt)
-      ? `<span style="color:#8188a0">${(c.startAt||'?').slice(2)} ~ </span><span style="color:#5b6378;font-weight:700">${(c.endAt||'?').slice(2)}</span>${(c.endAt&&st!=='joining')?ppDdayHtml(c.endAt):''}`
+      ? `<span style="color:#5b6378;font-weight:600">${window.__internPeriodText?window.__internPeriodText(c,true):((c.startAt||'?')+' ~ '+(c.endAt||'?'))}</span>${(c.endAt&&st!=='joining')?ppDdayHtml(c.endAt):''}`
       : '<span style="color:#aab0be">계약기간 미입력</span>';
     const dt=ppStatusDate(e);
     let flag='';
@@ -9364,7 +9390,7 @@ window.ppEditInternResult=async function(empId){
   });
   if(!res || !res.endAt) return;
   const startAt=res.startAt||contract.startAt||emp.hire_date||ppTodayStr();
-  const newContract={...contract, startAt, endAt:res.endAt, extensions:contract.extensions||[], plannedResult:res.plannedResult||'', plannedExtendEnd:res.plannedExtendEnd||''};
+  const newContract=window.__normInternContract({...contract, startAt, endAt:res.endAt, extensions:contract.extensions||[], plannedResult:res.plannedResult||'', plannedExtendEnd:res.plannedExtendEnd||''});
   if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
   window.__fbEdits[emp.id]._internContract=newContract;
   try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_internContract', newContract); } catch(_){}
@@ -16113,9 +16139,7 @@ window.checkInternContracts = async function(){
     if(result === '연장'){
       const newEnd = contract.plannedExtendEnd || '';
       if(newEnd){
-        const exts = Array.isArray(contract.extensions) ? contract.extensions : [];
-        exts.push({ startAt: contract.endAt, endAt: newEnd });
-        const newContract = { ...contract, endAt: newEnd, extensions: exts, plannedResult: '', plannedExtendEnd: '' };
+        const newContract = window.__normInternContract ? window.__normInternContract({ ...contract }) : (()=>{ const exts=(contract.extensions||[]).slice(); exts.push({ startAt: contract.endAt, endAt: newEnd }); return { ...contract, endAt:newEnd, extensions:exts, plannedResult:'', plannedExtendEnd:'' }; })();
         window.__fbEdits[emp.id]._internContract = newContract;
         try { if(window.fbSetEdit) window.fbSetEdit(emp.id, '_internContract', newContract); } catch(_){}
         if(typeof lvToast==='function') lvToast(`⏰ ${emp.name} 인턴 자동 연장 · ~${newEnd}`);
