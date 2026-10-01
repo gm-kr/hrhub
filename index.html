@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 154;
+  window.__APP_VERSION = 156;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1483,7 +1483,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v154</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=154;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v156</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=156;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -5106,6 +5106,7 @@ async function editInternContractInline(){
       if(window.fbSetEdit) window.fbSetEdit(curEmp.id, 'hire_date', startAt);
     }
   } catch(_){}
+  try { if(window.__syncJoiningFromHire) window.__syncJoiningFromHire(curEmp, startAt); } catch(_){}
   openP(curEmp);
 }
 window.editInternContractInline = editInternContractInline;
@@ -6515,7 +6516,14 @@ window.deletePraiseReward = deletePraiseReward;
 window.trigPhoto   = trigPhoto;
 window.handlePhoto = handlePhoto;
 window.setPEditMode = setPEditMode;
-window.saveFieldEdit = saveFieldEdit;
+const __origSaveFieldEdit = saveFieldEdit;
+window.saveFieldEdit = function(field, val){
+  const r = __origSaveFieldEdit(field, val);
+  if(field === 'hire_date' && typeof curEmp !== 'undefined' && curEmp){
+    try { if(window.__syncJoiningFromHire) window.__syncJoiningFromHire(curEmp, val); } catch(_){}
+  }
+  return r;
+};
 window.guessChannel = guessChannel;
 window.addEventListener('DOMContentLoaded',()=>{
   try{ void 0;
@@ -6633,6 +6641,70 @@ function getEmpStatus(emp){
   if(ed[emp.id]&&ed[emp.id].status) return ed[emp.id].status;
   return emp.status||'active';
 }
+
+// [JOINING SYNC] 입사일(인턴은 계약 시작일)을 바꾸면 상태도 맞춰줌
+//   미래 날짜 + 재직중 → 입사예정(예정일=입사일) / 입사예정인데 날짜만 바뀜 → 예정일 갱신 / 오늘·과거로 바뀜 → 재직중
+function __toIsoDate(v){
+  const t=String(v||'').trim(); if(!t) return '';
+  let m=t.match(/^(\d{4})[-.\/]\s*(\d{1,2})[-.\/]\s*(\d{1,2})/); 
+  if(!m) m=t.match(/^(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?/);
+  if(!m) return '';
+  return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+}
+window.__syncJoiningFromHire=function(emp, dateVal, opts){
+  try{
+    opts=opts||{};
+    if(!emp||!emp.id) return false;
+    const iso=__toIsoDate(dateVal); if(!iso) return false;
+    const t=new Date(); const today=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    const st=getEmpStatus(emp);
+    if(!window.__fbEdits) window.__fbEdits={};
+    if(!window.__fbEdits[emp.id]) window.__fbEdits[emp.id]={};
+    const ed=window.__fbEdits[emp.id];
+    const set=(status, dt)=>{
+      emp.status=status; ed.status=status;
+      if(dt){ ed._statusDate=dt; emp._statusDate=dt; } else { delete ed._statusDate; delete emp._statusDate; }
+      try { if(window.fbSetEdit){ window.fbSetEdit(emp.id,'status',status); window.fbSetEdit(emp.id,'_statusDate', dt||null); } } catch(_){}
+    };
+    let changed='';
+    if(iso>today && st==='active'){ set('joining', iso); changed='joining'; }
+    else if(st==='joining' && iso>today && ed._statusDate!==iso){ set('joining', iso); changed='date'; }
+    else if(st==='joining' && iso<=today){ set('active', null); changed='active'; }
+    if(changed){
+      try { if(typeof persistEditsCache==='function') persistEditsCache(); } catch(_){}
+      if(!opts.silent && typeof lvToast==='function'){
+        lvToast(changed==='active' ? ('✅ '+(emp.name||'')+' 입사일 도래 → 재직중') : ('🌱 '+(emp.name||'')+' 입사예정 '+iso));
+      }
+      try { if(typeof ppRender==='function') ppRender(); } catch(_){}
+      try { if(typeof lvRender==='function') lvRender(); } catch(_){}
+    }
+    return !!changed;
+  }catch(_){ return false; }
+};
+// 앱을 열 때 한 번: 입사일이 미래인데 재직중으로 되어 있는 직원 바로잡기 (편집 가능한 PC에서만)
+(function(){
+  let n=0;
+  const t=setInterval(()=>{
+    n++;
+    if(window.__freshServerLoaded && window.__fbUser && typeof EMPS!=='undefined' && EMPS.length){
+      clearInterval(t);
+      if(window.__MOBILE_READ_ONLY || window.__isStandalone) return;
+      setTimeout(()=>{
+        try {
+          const fixed=[];
+          EMPS.forEach(e=>{
+            if(!e||!e.id||isDeletedEmpId(e.id)) return;
+            if(getEmpStatus(e)!=='active') return;
+            const c=(window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._internContract)||{};
+            const d=(String(e.position||'').includes('인턴') && c.startAt) ? c.startAt : e.hire_date;
+            if(window.__syncJoiningFromHire(e, d, {silent:true})) fixed.push(e.name);
+          });
+          if(fixed.length && typeof lvToast==='function') lvToast('🌱 입사일이 미래인 '+fixed.length+'명 → 입사예정으로 정리: '+fixed.slice(0,3).join(', ')+(fixed.length>3?' 외':''));
+        } catch(_){}
+      }, 2500);
+    } else if(n>240) clearInterval(t);
+  }, 500);
+})();
 function getEmpMemo(emp){
   const ed=window.__fbEdits||{};
   return (ed[emp.id]&&ed[emp.id].memo)||emp.memo||'';
@@ -9232,6 +9304,7 @@ window.ppEditInternResult=async function(empId){
       if(window.fbSetEdit) window.fbSetEdit(emp.id, 'hire_date', startAt);
     }
   } catch(_){}
+  try { if(window.__syncJoiningFromHire) window.__syncJoiningFromHire(emp, startAt); } catch(_){}
   if(typeof lvToast==='function') lvToast('📋 '+emp.name+' · '+ppInternResultInfo(emp).label);
   try { ppRender(); } catch(_){}
 };
@@ -13206,6 +13279,25 @@ window.fbSetSchedule = async function(data) {
   }
   window.__freshServerLoaded = true;
   try { window.__bootT = window.__bootT || {}; window.__bootT.fresh = Math.round(performance.now()); console.log('[BOOT TIMING]', JSON.stringify(window.__bootT)); } catch(_){}
+  // [UPDATE CHECK] 홈화면 바로가기 등에서 옛 파일이 캐시로 열린 경우 → 서버 파일 수정시각만 가볍게 확인해 새 버전이면 1회 새로고침
+  setTimeout(async () => {
+    try {
+      if(location.protocol === 'file:' || location.hostname === 'localhost') return;
+      const r = await fetch(location.pathname + '?vc=' + Date.now(), { method:'HEAD', cache:'no-store' });
+      const lm = Date.parse(r.headers.get('last-modified') || '');
+      const mine = Date.parse(document.lastModified || '');
+      if(!lm || !mine) return;
+      if(lm - mine > 5000){
+        const key = '__updReloadAt';
+        const last = Number(sessionStorage.getItem(key) || 0);
+        if(Date.now() - last < 60000) return;  // 무한 새로고침 방지
+        sessionStorage.setItem(key, String(Date.now()));
+        const u = new URL(location.href);
+        u.searchParams.set('ts', String(Date.now()));
+        location.replace(u.toString());
+      }
+    } catch(_){}
+  }, 1500);
   window.__SERVER_BOOTSTRAP_DONE = true;
   window.__fbReady = true;
   let _usedPendingMainTab = false;
