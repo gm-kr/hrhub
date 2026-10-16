@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 165;
+  window.__APP_VERSION = 167;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1497,7 +1497,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v165</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=165;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v167</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=167;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -9703,6 +9703,33 @@ async function lvSetStatus(empId, status){
     if(input === null){ return; }  // 취소
     statusDate = input || null;
   }
+  // [TRANSFER FROM TEST] 운영팀 테스트에서 옮긴 사람을 '이동예정'으로 표시하면
+  //   → 테스트에서 옮긴 매장을 실제 이동 목적지로 반영 (배치현황에도 '원래 매장 → 새 매장 이동예정'으로 보임)
+  //   새로고침 시 배치현황 화면에서 원래 매장에 있는 것처럼 보이던 문제 해결
+  let _transferNote = '';
+  try {
+    if(status === 'transfer' && lvMode === 'draft'){
+      const _drow = (lvEnsureDraftData() || {})[empId] || {};
+      const _to = _drow.current_store || '';
+      const _from = emp.current_store || '';
+      if(_to && _from && _to !== _from){
+        emp._prev_store = _from;
+        if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
+        window.__fbEdits[empId]._prev_store = _from;
+        if(window.fbSetEdit) window.fbSetEdit(empId, '_prev_store', _from);
+        try { if(window.trackStoreChange) window.trackStoreChange(empId, _from, _to); } catch(_){}
+        emp.current_store = _to;
+        emp.channel = _drow.channel || guessChannel(_to) || emp.channel || '';
+        lvSaveToHrEdits(emp);
+        try {
+          const _act = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
+          _act[empId] = Object.assign({}, _act[empId]||{}, { current_store:_to, channel:emp.channel });
+          localStorage.setItem('layoutActualData', JSON.stringify(_act));
+        } catch(_){}
+        _transferNote = ' · 배치현황에도 ' + lvStoreName(_from) + ' → ' + lvStoreName(_to) + ' 이동예정으로 반영';
+      }
+    }
+  } catch(_){}
   emp.status=status;
   if(status==='deleted') markDeletedEmpId(empId); else unmarkDeletedEmpId(empId);
   lvPersistEdit(empId, 'status', status);
@@ -9722,7 +9749,7 @@ async function lvSetStatus(empId, status){
   syncScheduleForEmp(emp, status);
   hideCtxMenu(); showSaved();
   const dateSuffix = statusDate ? ` (${statusDate})` : '';
-  lvToast('💾 '+emp.name+' → '+STATUS_CFG[status].label + dateSuffix);
+  lvToast('💾 '+emp.name+' → '+STATUS_CFG[status].label + dateSuffix + _transferNote);
   const _sc = document.getElementById('lv-scroll');
   const _st = _sc ? _sc.scrollTop : 0;
   lvRender(); lvRenderSB(); ppRender();
@@ -13223,7 +13250,7 @@ window.fbSetSchedule = async function(data) {
       if(typeof d.mgrImpOrder  === 'string') localStorage.setItem('lvMgrImpStoreOrder',   d.mgrImpOrder);
       if(typeof d.mgrSandboxDraft === 'string') localStorage.setItem('lvMgrSandboxDraft', d.mgrSandboxDraft);
       if(typeof d.mgrSandboxText  === 'string') localStorage.setItem('lvMgrSandboxText',  d.mgrSandboxText);
-      if(!skipIncomingLayoutDraft && typeof d.layoutDraft  === 'string') localStorage.setItem('layoutDraftData', d.layoutDraft);
+      if(!skipIncomingLayoutDraft && typeof d.layoutDraft  === 'string'){ localStorage.setItem('layoutDraftData', d.layoutDraft); window.__draftBase = d.layoutDraft; }
       if(typeof d.lvOrder      === 'string'){
         try {
           const m = JSON.parse(d.lvOrder)||{};
@@ -13722,7 +13749,12 @@ window.__flushAllPending = function(){
       const testMemo = localStorage.getItem('lvTestMemo') || '';
       const cur = { storeBase, mgrImpSlots, mgrImpOrder, lvOrder: lvOrderJson, deletedStores, deletedEmps, sbBase, testMemo };
       if(window.__layoutDraftDirty === true){
-        cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
+        {
+          const _local = localStorage.getItem('layoutDraftData') || '{}';
+          const _merged = window.__mergeDraftStr ? window.__mergeDraftStr(_local, window.__draftBase, (window.__lastSharedSnap||{}).layoutDraft) : _local;
+          if(_merged !== _local){ try { localStorage.setItem('layoutDraftData', _merged); } catch(_){} }
+          cur.layoutDraft = _merged;
+        }
       }
       const diff = {};
       Object.keys(cur).forEach(k=>{ if(cur[k] !== (_last[k]||'')) diff[k] = cur[k]; });
@@ -13740,7 +13772,7 @@ window.__flushAllPending = function(){
           _updatedBy: window.__fbUser.email,
           _clientVersion: window.__APP_VERSION || 10
         }, { merge: true }).catch(()=>{});
-        if(diff.layoutDraft !== undefined) window.__layoutDraftDirty = false;
+        if(diff.layoutDraft !== undefined){ window.__layoutDraftDirty = false; window.__draftBase = diff.layoutDraft; }
       }
     }
   } catch(_){}
@@ -14209,6 +14241,26 @@ if(window.__needsStrictFirstPull && window.__needsStrictFirstPull()){
 
 // [RACE FIX] 마지막으로 본 sharedSettings - 변경된 필드만 push해 옛 값 덮어쓰기 방지
 window.__lastSharedSnap = window.__lastSharedSnap || {};
+// [DRAFT MERGE] 운영팀 테스트 배치는 통째로 저장되는 구조라, 여러 명이 동시에 쓰면 서로의 이동을 덮어쓰던 문제
+//   → 3-way 병합: 내가 바꾼 직원(로컬≠기준)은 내 값, 안 바꾼 직원은 서버 최신값을 사용
+window.__draftBase = window.__draftBase || null;
+window.__mergeDraftStr = function(localStr, baseStr, serverStr){
+  try {
+    if(typeof serverStr !== 'string') return localStr;
+    if(typeof localStr !== 'string' || !localStr) return serverStr;
+    if(typeof baseStr !== 'string') return localStr;
+    const L = JSON.parse(localStr||'{}'), B = JSON.parse(baseStr||'{}'), S = JSON.parse(serverStr||'{}');
+    const out = Object.assign({}, S);
+    const ids = new Set([...Object.keys(L), ...Object.keys(B)]);
+    ids.forEach(id => {
+      const l = L[id], b = B[id];
+      if(JSON.stringify(l) !== JSON.stringify(b)){
+        if(l === undefined) delete out[id]; else out[id] = l;
+      }
+    });
+    return JSON.stringify(out);
+  } catch(_){ return localStr; }
+};
 window.__sharedInitLoaded = window.__sharedInitLoaded || false;  // Firebase 초기 로드 완료 플래그
 window.__layoutDraftDirty = window.__layoutDraftDirty || false;
 window.__backupLayoutDraft = async function(layoutDraft, reason){
@@ -14284,7 +14336,12 @@ window.fbSetShared = function(){
         testMemo:     localStorage.getItem('lvTestMemo')           || ''
       };
       if(window.__layoutDraftDirty === true){
-        cur.layoutDraft = localStorage.getItem('layoutDraftData') || '{}';
+        {
+          const _local = localStorage.getItem('layoutDraftData') || '{}';
+          const _merged = window.__mergeDraftStr ? window.__mergeDraftStr(_local, window.__draftBase, (window.__lastSharedSnap||{}).layoutDraft) : _local;
+          if(_merged !== _local){ try { localStorage.setItem('layoutDraftData', _merged); } catch(_){} }
+          cur.layoutDraft = _merged;
+        }
       }
       const lvOrder = {};
       ['FSMALL','DS','DFS','ATS','NUF','ETC'].forEach(k=>{
@@ -14334,7 +14391,7 @@ window.fbSetShared = function(){
       }, { merge: true });
       // push 성공한 필드는 lastSharedSnap에도 반영
       Object.keys(diff).forEach(k => window.__lastSharedSnap[k] = diff[k]);
-      if(diff.layoutDraft !== undefined) window.__layoutDraftDirty = false;
+      if(diff.layoutDraft !== undefined){ window.__layoutDraftDirty = false; window.__draftBase = diff.layoutDraft; }
     } catch(e) { console.error('fbSetShared:', e); }
   }, 100);
 };
@@ -14400,8 +14457,12 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
       }
     }
     if(!skipIncomingLayoutDraft && typeof data.layoutDraft === 'string'){
-      if(localStorage.getItem('layoutDraftData') !== data.layoutDraft){
-        localStorage.setItem('layoutDraftData', data.layoutDraft);
+      const _localD = localStorage.getItem('layoutDraftData');
+      // 아직 서버에 못 올린 내 이동이 있으면 병합(내 이동 유지 + 남의 이동 반영), 없으면 서버값 그대로
+      const _nextD = (window.__layoutDraftDirty === true && window.__mergeDraftStr) ? window.__mergeDraftStr(_localD, window.__draftBase, data.layoutDraft) : data.layoutDraft;
+      window.__draftBase = data.layoutDraft;
+      if(_localD !== _nextD){
+        localStorage.setItem('layoutDraftData', _nextD);
         needRerender = true;
       }
     }
