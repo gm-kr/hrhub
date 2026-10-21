@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 167;
+  window.__APP_VERSION = 168;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1497,7 +1497,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v167</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=167;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v168</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=168;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -10042,6 +10042,78 @@ const PT_GROUPS = [
   { key:'weekend', label:'주말' },
   { key:'friSatSun', label:'금토일' }
 ];
+// [PT DAYS] 요일 직접 지정 그룹 (예: 화목토) → 그룹 키 'days:화목토'
+const PT_DAY_ORDER = '월화수목금토일';
+function ptNormDays(str){
+  const set = new Set(String(str||'').split('').filter(c => PT_DAY_ORDER.includes(c)));
+  return PT_DAY_ORDER.split('').filter(c => set.has(c)).join('');
+}
+function ptKeyFromDays(days){
+  const d = ptNormDays(days);
+  if(!d) return '';
+  if(d === '월화수목금') return 'weekday';
+  if(d === '토일') return 'weekend';
+  if(d === '금토일') return 'friSatSun';
+  return 'days:' + d;
+}
+function ptValidKey(groupKey){
+  if(PT_GROUPS.some(g => g.key === groupKey)) return groupKey;
+  if(typeof groupKey === 'string' && /^days:[월화수목금토일]+$/.test(groupKey)) return groupKey;
+  return 'weekday';
+}
+function ptGroupDefsFor(data){
+  const groups = (data && data.groups) || {};
+  const custom = Object.keys(groups).filter(k => /^days:/.test(k) && (groups[k]||[]).length)
+    .sort((a,b) => PT_DAY_ORDER.indexOf(a[5]) - PT_DAY_ORDER.indexOf(b[5]) || a.length - b.length)
+    .map(k => ({ key:k, label:k.slice(5), custom:true }));
+  return PT_GROUPS.concat(custom);
+}
+window.ptKeyFromDays = ptKeyFromDays;
+// 요일 선택 팝업 → '화목토' 같은 문자열 (취소 시 null)
+window.ptPickDays = function(initial){
+  return new Promise(resolve => {
+    let m = document.getElementById('pt-days-modal');
+    if(m) m.remove();
+    m = document.createElement('div');
+    m.id = 'pt-days-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(15,18,30,.45);display:flex;align-items:center;justify-content:center;font-family:inherit';
+    const init = new Set(ptNormDays(initial).split(''));
+    m.innerHTML = `<div style="background:#fff;border-radius:14px;padding:20px 22px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <div style="font-size:15px;font-weight:800;color:#1a1d23">📅 근무 요일 직접 지정</div>
+      <div style="font-size:11.5px;color:#7a8299;margin:4px 0 14px">근무하는 요일을 눌러서 고르세요 (예: 화·목·토)</div>
+      <div id="pt-days-btns" style="display:flex;gap:6px;justify-content:space-between">${PT_DAY_ORDER.split('').map(d=>`<button type="button" data-d="${d}" class="${init.has(d)?'on':''}" style="width:38px;height:38px;border-radius:50%;border:1.5px solid #e1e5f0;background:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;color:${d==='토'?'#2563eb':(d==='일'?'#e84040':'#3a4053')}">${d}</button>`).join('')}</div>
+      <div id="pt-days-preview" style="font-size:12px;color:#5b6378;font-weight:700;margin-top:12px;min-height:18px"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" data-act="cancel" style="flex:1;height:36px;border-radius:8px;border:1px solid #eaecf2;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">취소</button>
+        <button type="button" data-act="ok" style="flex:1.4;height:36px;border-radius:8px;border:1px solid #5b6cf8;background:#5b6cf8;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">확인</button>
+      </div></div>`;
+    document.body.appendChild(m);
+    const sel = new Set(init);
+    const paint = () => {
+      m.querySelectorAll('#pt-days-btns button').forEach(b => {
+        const on = sel.has(b.dataset.d);
+        b.style.background = on ? '#5b6cf8' : '#fff';
+        b.style.borderColor = on ? '#5b6cf8' : '#e1e5f0';
+        b.style.color = on ? '#fff' : (b.dataset.d==='토'?'#2563eb':(b.dataset.d==='일'?'#e84040':'#3a4053'));
+      });
+      const d = ptNormDays([...sel].join(''));
+      const k = ptKeyFromDays(d);
+      m.querySelector('#pt-days-preview').textContent = d ? ('선택: ' + d + (k==='weekday'?' (평일 그룹)':k==='weekend'?' (주말 그룹)':k==='friSatSun'?' (금토일 그룹)':'')) : '요일을 1개 이상 선택하세요';
+    };
+    m.querySelectorAll('#pt-days-btns button').forEach(b => b.addEventListener('click', () => { sel.has(b.dataset.d) ? sel.delete(b.dataset.d) : sel.add(b.dataset.d); paint(); }));
+    const close = v => { m.remove(); resolve(v); };
+    m.querySelector('[data-act="cancel"]').addEventListener('click', () => close(null));
+    m.querySelector('[data-act="ok"]').addEventListener('click', () => { const d = ptNormDays([...sel].join('')); if(!d){ return; } close(d); });
+    m.addEventListener('click', e => { if(e.target === m) close(null); });
+    paint();
+  });
+};
+// 매장 카드에서 '＋ 요일 지정' → 요일 고른 뒤 일괄 입력
+window.lvPTAddCustomDays = async function(storeKey){
+  const d = await window.ptPickDays('');
+  if(!d) return;
+  window.lvPTAdd(storeKey, ptKeyFromDays(d));
+};
 let __ptVisible = localStorage.getItem('lvPtExcluded') === '1' ? false : true;
 window.__ptStoreMem = window.__ptStoreMem || {};
 
@@ -10126,6 +10198,12 @@ function normalizePTData(raw) {
         ? raw.groups[g.key].map(_norm).filter(Boolean)
         : [];
     });
+    // [PT DAYS] 요일 직접 지정 그룹 유지
+    Object.keys(raw.groups).forEach(k => {
+      if(!/^days:[월화수목금토일]+$/.test(k) || !Array.isArray(raw.groups[k])) return;
+      const arr = raw.groups[k].map(_norm).filter(Boolean);
+      if(arr.length) groups[k] = arr;
+    });
   } else if (raw && Array.isArray(raw.names)) {
     groups.weekday = raw.names.map(_norm).filter(Boolean);
   }
@@ -10133,11 +10211,12 @@ function normalizePTData(raw) {
 }
 function getPTGroupLabel(groupKey) {
   const found = PT_GROUPS.find(g => g.key === groupKey);
+  if(!found && /^days:/.test(groupKey||'')) return groupKey.slice(5);
   return found ? found.label : '파트타이머';
 }
 function getPTTotalCount(data) {
   const groups = (data && data.groups) || {};
-  return PT_GROUPS.reduce((sum, g) => sum + ((groups[g.key] || []).length), 0);
+  return Object.keys(groups).reduce((sum, k) => sum + (Array.isArray(groups[k]) ? groups[k].length : 0), 0);
 }
 
 /* ── 매장별 PT 데이터 가져오기 (초기값: 엑셀) ── */
@@ -10202,7 +10281,8 @@ window.lvPTAdd = function(storeKey, groupKey) {
 // 일괄 입력 처리 (입력 텍스트 → 이름 배열 → 데이터 저장)
 window.lvPTBulkAdd = function(storeKey, groupKey, text, endDate){
   const data = getPTData(storeKey);
-  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  const key = ptValidKey(groupKey);
+  if(!Array.isArray(data.groups[key])) data.groups[key] = [];
   // 줄바꿈/쉼표/탭/세미콜론/여러 공백 모두 구분자로 인식
   const names = (text||'').split(/[\n,\t; ]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length) return 0;
@@ -10215,7 +10295,8 @@ window.lvPTBulkAdd = function(storeKey, groupKey, text, endDate){
 /* ── 파트타이머 삭제 ── */
 window.lvPTDel = function(storeKey, groupKey, idx) {
   const data = getPTData(storeKey);
-  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  const key = ptValidKey(groupKey);
+  if(!Array.isArray(data.groups[key])) data.groups[key] = [];
   data.groups[key].splice(idx, 1);
   setPTData(storeKey, data);
   lvRender();
@@ -10230,7 +10311,8 @@ window.lvPTSetEndDate = function(storeKey, groupKey, idx){
 /* ── 파트타이머 이름 변경 ── */
 window.lvPTRename = function(storeKey, groupKey, idx) {
   const data = getPTData(storeKey);
-  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  const key = ptValidKey(groupKey);
+  if(!Array.isArray(data.groups[key])) data.groups[key] = [];
   const item = data.groups[key][idx];
   const currentName = (item && typeof item === 'object') ? item.name : (item||'');
   const newName = prompt('이름 변경:', currentName);
@@ -10287,7 +10369,8 @@ function buildPTGroupRow(storeKey, groupKey, label, names) {
 /* ── 파트타이머 섹션 HTML 생성 ── */
 function buildPTSection(storeKey) {
   const data = getPTData(storeKey);
-  const groupsHtml = PT_GROUPS.map(g => buildPTGroupRow(storeKey, g.key, g.label, data.groups[g.key] || [])).join('');
+  const groupsHtml = ptGroupDefsFor(data).map(g => buildPTGroupRow(storeKey, g.key, g.label, data.groups[g.key] || [])).join('')
+    + `<div class="pt-group"><button class="pt-add-btn" onclick="lvPTAddCustomDays('${storeKey}')" title="화목토처럼 근무 요일을 직접 골라 등록">＋ 요일 직접 지정</button></div>`;
   return `<div class="pt-section">
     <div class="pt-header">
       <span class="pt-label">👥 파트타이머</span>
@@ -15689,6 +15772,7 @@ function _ptbsBuildRow(){
       <option value="weekday">평일</option>
       <option value="weekend">주말</option>
       <option value="friSatSun">금토일</option>
+      <option value="__custom">요일 직접 지정…</option>
     </select>
     <input class="ptbs-row-names" type="text" placeholder="이름 (쉼표/공백 구분)" style="padding:6px 8px;border:1px solid #eaecf2;border-radius:6px;font-family:inherit;font-size:12.5px;outline:none">
     <button class="ptbs-row-del" onclick="this.closest('.ptbs-row').remove()" title="이 행 삭제" style="height:30px;border-radius:6px;border:1px solid #fce0e0;background:#fff;color:#e84040;font-size:14px;cursor:pointer">✕</button>
@@ -15749,7 +15833,8 @@ window.lvPTConfirmStoreBulk = function(){
   const skipped = [];
   rows.forEach(row => {
     const storeKey = (row.querySelector('.ptbs-row-store')||{}).value || '';
-    const groupKey = (row.querySelector('.ptbs-row-group')||{}).value || 'weekday';
+    let groupKey = (row.querySelector('.ptbs-row-group')||{}).value || 'weekday';
+    if(groupKey === '__custom') groupKey = 'weekday';
     const text = (row.querySelector('.ptbs-row-names')||{}).value || '';
     if(!storeKey || !text.trim()) {
       if(storeKey && !text.trim()) skipped.push('이름 비어있음');
@@ -15779,11 +15864,32 @@ window.lvPTConfirmStoreBulk = function(){
     if(typeof lvToast==='function') lvToast('매장과 이름을 모두 입력해주세요');
   }
 };
+// [PT DAYS] 일괄 등록에서 '요일 직접 지정…' 선택 시 요일 고르기
+document.addEventListener('change', async function(e){
+  const sel = e.target;
+  if(!sel || !sel.classList || !sel.classList.contains('ptbs-row-group') || sel.value !== '__custom') return;
+  const prev = sel.dataset.prev || 'weekday';
+  const d = window.ptPickDays ? await window.ptPickDays('') : null;
+  if(!d){ sel.value = prev; return; }
+  const key = window.ptKeyFromDays ? window.ptKeyFromDays(d) : 'weekday';
+  let opt = [...sel.options].find(o => o.value === key);
+  if(!opt){
+    opt = document.createElement('option');
+    opt.value = key; opt.textContent = d;
+    sel.insertBefore(opt, sel.querySelector('option[value="__custom"]'));
+  }
+  sel.value = key; sel.dataset.prev = key;
+});
+document.addEventListener('focusin', function(e){
+  const sel = e.target;
+  if(sel && sel.classList && sel.classList.contains('ptbs-row-group') && sel.value !== '__custom') sel.dataset.prev = sel.value;
+});
 // 퇴사예정일 캘린더 모달
 window.__ptEndCtx = null;
 window.lvPTOpenEndDate = function(storeKey, groupKey, idx){
   const data = getPTData(storeKey);
-  const key = PT_GROUPS.some(g => g.key === groupKey) ? groupKey : 'weekday';
+  const key = ptValidKey(groupKey);
+  if(!Array.isArray(data.groups[key])) data.groups[key] = [];
   const item = data.groups[key][idx];
   if(!item) return;
   window.__ptEndCtx = {storeKey, groupKey:key, idx, name: item.name||''};
