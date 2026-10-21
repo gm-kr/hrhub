@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 168;
+  window.__APP_VERSION = 169;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1497,7 +1497,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v168</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=168;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v169</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=169;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -6698,6 +6698,10 @@ const STATUS_CFG={
 };
 function getEmpStatus(emp){
   if(emp && isDeletedEmpId(emp.id)) return 'deleted';
+  // [TEST ONLY] 운영팀 테스트 화면에서는 테스트에서 지정한 상태를 우선 표시
+  if(lvMode === 'draft' && emp && emp.id){
+    try { const _r = lvEnsureDraftData()[emp.id]; if(_r && _r.status) return _r.status; } catch(_){}
+  }
   const ed=window.__fbEdits||{};
   if(ed[emp.id]&&ed[emp.id].status) return ed[emp.id].status;
   return emp.status||'active';
@@ -9105,15 +9109,15 @@ function ppRender(){
       return st === 'returning';
     });
     returningEmps.sort((a,b)=>{
-      const da=(window.__fbEdits&&window.__fbEdits[a.id]&&window.__fbEdits[a.id]._statusDate)||'';
-      const db=(window.__fbEdits&&window.__fbEdits[b.id]&&window.__fbEdits[b.id]._statusDate)||'';
+      const da=ppStatusDate(a);
+      const db=ppStatusDate(b);
       if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
       return da.localeCompare(db);
     });
     rBody.innerHTML = returningEmps.map(e=>{
       const av = ppAvatarHtml(e, e.name);
       const storeName = e.current_store ? lvStoreName(e.current_store) : '<span style="color:#aab0be">미배정</span>';
-      const dt = (window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._statusDate)||'';
+      const dt = ppStatusDate(e);
       const dtDisp = dt ? `<span style="color:#5b6cf8;font-weight:600">${dt}</span>` : '<span style="color:#aab0be">미지정</span>';
       return `<tr style="cursor:pointer" onclick="try{openP(EMPS.find(x=>x.id==='${e.id}'))}catch(_){}">
         <td>${av}</td>
@@ -9138,8 +9142,8 @@ function ppRender(){
     });
     // 예정일(_statusDate) 또는 계약 startAt 빠른 순
     joiningEmps.sort((a,b)=>{
-      const da=(window.__fbEdits&&window.__fbEdits[a.id]&&window.__fbEdits[a.id]._statusDate)||'';
-      const db=(window.__fbEdits&&window.__fbEdits[b.id]&&window.__fbEdits[b.id]._statusDate)||'';
+      const da=ppStatusDate(a);
+      const db=ppStatusDate(b);
       if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
       return da.localeCompare(db);
     });
@@ -9208,14 +9212,14 @@ function ppRender(){
     });
     // 예정일 빠른 순 정렬
     leavingEmps.sort((a,b)=>{
-      const da=(window.__fbEdits&&window.__fbEdits[a.id]&&window.__fbEdits[a.id]._statusDate)||'';
-      const db=(window.__fbEdits&&window.__fbEdits[b.id]&&window.__fbEdits[b.id]._statusDate)||'';
+      const da=ppStatusDate(a);
+      const db=ppStatusDate(b);
       if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1;
       return da.localeCompare(db);
     });
     lBody.innerHTML=leavingEmps.map(e=>{
       const av=ppAvatarHtml(e, e.name);
-      const dt=(window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._statusDate)||'';
+      const dt=ppStatusDate(e);
       const dtDisp=dt?`<span style="color:#e84040;font-weight:600">${dt}</span>`:`<span style="color:#aab0be">미지정</span>`;
       const storeName=e.current_store?lvStoreName(e.current_store):'<span style="color:#aab0be">-</span>';
       return `<tr style="cursor:pointer" onclick="try{openP(EMPS.find(x=>x.id==='${e.id}'))}catch(_){}">
@@ -9229,6 +9233,9 @@ function ppRender(){
   }
 }
 function ppStatusDate(e){
+  if(lvMode === 'draft' && e && e.id){
+    try { const _r = lvEnsureDraftData()[e.id]; if(_r && _r.status) return _r._statusDate || ''; } catch(_){}
+  }
   return (window.__fbEdits&&window.__fbEdits[e.id]&&window.__fbEdits[e.id]._statusDate)||'';
 }
 function ppTodayStr(){
@@ -9703,33 +9710,25 @@ async function lvSetStatus(empId, status){
     if(input === null){ return; }  // 취소
     statusDate = input || null;
   }
-  // [TRANSFER FROM TEST] 운영팀 테스트에서 옮긴 사람을 '이동예정'으로 표시하면
-  //   → 테스트에서 옮긴 매장을 실제 이동 목적지로 반영 (배치현황에도 '원래 매장 → 새 매장 이동예정'으로 보임)
-  //   새로고침 시 배치현황 화면에서 원래 매장에 있는 것처럼 보이던 문제 해결
   let _transferNote = '';
-  try {
-    if(status === 'transfer' && lvMode === 'draft'){
-      const _drow = (lvEnsureDraftData() || {})[empId] || {};
-      const _to = _drow.current_store || '';
-      const _from = emp.current_store || '';
-      if(_to && _from && _to !== _from){
-        emp._prev_store = _from;
-        if(!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
-        window.__fbEdits[empId]._prev_store = _from;
-        if(window.fbSetEdit) window.fbSetEdit(empId, '_prev_store', _from);
-        try { if(window.trackStoreChange) window.trackStoreChange(empId, _from, _to); } catch(_){}
-        emp.current_store = _to;
-        emp.channel = _drow.channel || guessChannel(_to) || emp.channel || '';
-        lvSaveToHrEdits(emp);
-        try {
-          const _act = JSON.parse(localStorage.getItem('layoutActualData')||'{}');
-          _act[empId] = Object.assign({}, _act[empId]||{}, { current_store:_to, channel:emp.channel });
-          localStorage.setItem('layoutActualData', JSON.stringify(_act));
-        } catch(_){}
-        _transferNote = ' · 배치현황에도 ' + lvStoreName(_from) + ' → ' + lvStoreName(_to) + ' 이동예정으로 반영';
-      }
-    }
-  } catch(_){}
+  // [TEST ONLY] 운영팀 테스트에서 바꾼 상태(지원근무·이동예정 등)는 테스트 배치에만 저장 → 배치현황(실제)에는 반영 안 됨
+  if(lvMode === 'draft' && status !== 'deleted'){
+    const _draft = lvEnsureDraftData();
+    const _row = Object.assign({}, _draft[empId] || {});
+    const _realSt = (window.__fbEdits && window.__fbEdits[empId] && window.__fbEdits[empId].status) || emp.status || 'active';
+    if(status === _realSt && !statusDate){ delete _row.status; delete _row._statusDate; }
+    else { _row.status = status; if(statusDate) _row._statusDate = statusDate; else delete _row._statusDate; }
+    _draft[empId] = _row;
+    lvWriteLayout(LV_DRAFT_KEY, _draft);
+    window.__layoutDraftDirty = true;
+    try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
+    hideCtxMenu(); showSaved();
+    lvToast('🧪 '+emp.name+' → '+STATUS_CFG[status].label+(statusDate?' ('+statusDate+')':'')+' · 운영팀 테스트에만 반영');
+    const _scT = document.getElementById('lv-scroll'); const _stT = _scT ? _scT.scrollTop : 0;
+    lvRender(); lvRenderSB(); ppRender();
+    const _scT2 = document.getElementById('lv-scroll'); if(_scT2) _scT2.scrollTop = _stT;
+    return;
+  }
   emp.status=status;
   if(status==='deleted') markDeletedEmpId(empId); else unmarkDeletedEmpId(empId);
   lvPersistEdit(empId, 'status', status);
