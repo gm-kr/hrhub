@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 169;
+  window.__APP_VERSION = 173;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -942,6 +942,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);font-size:14px
 .lv-pp-tbl td{padding:4px 6px; border-bottom:1px solid #f8f9fc; vertical-align:top;}
 .lv-pp-tbl tr:last-child td { border-bottom:none; }
 .lv-pp-tbl tr:hover td { background:#fafbff; }
+.lv-draft-sync{display:none;font-size:10.5px;font-weight:700;color:#7a8299;background:#f4f5f9;border:1px solid #e6e9f2;border-radius:9px;padding:3px 9px;margin-left:6px;white-space:nowrap;}
+.lv-draft-sync.on{display:inline-block;}
+.lv-draft-sync.mine{color:#1f8a57;background:#e8f7ef;border-color:#c9ecd9;}
+.lv-draft-sync.other{color:#5b6cf8;background:#eef0fe;border-color:#d6dbfb;}
+.lv-draft-sync.err{color:#e84040;background:#fdecec;border-color:#f6caca;}
 .lv-pp-dday{display:inline-block;margin-left:4px;padding:0 5px;border-radius:8px;font-size:9.5px;font-weight:800;background:#f2f4f8;color:#7a8299;}
 .lv-pp-dday.soon{background:#fff1e6;color:#e07b12;}
 .lv-pp-dday.today{background:#fee2e2;color:#dc2626;}
@@ -1497,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v169</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=169;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v173</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=173;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3744,6 +3749,7 @@ window.openMoveChannel = openMoveChannel;
         <button class="lv-mode-btn active" id="lv-actual-tab" onclick="lvSetMode('actual')">📋 배치현황</button>
         <button class="lv-mode-btn" id="lv-mode-draft" onclick="lvSetMode('draft')">🧪 운영팀 테스트</button>
       </div>
+      <span id="lv-draft-sync" class="lv-draft-sync" title="운영팀 테스트 실시간 공유 상태"></span>
       <div class="lv-sep"></div>
       <div class="lv-actions">
         <button class="lv-btn" id="lv-mgr-toggle-btn" onclick="lvToggleMgrOnly()" title="매니저/부매니저/HAUS 매니저만 표시">👔 매니저 현황</button>
@@ -7683,6 +7689,8 @@ function lvSaveMgrDraftMove(empId,storeKey,posKey){
   draft[empId]=Object.assign({}, prev, next);
   lvWriteLayout(LV_MGR_DRAFT_KEY,draft);
   __mgrSandboxDirty = true;
+  // [SHARE] 매니저 현황 자유배치 이동도 다른 사람에게 공유
+  try { if(window.fbSetShared) window.fbSetShared(); } catch(_){}
 }
 function lvMgrDirectEmpForMode(emp, mode){
   if(!emp) return emp;
@@ -8565,6 +8573,7 @@ function lvSetMode(mode){
       if(modeBtn) modeBtn.classList.toggle('active', showDraft);
       document.getElementById('lv-actual-tab')?.classList.toggle('active', !showDraft);
       if(!showDraft) _lvCloseDraftPassword(false);
+      try { const _sy=document.getElementById('lv-draft-sync'); if(_sy) _sy.style.visibility = showDraft ? 'visible' : 'hidden'; } catch(_){}
       // 최신 데이터 로딩 직후에도 상태가 화면에 반드시 반영되도록 재시도 렌더
       lvRenderLayoutDeferred();
     };
@@ -9868,6 +9877,8 @@ window.lvEditStoreBase=function(storeKey,el){
     autofocus>`;
 };
 window.lvSaveStoreBase=function(storeKey,val){
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){ lvToast('📱 모바일은 보기 전용이라 기준인원이 저장되지 않아요 · PC에서 수정해주세요'); try{ lvRenderSB(); lvRender(); }catch(_){} return; }
+  if(!window.__freshServerLoaded){ lvToast('⏳ 최신 데이터 불러오는 중이라 저장하지 못했어요 · 잠시 후 다시 입력해주세요'); try{ lvRenderSB(); }catch(_){} return; }
   const n=parseInt(val);
   if(isNaN(n)||n<0){lvRender();return;}
   const map=getStoreBaseOverrides();
@@ -9902,6 +9913,8 @@ function getSbBaseValue(brandKey, fallback){
   return sbNum(fallback,0);
 }
 function lvSetBrandBase(brandKey, rawVal){
+  if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){ lvToast('📱 모바일은 보기 전용이라 기준인원이 저장되지 않아요 · PC에서 수정해주세요'); try{ lvRenderSB(); lvRender(); }catch(_){} return; }
+  if(!window.__freshServerLoaded){ lvToast('⏳ 최신 데이터 불러오는 중이라 저장하지 못했어요 · 잠시 후 다시 입력해주세요'); try{ lvRenderSB(); }catch(_){} return; }
   const map=getSbBaseOverrides();
   if(rawVal===''||rawVal===null||rawVal===undefined){
     delete map[brandKey];
@@ -9917,6 +9930,15 @@ function lvSetBrandBase(brandKey, rawVal){
 window.lvSetBrandBase=lvSetBrandBase;
 function lvRenderSB(){
   const wrap=$('lv-sb-wrap'); if(!wrap) return;
+  // [FIX] 기준인원 입력 중에는 표를 다시 그리지 않음 (다른 사람 변경·실시간 갱신에 입력칸이 교체되어 수정값이 사라지던 문제)
+  try {
+    const _a=document.activeElement;
+    if(_a && _a.classList && _a.classList.contains('lv-sb-base-input') && wrap.contains(_a)){
+      clearTimeout(window.__sbRenderRetry);
+      window.__sbRenderRetry=setTimeout(()=>{ try{ lvRenderSB(); }catch(_){} }, 800);
+      return;
+    }
+  } catch(_){}
   const sd=window.SB_DATA||{};
   const sm=sd.summary||{};
   const brands=sm.brands||[];
@@ -9973,7 +9995,7 @@ function lvRenderSB(){
     const lC=b.leaving>0?`<span style="color:#e84040;font-weight:700">-${b.leaving}</span>`:`<span style="color:#ddd">-</span>`;
     return `<tr>
       <td class="brand-name"><span style="font-size:11px;background:#eef0fe;color:#5b6cf8;padding:2px 7px;border-radius:5px;font-weight:700">${tag}</span></td>
-      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)"></td><td title="매니저+부매니저+팀원 (퇴사예정 포함, 무급휴직·입사예정 제외)">${b.reg}</td><td title="인턴 (퇴사예정 포함, 입사예정 제외)">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
+      <td><input class="lv-sb-base-input" type="number" min="0" step="1" value="${b.base}" onchange="lvSetBrandBase('${bk}',this.value)" onkeydown="if(event.key==='Enter'){this.blur();}"></td><td title="매니저+부매니저+팀원 (퇴사예정 포함, 무급휴직·입사예정 제외)">${b.reg}</td><td title="인턴 (퇴사예정 포함, 입사예정 제외)">${b.intern||'-'}</td><td>${b.leave||'-'}</td>
       <td>${jC}</td><td>${lC}</td>
       <td class="col-formula"><b>${b.cur}</b></td>
       <td class="lv-sb-${gCls(b.gap)}">${gStr(b.gap)}</td><td>${r}%</td></tr>`;
@@ -10540,7 +10562,7 @@ function lvRender(){
   try {
     const active = document.activeElement;
     const ac = active && active.classList;
-    if(ac && (ac.contains('lv-test-memo-textarea') || ac.contains('lv-mgr-role-slot-input'))){
+    if(ac && (ac.contains('lv-test-memo-textarea') || ac.contains('lv-mgr-role-slot-input') || ac.contains('lv-sb-base-input') || ac.contains('lv-hc-base-input'))){
       // 편집 끝나면 재렌더 예약
       if(!window.__lvRenderPending){
         window.__lvRenderPending = true;
@@ -10548,7 +10570,7 @@ function lvRender(){
           window.__lvRenderPending = false;
           const a = document.activeElement;
           const acc = a && a.classList;
-          if(acc && (acc.contains('lv-test-memo-textarea') || acc.contains('lv-mgr-role-slot-input'))){
+          if(acc && (acc.contains('lv-test-memo-textarea') || acc.contains('lv-mgr-role-slot-input') || acc.contains('lv-sb-base-input') || acc.contains('lv-hc-base-input'))){
             setTimeout(_retry, 800);
           } else {
             try { lvRender(); } catch(_){}
@@ -12417,6 +12439,27 @@ async function __checkRemoteAccess(email){
 window.__authAllowedPromise = new Promise(res => { window.__resolveAuthAllowed = res; });
 if(IS_LOCAL_DEV){ try { window.__resolveAuthAllowed(); } catch(_){} }
 const _auth = getAuth(_app);
+// [REALTIME RECOVERY] 실시간 리스너가 오류(권한 확인 실패·네트워크 끊김 등)로 한 번 끊기면 영영 다시 안 붙던 문제
+//   → 오류가 나면 로그인 토큰을 새로 받고 자동으로 다시 연결 (3초 → 최대 30초 간격)
+function __safeSnap(ref, next, onErr){
+  let unsub = null, stopped = false, tries = 0;
+  const sub = () => {
+    if(stopped) return;
+    try {
+      unsub = onSnapshot(ref, (snap) => { tries = 0; window.__lastRealtimeAt = Date.now(); try { next && next(snap); } catch(e){ console.error('[REALTIME] handler', e); } }, async (err) => {
+        try { if(onErr) onErr(err); } catch(_){}
+        console.warn('[REALTIME] 리스너 끊김 → 재연결 예정', (err && err.code) || err);
+        window.__realtimeErrors = (window.__realtimeErrors||0) + 1;
+        if(stopped) return;
+        tries++;
+        try { if(_auth && _auth.currentUser) await _auth.currentUser.getIdToken(true); } catch(_){}
+        setTimeout(sub, Math.min(30000, 3000 * tries));
+      });
+    } catch(e){ console.warn('[REALTIME] subscribe 실패', e); setTimeout(sub, 5000); }
+  };
+  sub();
+  return () => { stopped = true; try { unsub && unsub(); } catch(_){} };
+}
 const _googleProvider = new GoogleAuthProvider();
 _googleProvider.setCustomParameters({ prompt: 'select_account' });
 // 30일 자동 로그인 유지(브라우저 로컬 저장)
@@ -12907,7 +12950,7 @@ function shouldIgnoreStrictCacheSnap(snap, label) {
   return false;
 }
 function startRealtimeListeners() {
-  onSnapshot(collection(_db, COL_EDITS), (snap) => {
+  __safeSnap(collection(_db, COL_EDITS), (snap) => {
     if (shouldIgnoreStrictCacheSnap(snap, 'hrEdits')) return;
     snap.docChanges().forEach(change => {
       const id   = change.doc.id;
@@ -13033,7 +13076,7 @@ function startRealtimeListeners() {
       window.__fbRenderTimer = setTimeout(renderAfterEditSnap, 80);
     }
   });
-  onSnapshot(doc(_db, COL_SCHEDULE, 'data'), (snap) => {
+  __safeSnap(doc(_db, COL_SCHEDULE, 'data'), (snap) => {
     if (shouldIgnoreStrictCacheSnap(snap, 'scheduled')) return;
     if (snap.exists()) {
       window.__fbSchedule = snap.data();
@@ -13735,7 +13778,7 @@ window.fbSetCriteria = async function(criteriaArr) {
   } catch(e) { console.warn('[FB] criteria 저장 오류:', e.code, e.message); }
 };
 let _lastStoreListJson = '';
-onSnapshot(doc(_db, COL_STORELIST, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_STORELIST, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'storeList')) return;
   window.__fbInit.storeList = true;  // [INIT]
   if (!snap.exists()) return;
@@ -14326,6 +14369,19 @@ window.__lastSharedSnap = window.__lastSharedSnap || {};
 // [DRAFT MERGE] 운영팀 테스트 배치는 통째로 저장되는 구조라, 여러 명이 동시에 쓰면 서로의 이동을 덮어쓰던 문제
 //   → 3-way 병합: 내가 바꾼 직원(로컬≠기준)은 내 값, 안 바꾼 직원은 서버 최신값을 사용
 window.__draftBase = window.__draftBase || null;
+// [SYNC BADGE] 운영팀 테스트에서 '누가 언제 마지막으로 바꿨는지' 표시 → 실시간 공유가 되는지 눈으로 확인
+window.__setDraftSync = function(kind, who, at){
+  try {
+    const el = document.getElementById('lv-draft-sync'); if(!el) return;
+    const t = at ? new Date(at) : new Date();
+    const hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+    const me = String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
+    const w = String(who||'');
+    el.className = 'lv-draft-sync on ' + (kind==='err' ? 'err' : (w.toLowerCase()===me ? 'mine' : 'other'));
+    el.textContent = kind==='err' ? ('❌ 테스트 저장 실패 '+hm+' · 새로고침 필요')
+      : (w.toLowerCase()===me ? ('☁️ 내 변경 저장됨 '+hm) : ('🔄 '+(w.split('@')[0]||'다른 사람')+' 변경 반영 '+hm));
+  } catch(_){}
+};
 window.__mergeDraftStr = function(localStr, baseStr, serverStr){
   try {
     if(typeof serverStr !== 'string') return localStr;
@@ -14394,6 +14450,7 @@ window.fbSetShared = function(){
   }
   if(!window.__freshServerLoaded){
     console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetShared 차단');
+    try { if(typeof lvToast === 'function') lvToast('⏳ 아직 최신 데이터를 불러오는 중이라 저장되지 않았어요 · 잠시 후 다시 해주세요'); } catch(_){}
     return;
   }
   clearTimeout(_fbSharedTimer);
@@ -14474,7 +14531,13 @@ window.fbSetShared = function(){
       // push 성공한 필드는 lastSharedSnap에도 반영
       Object.keys(diff).forEach(k => window.__lastSharedSnap[k] = diff[k]);
       if(diff.layoutDraft !== undefined){ window.__layoutDraftDirty = false; window.__draftBase = diff.layoutDraft; }
-    } catch(e) { console.error('fbSetShared:', e); }
+      if((diff.sbBase !== undefined || diff.storeBase !== undefined) && typeof lvToast === 'function') lvToast('✅ 기준인원 서버 저장 완료 · 모두에게 반영됨');
+      if(diff.layoutDraft !== undefined || diff.mgrSandboxDraft !== undefined || diff.mgrSandboxText !== undefined){ try { window.__setDraftSync('ok', window.__fbUser.email, Date.now()); } catch(_){} }
+    } catch(e) {
+      console.error('fbSetShared:', e);
+      try { if(typeof lvToast === 'function') lvToast('❌ 서버 저장 실패 ('+(e.code||e.message||'오류')+') · 새로고침 후 다시 시도해주세요'); } catch(_){}
+      try { window.__setDraftSync('err'); } catch(_){}
+    }
   }, 100);
 };
 // [SAFETY] shared onSnapshot 응답이 느려도 push 잠금만 해제. 화면은 fresh server fetch 후 표시.
@@ -14484,7 +14547,7 @@ setTimeout(() => {
     window.__sharedInitLoaded = true;
   }
 }, 5000);
-onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_SHARED, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'sharedSettings')) return;
   // [INIT] 스냅샷 도착만으로도 init 완료 표시. 화면 표시는 fresh server fetch 완료 후.
   window.__sharedInitLoaded = true;
@@ -14543,6 +14606,7 @@ onSnapshot(doc(_db, COL_SHARED, 'data'), (snap) => {
       // 아직 서버에 못 올린 내 이동이 있으면 병합(내 이동 유지 + 남의 이동 반영), 없으면 서버값 그대로
       const _nextD = (window.__layoutDraftDirty === true && window.__mergeDraftStr) ? window.__mergeDraftStr(_localD, window.__draftBase, data.layoutDraft) : data.layoutDraft;
       window.__draftBase = data.layoutDraft;
+      if(_localD !== data.layoutDraft && !snap.metadata.hasPendingWrites){ try { window.__setDraftSync('ok', data._updatedBy, data._updatedAt && data._updatedAt.toDate ? data._updatedAt.toDate() : Date.now()); } catch(_){} }
       if(_localD !== _nextD){
         localStorage.setItem('layoutDraftData', _nextD);
         needRerender = true;
@@ -14670,7 +14734,7 @@ window.fbSetPraise = function(){
     } catch(e) { console.error('fbSetPraise:', e); }
   }, 100);
 };
-onSnapshot(doc(_db, COL_PRAISE, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_PRAISE, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'praise')) return;
   window.__fbInit.praise = true;  // [INIT]
   if(!snap.exists()) return;
@@ -14712,7 +14776,7 @@ window.fbSetInvitation = function(){
     } catch(e) { console.error('fbSetInvitation:', e); }
   }, 100);
 };
-onSnapshot(doc(_db, COL_INVITATION, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_INVITATION, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'invitation')) return;
   window.__fbInit.invitation = true;  // [INIT]
   if(!snap.exists()) return;
@@ -14767,7 +14831,7 @@ window.fbSetEmpPhoto = function(empId, base64){
 };
 // 최초 empPhotos 로드 시, 로컬에만 있는 사진은 Firebase에 자동 업로드 (마이그레이션)
 let _fbPhotoInitialLoaded = false;
-onSnapshot(collection(_db, 'empPhotos'), (snap) => {
+__safeSnap(collection(_db, 'empPhotos'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'empPhotos')) return;
   window.__lastPhotoPullAt = Date.now();
   const wasPhotoLoaded = !!window.__photoServerLoaded;
@@ -14887,7 +14951,7 @@ window.fbSetStoreHistory = function(){
     } catch(e) { console.error('fbSetStoreHistory:', e); }
   }, 400);
 };
-onSnapshot(doc(_db, COL_STOREHIST, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_STOREHIST, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'storeHistory')) return;
   window.__fbInit.storeHistory = true;  // [INIT]
   if(!snap.exists()) return;
@@ -14905,7 +14969,7 @@ onSnapshot(doc(_db, COL_STOREHIST, 'data'), (snap) => {
     }
   } catch(e) { console.error('history snap:', e); }
 });
-onSnapshot(doc(_db, COL_CRITERIA, 'data'), (snap) => {
+__safeSnap(doc(_db, COL_CRITERIA, 'data'), (snap) => {
   if (shouldIgnoreStrictCacheSnap(snap, 'criteria')) return;
   if (!snap.exists()) return;
   const data = snap.data();
@@ -14965,7 +15029,7 @@ window.fbSubscribeStoreEval = function(storeId) {
     window.__storeEvalUnsub = null;
   }
   if (!storeId) return;
-  window.__storeEvalUnsub = onSnapshot(doc(_db, COL_STORE_EVAL, storeId), (snap) => {
+  window.__storeEvalUnsub = __safeSnap(doc(_db, COL_STORE_EVAL, storeId), (snap) => {
     if (shouldIgnoreStrictCacheSnap(snap, 'storeEval:'+storeId)) return;
     if (!snap.exists()) return;
     const data = snap.data();
@@ -15005,7 +15069,7 @@ window.__fbGetDocFresh = async function(ref){
     return await getDoc(ref);
   }
 };
-window.__fbOnSnapshot = onSnapshot;
+window.__fbOnSnapshot = __safeSnap;
 window.__fbCollection = collection;
 window.__fbGetDocs = getDocs;
 window.__fbGetDocsFresh = async function(ref){
