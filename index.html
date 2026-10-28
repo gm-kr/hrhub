@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 173;
+  window.__APP_VERSION = 174;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1502,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v173</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=173;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v174</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=174;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -8573,7 +8573,7 @@ function lvSetMode(mode){
       if(modeBtn) modeBtn.classList.toggle('active', showDraft);
       document.getElementById('lv-actual-tab')?.classList.toggle('active', !showDraft);
       if(!showDraft) _lvCloseDraftPassword(false);
-      try { const _sy=document.getElementById('lv-draft-sync'); if(_sy) _sy.style.visibility = showDraft ? 'visible' : 'hidden'; } catch(_){}
+      try { if(window.__renderSyncBadge) window.__renderSyncBadge(); } catch(_){}
       // 최신 데이터 로딩 직후에도 상태가 화면에 반드시 반영되도록 재시도 렌더
       lvRenderLayoutDeferred();
     };
@@ -12952,6 +12952,20 @@ function shouldIgnoreStrictCacheSnap(snap, label) {
 function startRealtimeListeners() {
   __safeSnap(collection(_db, COL_EDITS), (snap) => {
     if (shouldIgnoreStrictCacheSnap(snap, 'hrEdits')) return;
+    try {
+      if(!snap.metadata.hasPendingWrites){
+        const _me = String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
+        let _latest = null;
+        snap.docChanges().forEach(ch => {
+          if(ch.type === 'removed') return;
+          const d = ch.doc.data() || {};
+          const by = String(d._updatedBy||'').toLowerCase();
+          const at = d._updatedAt && d._updatedAt.toDate ? d._updatedAt.toDate().getTime() : 0;
+          if(by && by !== _me && at && Date.now() - at < 10*60*1000 && (!_latest || at > _latest.at)) _latest = { by: d._updatedBy, at };
+        });
+        if(_latest && window.__setSync) window.__setSync('actual', 'ok', _latest.by, _latest.at);
+      }
+    } catch(_){}
     snap.docChanges().forEach(change => {
       const id   = change.doc.id;
       if (change.type === 'removed') {
@@ -13187,8 +13201,11 @@ window.fbSetEdit = function(empId, field, value) {
       delete _fbEditBuf[empId];
       const ref = doc(_db, COL_EDITS, empId);
       await setDoc(ref, { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
+      try { window.__setSync && window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){}
     } catch(e) {
       console.error('[FB] fbSetEdit 오류:', e.code, e.message);
+      try { window.__setSync && window.__setSync('actual', 'err'); } catch(_){}
+      try { if(typeof lvToast === 'function') lvToast('❌ 직원 정보 저장 실패 ('+(e.code||'오류')+') · 새로고침 후 다시 해주세요'); } catch(_){}
       // 실패 시 buf 복원 (다음 재시도 가능)
       try { _fbEditBuf[empId] = Object.assign(_fbEditBuf[empId]||{}, { [field]: value }); } catch(_){}
     }
@@ -14370,18 +14387,30 @@ window.__lastSharedSnap = window.__lastSharedSnap || {};
 //   → 3-way 병합: 내가 바꾼 직원(로컬≠기준)은 내 값, 안 바꾼 직원은 서버 최신값을 사용
 window.__draftBase = window.__draftBase || null;
 // [SYNC BADGE] 운영팀 테스트에서 '누가 언제 마지막으로 바꿨는지' 표시 → 실시간 공유가 되는지 눈으로 확인
-window.__setDraftSync = function(kind, who, at){
+window.__syncState = window.__syncState || { draft:null, actual:null };
+window.__renderSyncBadge = function(){
   try {
     const el = document.getElementById('lv-draft-sync'); if(!el) return;
-    const t = at ? new Date(at) : new Date();
+    const mode = (document.getElementById('lv-mode-draft') && document.getElementById('lv-mode-draft').classList.contains('active')) ? 'draft' : 'actual';
+    const st = window.__syncState[mode];
+    if(!st){ el.className = 'lv-draft-sync'; el.textContent = ''; return; }
+    const t = new Date(st.at || Date.now());
     const hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
     const me = String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
-    const w = String(who||'');
-    el.className = 'lv-draft-sync on ' + (kind==='err' ? 'err' : (w.toLowerCase()===me ? 'mine' : 'other'));
-    el.textContent = kind==='err' ? ('❌ 테스트 저장 실패 '+hm+' · 새로고침 필요')
-      : (w.toLowerCase()===me ? ('☁️ 내 변경 저장됨 '+hm) : ('🔄 '+(w.split('@')[0]||'다른 사람')+' 변경 반영 '+hm));
+    const w = String(st.who||'');
+    const mine = w.toLowerCase() === me;
+    el.className = 'lv-draft-sync on ' + (st.kind==='err' ? 'err' : (mine ? 'mine' : 'other'));
+    el.textContent = st.kind==='err' ? ('❌ 저장 실패 '+hm+' · 새로고침 필요')
+      : (mine ? ('☁️ 내 변경 저장됨 '+hm) : ('🔄 '+(w.split('@')[0]||'다른 사람')+' 변경 반영 '+hm));
   } catch(_){}
 };
+// mode: 'draft'(운영팀 테스트) | 'actual'(배치현황)
+window.__setSync = function(mode, kind, who, at){
+  window.__syncState[mode] = { kind, who: who || (window.__fbUser&&window.__fbUser.email) || '', at: at || Date.now() };
+  window.__renderSyncBadge();
+};
+window.__setDraftSync = function(kind, who, at){ window.__setSync('draft', kind, who, at); };
+
 window.__mergeDraftStr = function(localStr, baseStr, serverStr){
   try {
     if(typeof serverStr !== 'string') return localStr;
@@ -14533,6 +14562,7 @@ window.fbSetShared = function(){
       if(diff.layoutDraft !== undefined){ window.__layoutDraftDirty = false; window.__draftBase = diff.layoutDraft; }
       if((diff.sbBase !== undefined || diff.storeBase !== undefined) && typeof lvToast === 'function') lvToast('✅ 기준인원 서버 저장 완료 · 모두에게 반영됨');
       if(diff.layoutDraft !== undefined || diff.mgrSandboxDraft !== undefined || diff.mgrSandboxText !== undefined){ try { window.__setDraftSync('ok', window.__fbUser.email, Date.now()); } catch(_){} }
+      if(Object.keys(diff).some(k => !['layoutDraft','mgrSandboxDraft','mgrSandboxText','testMemo','testMemoPrev'].includes(k))){ try { window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){} }
     } catch(e) {
       console.error('fbSetShared:', e);
       try { if(typeof lvToast === 'function') lvToast('❌ 서버 저장 실패 ('+(e.code||e.message||'오류')+') · 새로고침 후 다시 시도해주세요'); } catch(_){}
