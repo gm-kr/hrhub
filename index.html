@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 174;
+  window.__APP_VERSION = 175;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1502,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v174</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=174;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v175</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=175;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -12973,7 +12973,7 @@ function startRealtimeListeners() {
         return;
       }
       const data = change.doc.data();
-      const _pending = (typeof _fbEditBuf !== 'undefined' && _fbEditBuf[id]) ? _fbEditBuf[id] : {};
+      const _pending = Object.assign({}, (function(){ try { const o = JSON.parse(localStorage.getItem('__hrOutbox_v1')||'{}'); return (o[id] && o[id].f) || {}; } catch(_){ return {}; } })(), (typeof _fbEditBuf !== 'undefined' && _fbEditBuf[id]) ? _fbEditBuf[id] : {});
       const _prevEdit = window.__HR_STRICT_SERVER ? {} : (window.__fbEdits[id] || {});
       // [SYNC FIX] 우선순위: pending(저장 중인 본인 입력) > data(Firebase 최신) > prevEdit(로컬 캐시)
       //   기존 버그: {...data, ..._prevEdit, ..._pending} 으로 prevEdit가 Firebase를 덮어써서
@@ -13172,48 +13172,148 @@ function persistEditsCache() {
     localStorage.setItem('__fbEditsCache', JSON.stringify(window.__fbEdits || {}));
   } catch(e) {}
 }
+// [DURABLE OUTBOX] 직원 변경 저장을 '확인될 때까지' 보관 → 연결이 끊겨도 새로고침해도 사라지지 않음
+//   1) 바꾸는 즉시 이 기기(localStorage)에 '보낼 목록'으로 기록
+//   2) 서버가 저장 완료를 확인해야 목록에서 지움
+//   3) 8초 안에 확인이 없으면 로그인 토큰 갱신 후 다시 보냄 (계속 재시도)
+//   4) 새로고침·재접속하면 남아 있는 목록을 먼저 서버에 다시 보냄
+const __OUTBOX_KEY = '__hrOutbox_v1';
+function __obRead(){ try { const v = JSON.parse(localStorage.getItem(__OUTBOX_KEY)||'{}'); return (v && typeof v==='object') ? v : {}; } catch(_){ return {}; } }
+function __obWrite(ob){ try { localStorage.setItem(__OUTBOX_KEY, JSON.stringify(ob)); } catch(_){} }
+function __obAdd(empId, fields){
+  const ob = __obRead();
+  ob[empId] = Object.assign({}, ob[empId] && ob[empId].f || {}, fields);
+  ob[empId] = { f: ob[empId], t: Date.now() };
+  __obWrite(ob);
+}
+function __obAck(empId, sentFields){
+  const ob = __obRead(); const cur = ob[empId]; if(!cur) return;
+  // 보낸 뒤에 같은 필드가 또 바뀌었으면 남겨둠
+  Object.keys(sentFields).forEach(k => { if(JSON.stringify(cur.f[k]) === JSON.stringify(sentFields[k])) delete cur.f[k]; });
+  if(!Object.keys(cur.f).length) delete ob[empId]; else ob[empId] = cur;
+  __obWrite(ob);
+}
+const __obInflight = {};
+async function __obSend(empId){
+  if(__obInflight[empId]) return;
+  const ob = __obRead(); const ent = ob[empId]; if(!ent || !Object.keys(ent.f||{}).length) return;
+  if(!window.__fbUser || !window.__fbUser.email) return;
+  const fields = Object.assign({}, ent.f);
+  __obInflight[empId] = true;
+  let done = false;
+  const watchdog = setTimeout(async () => {
+    if(done) return;
+    try { window.__setSync && window.__setSync('actual', 'err'); } catch(_){}
+    try { if(typeof lvToast === 'function') lvToast('⏳ 서버 저장 확인이 늦어 다시 보내는 중… (변경은 이 기기에 보관됨)'); } catch(_){}
+    try { if(_auth && _auth.currentUser) await _auth.currentUser.getIdToken(true); } catch(_){}
+    __obInflight[empId] = false;
+    setTimeout(() => __obSend(empId), 1500);
+  }, 8000);
+  try {
+    await setDoc(doc(_db, COL_EDITS, empId), { ...fields, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
+    done = true; clearTimeout(watchdog);
+    __obAck(empId, fields);
+    try { window.__setSync && window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){}
+  } catch(e) {
+    done = true; clearTimeout(watchdog);
+    console.error('[FB] fbSetEdit 오류:', e.code, e.message);
+    try { window.__setSync && window.__setSync('actual', 'err'); } catch(_){}
+    try { if(typeof lvToast === 'function') lvToast('⚠️ 저장 재시도 중 ('+(e.code||'오류')+') · 변경은 이 기기에 보관돼 있어요'); } catch(_){}
+    try { if(_auth && _auth.currentUser) await _auth.currentUser.getIdToken(true); } catch(_){}
+    setTimeout(() => { __obInflight[empId] = false; __obSend(empId); }, 5000);
+    return;
+  }
+  __obInflight[empId] = false;
+  // 보내는 사이 새로 쌓인 변경이 있으면 이어서 전송
+  const after = __obRead()[empId];
+  if(after && Object.keys(after.f||{}).length) setTimeout(() => __obSend(empId), 50);
+}
+window.__obFlushAll = function(){
+  try { Object.keys(__obRead()).forEach(id => __obSend(id)); } catch(_){}
+};
+window.__obPendingCount = function(){ try { return Object.keys(__obRead()).length; } catch(_){ return 0; } };
 window.fbSetEdit = function(empId, field, value) {
   if (!empId) return;
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetEdit 차단');
     return;
   }
-  if(!window.__freshServerLoaded){
-    console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetEdit 차단');
-    return;
-  }
-  // hrEdits는 필드별 merge 저장이라 race 위험 낮음 → 가드 없이 즉시 저장
+  if (!window.__fbEdits) window.__fbEdits = {};
   if (!window.__fbEdits[empId]) window.__fbEdits[empId] = {};
   window.__fbEdits[empId][field] = value;
-  // Keep a local durable cache in sync immediately so refresh/tab switches won't lose recent edits.
   persistEditsCache();
+  // 보낼 목록에 먼저 기록 (값이 undefined면 null로)
+  __obAdd(empId, { [field]: (value === undefined ? null : value) });
+  if(!window.__freshServerLoaded){
+    // 최신 로딩 전이면 로딩 완료 직후 자동 전송
+    console.warn('[OUTBOX] 최신 로딩 후 전송 예약', empId, field);
+    return;
+  }
   if (!_fbEditBuf[empId]) _fbEditBuf[empId] = {};
   _fbEditBuf[empId][field] = value;
   clearTimeout(_fbEditTimers[empId]);
-  _fbEditTimers[empId] = setTimeout(async () => {
-    try {
-      const batch = _fbEditBuf[empId];
-      if(!batch) return;
-      // 인증 안 됐으면 buf 보관 유지하여 인증 후 재시도
-      if(!window.__fbUser || !window.__fbUser.email){
-        return;
-      }
-      delete _fbEditBuf[empId];
-      const ref = doc(_db, COL_EDITS, empId);
-      await setDoc(ref, { ...batch, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
-      try { window.__setSync && window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){}
-    } catch(e) {
-      console.error('[FB] fbSetEdit 오류:', e.code, e.message);
-      try { window.__setSync && window.__setSync('actual', 'err'); } catch(_){}
-      try { if(typeof lvToast === 'function') lvToast('❌ 직원 정보 저장 실패 ('+(e.code||'오류')+') · 새로고침 후 다시 해주세요'); } catch(_){}
-      // 실패 시 buf 복원 (다음 재시도 가능)
-      try { _fbEditBuf[empId] = Object.assign(_fbEditBuf[empId]||{}, { [field]: value }); } catch(_){}
-    }
-  }, 0);
+  _fbEditTimers[empId] = setTimeout(() => { delete _fbEditBuf[empId]; __obSend(empId); }, 0);
 };
+// [DRAFT OUTBOX REPLAY] 운영팀 테스트 미전송 변경 복구
+(function(){
+  let n = 0;
+  const t = setInterval(() => {
+    n++;
+    if(window.__freshServerLoaded && window.__fbUser && window.__fbUser.email && window.__sharedInitLoaded){
+      clearInterval(t);
+      try {
+        const u = JSON.parse(localStorage.getItem('__draftUnsent_v1')||'null');
+        if(u && u.local && (Date.now() - (u.t||0)) < 3*24*3600*1000){
+          const server = (window.__lastSharedSnap||{}).layoutDraft || localStorage.getItem('layoutDraftData') || '{}';
+          const merged = window.__mergeDraftStr ? window.__mergeDraftStr(u.local, u.base, server) : u.local;
+          if(merged !== server){
+            localStorage.setItem('layoutDraftData', merged);
+            window.__draftBase = server;
+            window.__layoutDraftDirty = true;
+            try { if(typeof lvToast === 'function') lvToast('☁️ 저장 안 됐던 운영팀 테스트 변경을 다시 보내는 중'); } catch(_){}
+            setTimeout(() => { try { window.fbSetShared && window.fbSetShared(); window.lvRender && window.lvRender(); } catch(_){} }, 300);
+          } else {
+            localStorage.removeItem('__draftUnsent_v1');
+          }
+        } else if(u){ localStorage.removeItem('__draftUnsent_v1'); }
+      } catch(_){}
+    } else if(n > 600) clearInterval(t);
+  }, 500);
+})();
+// 접속·새로고침 후 보관된 미전송 변경을 다시 보냄 + 1분마다 남은 게 있으면 재전송
+(function(){
+  let n = 0;
+  const t = setInterval(() => {
+    n++;
+    if(window.__freshServerLoaded && window.__fbUser && window.__fbUser.email){
+      clearInterval(t);
+      const cnt = window.__obPendingCount();
+      if(cnt){
+        console.warn('[OUTBOX] 미전송 변경 재전송:', cnt);
+        try { if(typeof lvToast === 'function') lvToast('☁️ 저장 안 됐던 변경 '+cnt+'건을 다시 보내는 중'); } catch(_){}
+        // 로컬 화면에도 미전송 값을 다시 적용 (서버 최신값 위에 내 변경을 덮음)
+        try {
+          const ob = __obRead();
+          Object.keys(ob).forEach(id => {
+            const f = ob[id].f || {};
+            if(!window.__fbEdits[id]) window.__fbEdits[id] = {};
+            Object.assign(window.__fbEdits[id], f);
+            const emp = (typeof EMPS!=='undefined') ? EMPS.find(e=>e.id===id) : null;
+            if(emp) Object.keys(f).forEach(k => { if(f[k] !== null) emp[k] = f[k]; });
+          });
+          setTimeout(() => { try { window.lvRender && window.lvRender(); } catch(_){} }, 300);
+        } catch(_){}
+        window.__obFlushAll();
+      }
+      setInterval(() => { if(window.__obPendingCount()) window.__obFlushAll(); }, 60000);
+    } else if(n > 600) clearInterval(t);
+  }, 500);
+  window.addEventListener('online', () => { try { window.__obFlushAll(); } catch(_){} });
+})();
 // [AUTH FLUSH] 인증 직후 _fbEditBuf에 남은 모든 pending edits를 한 번에 push
 window.__flushPendingEdits = async function(){
   if(!window.__fbUser || !window.__fbUser.email) return;
+  try { window.__obFlushAll && window.__obFlushAll(); } catch(_){}
   const ids = Object.keys(_fbEditBuf||{});
   for(const id of ids){
     try {
@@ -14477,6 +14577,12 @@ window.fbSetShared = function(){
     console.warn('[MOBILE READ-ONLY] fbSetShared 차단');
     return;
   }
+  // [DRAFT OUTBOX] 운영팀 테스트 변경을 서버 확인 전까지 이 기기에 보관 (새로고침·연결끊김에도 유지)
+  try {
+    if(window.__layoutDraftDirty === true){
+      localStorage.setItem('__draftUnsent_v1', JSON.stringify({ local: localStorage.getItem('layoutDraftData')||'{}', base: (typeof window.__draftBase === 'string') ? window.__draftBase : null, t: Date.now() }));
+    }
+  } catch(_){}
   if(!window.__freshServerLoaded){
     console.warn('[FRESH GUARD] 최신 서버 로드 전 fbSetShared 차단');
     try { if(typeof lvToast === 'function') lvToast('⏳ 아직 최신 데이터를 불러오는 중이라 저장되지 않았어요 · 잠시 후 다시 해주세요'); } catch(_){}
@@ -14549,14 +14655,29 @@ window.fbSetShared = function(){
         if(prev && prev !== '{}') diff[k+'Prev'] = prev;
       });
       if(diff.layoutDraft !== undefined){
-        await window.__backupLayoutDraft(diff.layoutDraft, 'fbSetShared before push');
+        try { await window.__backupLayoutDraft(diff.layoutDraft, 'fbSetShared before push'); } catch(_){}
       }
+      let __ack = false;
+      const __wd = setTimeout(async () => {
+        if(__ack) return;
+        try { window.__setSync && window.__setSync(diff.layoutDraft!==undefined?'draft':'actual', 'err'); } catch(_){}
+        try { if(typeof lvToast === 'function') lvToast('⏳ 서버 저장 확인이 늦어 다시 보내는 중… (변경은 이 기기에 보관됨)'); } catch(_){}
+        try { if(_auth && _auth.currentUser) await _auth.currentUser.getIdToken(true); } catch(_){}
+        try { if(diff.layoutDraft !== undefined) window.__layoutDraftDirty = true; window.fbSetShared(); } catch(_){}
+      }, 8000);
       await setDoc(doc(_db, COL_SHARED, 'data'), {
         ...diff,
         _updatedAt: serverTimestamp(),
         _updatedBy: window.__fbUser.email,
         _clientVersion: window.__APP_VERSION || 10
       }, { merge: true });
+      __ack = true; clearTimeout(__wd);
+      if(diff.layoutDraft !== undefined){
+        try {
+          const _u = JSON.parse(localStorage.getItem('__draftUnsent_v1')||'null');
+          if(!_u || _u.local === diff.layoutDraft || (localStorage.getItem('layoutDraftData')||'') === diff.layoutDraft) localStorage.removeItem('__draftUnsent_v1');
+        } catch(_){}
+      }
       // push 성공한 필드는 lastSharedSnap에도 반영
       Object.keys(diff).forEach(k => window.__lastSharedSnap[k] = diff[k]);
       if(diff.layoutDraft !== undefined){ window.__layoutDraftDirty = false; window.__draftBase = diff.layoutDraft; }
