@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 175;
+  window.__APP_VERSION = 176;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1502,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v175</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=175;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v176</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=176;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -3757,6 +3757,7 @@ window.openMoveChannel = openMoveChannel;
         <button class="lv-btn" onclick="lvPTOpenStoreBulk()" title="여러 명 파트타이머 일괄 등록">＋ PT 일괄 등록</button>
         <button class="lv-btn" id="lv-apply-btn" onclick="lvApplyDraftToActual()">전체 적용</button>
         <button class="lv-btn danger" id="lv-reset-draft-btn" onclick="lvResetDraft()">테스트 초기화</button>
+        <button class="lv-btn" onclick="openChangeLog()" title="오늘 누가 무엇을 바꿨는지 보기">🕘 변경 내역 <span id="cl-btn-count" style="font-size:10px;color:#5b6cf8;font-weight:800"></span></button>
       </div>
       <span id="lv-saved">✓ 저장됨</span>
     </div>
@@ -12334,7 +12335,7 @@ function knExportChanges(){
 </script>
 <script type="module">
 import { initializeApp }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, initializeFirestore, doc, setDoc, getDoc, getDocFromServer, onSnapshot, collection, getDocs, getDocsFromServer, writeBatch, serverTimestamp }
+import { getFirestore, initializeFirestore, doc, setDoc, getDoc, getDocFromServer, onSnapshot, collection, getDocs, getDocsFromServer, writeBatch, serverTimestamp, query, where }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
                                 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -12973,6 +12974,7 @@ function startRealtimeListeners() {
         return;
       }
       const data = change.doc.data();
+      try { if(!change.doc.metadata.hasPendingWrites) window.__srvEdits[id] = data; } catch(_){}
       const _pending = Object.assign({}, (function(){ try { const o = JSON.parse(localStorage.getItem('__hrOutbox_v1')||'{}'); return (o[id] && o[id].f) || {}; } catch(_){ return {}; } })(), (typeof _fbEditBuf !== 'undefined' && _fbEditBuf[id]) ? _fbEditBuf[id] : {});
       const _prevEdit = window.__HR_STRICT_SERVER ? {} : (window.__fbEdits[id] || {});
       // [SYNC FIX] 우선순위: pending(저장 중인 본인 입력) > data(Firebase 최신) > prevEdit(로컬 캐시)
@@ -13199,6 +13201,7 @@ async function __obSend(empId){
   const ob = __obRead(); const ent = ob[empId]; if(!ent || !Object.keys(ent.f||{}).length) return;
   if(!window.__fbUser || !window.__fbUser.email) return;
   const fields = Object.assign({}, ent.f);
+  const __oldVals = Object.assign({}, (window.__srvEdits && window.__srvEdits[empId]) || {});  // 변경 전 값 (기록용)
   __obInflight[empId] = true;
   let done = false;
   const watchdog = setTimeout(async () => {
@@ -13213,6 +13216,8 @@ async function __obSend(empId){
     await setDoc(doc(_db, COL_EDITS, empId), { ...fields, _updatedAt: serverTimestamp(), _updatedBy: window.__fbUser.email }, { merge: true });
     done = true; clearTimeout(watchdog);
     __obAck(empId, fields);
+    try { const _en = window.__clFromEdit && window.__clFromEdit(empId, fields, __oldVals); if(_en) window.__clWrite([_en]); } catch(_){}
+    try { window.__srvEdits[empId] = Object.assign({}, window.__srvEdits[empId]||{}, fields); } catch(_){}
     try { window.__setSync && window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){}
   } catch(e) {
     done = true; clearTimeout(watchdog);
@@ -13254,6 +13259,214 @@ window.fbSetEdit = function(empId, field, value) {
   clearTimeout(_fbEditTimers[empId]);
   _fbEditTimers[empId] = setTimeout(() => { delete _fbEditBuf[empId]; __obSend(empId); }, 0);
 };
+// ═════════ [CHANGE LOG] 변경 내역 기록 · 실시간 알림 · 당일 내역 보기 ═════════
+//   저장이 '서버 확인'된 변경만 changeLog 컬렉션에 1줄씩 기록 → 모두에게 오른쪽 알림 + 날짜별 내역 조회
+window.__srvEdits = window.__srvEdits || {};   // 서버에서 마지막으로 받은 직원별 값 (변경 전 값 비교용)
+const __CL_COL = 'changeLog';
+const __CL_STATUS = {active:'재직중',leave:'휴직중',joining:'입사예정',returning:'복직예정',transfer:'이동예정',leaving:'퇴사예정',support:'지원근무',deleted:'삭제'};
+const __CL_FIELDS = {
+  current_store:'매장', position:'직책', status:'상태', _statusDate:'예정일', hire_date:'입사일', name:'이름', brand:'브랜드',
+  empNo:'사번', gender:'성별', residence:'거주지', metro:'지하철역', language:'언어', memo:'메모', tenure:'근무기간',
+  kindness:'친절함', sincerity:'성실함', charm:'매력', growth:'성장', _internContract:'인턴 계약'
+};
+function __clDay(d){ d = d || new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function __clStore(v){ try { return v ? ((window.lvStoreName && window.lvStoreName(v)) || v) : '미배정'; } catch(_){ return v||''; } }
+function __clVal(field, v){
+  if(v === null || v === undefined || v === '') return '없음';
+  if(field === 'current_store') return __clStore(v);
+  if(field === 'status') return __CL_STATUS[v] || v;
+  if(field === 'memo') return String(v).slice(0,20) + (String(v).length>20?'…':'');
+  if(field === '_internContract'){
+    try {
+      const r = v.plannedResult ? (' · '+v.plannedResult+' 예정') : '';
+      const ext = (v.extensions && v.extensions.length) ? (' · 연장'+v.extensions.length+'회') : '';
+      return (v.startAt||'?')+'~'+(v.endAt||'?')+ext+r;
+    } catch(_){ return '변경'; }
+  }
+  return String(v);
+}
+function __clEmpName(id){ try { const e = (typeof EMPS!=='undefined') ? EMPS.find(x=>x.id===id) : null; return (e && e.name) || id; } catch(_){ return id; } }
+function __clBaseVal(id, field){
+  try { const b = (window.__EMPS_BASE||[]).find(x=>x.id===id); return b ? b[field] : undefined; } catch(_){ return undefined; }
+}
+async function __clWrite(entries){
+  if(!entries || !entries.length || !window.__fbUser) return;
+  const day = __clDay();
+  for(const en of entries.slice(0, 40)){
+    try {
+      await setDoc(doc(collection(_db, __CL_COL)), Object.assign({ day, by: window.__fbUser.email, at: serverTimestamp(), atMs: Date.now() }, en));
+    } catch(e){ console.warn('[CHANGELOG] 기록 실패', e && e.code); }
+  }
+}
+window.__clWrite = __clWrite;
+// 직원 변경(배치현황) → 로그 문장 만들기
+function __clFromEdit(empId, fields, oldOverride){
+  const old = oldOverride || window.__srvEdits[empId] || {};
+  const parts = [];
+  Object.keys(fields).forEach(f => {
+    if(!__CL_FIELDS[f]) return;
+    const nv = fields[f];
+    const ov = (old[f] !== undefined) ? old[f] : __clBaseVal(empId, f);
+    if(JSON.stringify(ov === undefined ? null : ov) === JSON.stringify(nv === undefined ? null : nv)) return;
+    if(f === 'memo'){ parts.push('메모 수정'); return; }
+    parts.push(__CL_FIELDS[f]+' '+__clVal(f, ov)+' → '+__clVal(f, nv));
+  });
+  if(!parts.length) return null;
+  return { mode:'actual', empId, empName: __clEmpName(empId), text: parts.join(' · ') };
+}
+window.__clFromEdit = __clFromEdit;
+// 운영팀 테스트 배치 변경 → 직원별 로그
+function __clFromDraft(oldStr, newStr){
+  let O = {}, N = {};
+  try { O = JSON.parse(oldStr||'{}') || {}; } catch(_){}
+  try { N = JSON.parse(newStr||'{}') || {}; } catch(_){}
+  const out = [];
+  Object.keys(N).forEach(id => {
+    const o = O[id] || {}, n = N[id] || {};
+    if(!O[id]) return; // 처음 채워지는 기본값은 기록 안 함
+    const parts = [];
+    if((o.current_store||'') !== (n.current_store||'')) parts.push('매장 '+__clStore(o.current_store)+' → '+__clStore(n.current_store));
+    if(n.position !== undefined && (o.position||'') !== (n.position||'')) parts.push('직책 '+(o.position||'없음')+' → '+(n.position||'없음'));
+    if((o.status||'') !== (n.status||'')) parts.push('상태 '+(__CL_STATUS[o.status]||'원래대로')+' → '+(__CL_STATUS[n.status]||'원래대로')+(n._statusDate?(' ('+n._statusDate+')'):''));
+    if(parts.length) out.push({ mode:'draft', empId:id, empName: __clEmpName(id), text: parts.join(' · ') });
+  });
+  return out;
+}
+window.__clFromDraft = __clFromDraft;
+function __clFromBase(key, oldStr, newStr){
+  let O = {}, N = {};
+  try { O = JSON.parse(oldStr||'{}') || {}; } catch(_){}
+  try { N = JSON.parse(newStr||'{}') || {}; } catch(_){}
+  const out = [];
+  new Set([...Object.keys(O), ...Object.keys(N)]).forEach(k => {
+    if(String(O[k]) === String(N[k])) return;
+    const label = key === 'sbBase' ? ('브랜드 기준인원 '+k) : ('기준인원 '+__clStore(k));
+    out.push({ mode:'actual', empId:'', empName:'', text: label+' '+(O[k]===undefined?'기본':O[k])+' → '+(N[k]===undefined?'기본':N[k]) });
+  });
+  return out;
+}
+window.__clFromBase = __clFromBase;
+// ── 오른쪽 실시간 알림 ──
+function __clToast(en){
+  try {
+    let box = document.getElementById('cl-toast-box');
+    if(!box){
+      box = document.createElement('div'); box.id = 'cl-toast-box';
+      box.style.cssText = 'position:fixed;right:16px;top:70px;z-index:2147482000;display:flex;flex-direction:column;gap:6px;width:320px;max-width:calc(100vw - 32px);pointer-events:none;';
+      document.body.appendChild(box);
+    }
+    const me = String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
+    const mine = String(en.by||'').toLowerCase() === me;
+    const who = mine ? '나' : String(en.by||'').split('@')[0];
+    const t = new Date(en.atMs || Date.now());
+    const hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    const esc = v => String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const card = document.createElement('div');
+    const isDraft = en.mode === 'draft';
+    card.style.cssText = 'pointer-events:auto;background:#fff;border:1px solid '+(isDraft?'#f4dcb8':'#dfe3f5')+';border-left:4px solid '+(mine?'#2daa72':(isDraft?'#e07b12':'#5b6cf8'))+';border-radius:10px;box-shadow:0 8px 24px rgba(20,24,40,.12);padding:9px 12px;font-size:12px;line-height:1.45;color:#2a2f42;opacity:0;transform:translateX(16px);transition:all .25s;cursor:pointer;';
+    card.innerHTML = '<div style="display:flex;gap:6px;align-items:center;font-size:10.5px;color:#8188a0;font-weight:700"><span>'+(mine?'☁️':'🔄')+' '+esc(who)+'</span><span>·</span><span>'+(isDraft?'🧪 운영팀 테스트':'📋 배치현황')+'</span><span style="margin-left:auto">'+hm+'</span></div>'
+      + '<div style="margin-top:2px"><b>'+esc(en.empName||'')+'</b> '+esc(en.text||'')+'</div>';
+    card.addEventListener('click', () => { try { window.openChangeLog(); } catch(_){} });
+    box.appendChild(card);
+    requestAnimationFrame(() => { card.style.opacity = '1'; card.style.transform = 'none'; });
+    while(box.children.length > 4) box.removeChild(box.firstChild);
+    setTimeout(() => { card.style.opacity = '0'; setTimeout(() => card.remove(), 300); }, 7000);
+  } catch(_){}
+}
+// ── 오늘 변경 내역 실시간 수신 ──
+window.__clToday = [];
+window.__clSeen = new Set();
+(function(){
+  let n = 0, unsub = null, curDay = null;
+  const start = () => {
+    curDay = __clDay();
+    try { if(unsub) unsub(); } catch(_){}
+    let first = true;
+    unsub = __safeSnap(query(collection(_db, __CL_COL), where('day','==',curDay)), (snap) => {
+      const list = [];
+      snap.forEach(d => { const x = d.data() || {}; x._id = d.id; if(!x.atMs && x.at && x.at.toMillis) x.atMs = x.at.toMillis(); list.push(x); });
+      list.sort((a,b) => (a.atMs||0) - (b.atMs||0));
+      window.__clToday = list;
+      if(!first){
+        snap.docChanges().forEach(ch => {
+          if(ch.type !== 'added') return;
+          const x = ch.doc.data() || {}; if(window.__clSeen.has(ch.doc.id)) return;
+          window.__clSeen.add(ch.doc.id);
+          if(!x.atMs && x.at && x.at.toMillis) x.atMs = x.at.toMillis();
+          __clToast(x);
+        });
+      } else { list.forEach(x => window.__clSeen.add(x._id)); }
+      first = false;
+      try { const c = document.getElementById('cl-btn-count'); if(c) c.textContent = list.length ? String(list.length) : ''; } catch(_){}
+      try { if(document.getElementById('cl-modal')) window.__renderChangeLog(); } catch(_){}
+    });
+  };
+  const t = setInterval(() => {
+    n++;
+    if(window.__freshServerLoaded && window.__fbUser && !(window.__MOBILE_READ_ONLY || window.__isStandalone)){
+      clearInterval(t); start();
+      setInterval(() => { if(__clDay() !== curDay) start(); }, 60000);  // 자정 지나면 새 날짜로
+    } else if(n > 600) clearInterval(t);
+  }, 500);
+})();
+// ── 변경 내역 보기 (날짜 선택 · 배치현황/테스트 · 사람 필터) ──
+window.__clView = { day: null, mode: 'all', who: 'all', list: null };
+window.openChangeLog = async function(day){
+  const v = window.__clView;
+  v.day = day || v.day || __clDay();
+  let m = document.getElementById('cl-modal');
+  if(!m){
+    m = document.createElement('div'); m.id = 'cl-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:2147482500;background:rgba(15,18,30,.45);display:flex;align-items:center;justify-content:center;font-family:inherit';
+    m.addEventListener('click', e => { if(e.target === m) m.remove(); });
+    document.body.appendChild(m);
+  }
+  if(v.day === __clDay()) v.list = null;
+  else {
+    v.list = [];
+    try {
+      const s = await getDocsFromServer(query(collection(_db, __CL_COL), where('day','==',v.day)));
+      s.forEach(d => { const x = d.data()||{}; if(!x.atMs && x.at && x.at.toMillis) x.atMs = x.at.toMillis(); v.list.push(x); });
+      v.list.sort((a,b) => (a.atMs||0)-(b.atMs||0));
+    } catch(e){ v.list = []; }
+  }
+  window.__renderChangeLog();
+};
+window.__renderChangeLog = function(){
+  const m = document.getElementById('cl-modal'); if(!m) return;
+  const v = window.__clView;
+  const all = (v.list || window.__clToday || []).slice().reverse();
+  const people = [...new Set(all.map(x => x.by).filter(Boolean))];
+  const list = all.filter(x => (v.mode==='all' || x.mode===v.mode) && (v.who==='all' || x.by===v.who));
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const me = String((window.__fbUser&&window.__fbUser.email)||'').toLowerCase();
+  const btn = (k, cur, label, fn) => '<button type="button" onclick="'+fn+'(\''+k+'\')" style="border:1px solid '+(cur===k?'#5b6cf8':'#e1e5f0')+';background:'+(cur===k?'#5b6cf8':'#fff')+';color:'+(cur===k?'#fff':'#5b6378')+';border-radius:8px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">'+label+'</button>';
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;width:640px;max-width:calc(100vw - 32px);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">'
+    + '<div style="padding:16px 20px 10px;border-bottom:1px solid #f0f2f7">'
+    +   '<div style="display:flex;align-items:center;gap:8px"><div style="font-size:15px;font-weight:800;color:#2a2f42">🕘 변경 내역</div>'
+    +   '<input type="date" value="'+v.day+'" onchange="openChangeLog(this.value)" style="margin-left:auto;padding:5px 8px;border:1px solid #e1e5f0;border-radius:8px;font-family:inherit;font-size:12px">'
+    +   '<button type="button" onclick="document.getElementById(\'cl-modal\').remove()" style="border:0;background:#f4f5f9;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px">✕</button></div>'
+    +   '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:10px">'
+    +     btn('all', v.mode, '전체 '+all.length, '__clSetMode') + btn('actual', v.mode, '📋 배치현황', '__clSetMode') + btn('draft', v.mode, '🧪 운영팀 테스트', '__clSetMode')
+    +     '<span style="width:8px"></span>' + btn('all', v.who, '모든 사람', '__clSetWho')
+    +     people.map(p => btn(p, v.who, (String(p).toLowerCase()===me?'나':String(p).split('@')[0]), '__clSetWho')).join('')
+    +   '</div></div>'
+    + '<div style="overflow:auto;padding:6px 20px 16px">'
+    + (list.length ? list.map(x => {
+        const t = new Date(x.atMs||0);
+        const hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+        const who = String(x.by||'').toLowerCase()===me ? '나' : String(x.by||'').split('@')[0];
+        return '<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f4f5f9;font-size:12.5px;align-items:baseline">'
+          + '<span style="flex:0 0 58px;color:#9aa0b3;font-size:11px;font-weight:700">'+hm+'</span>'
+          + '<span style="flex:0 0 auto;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:'+(x.mode==='draft'?'#fff4e6':'#eef0fe')+';color:'+(x.mode==='draft'?'#e07b12':'#5b6cf8')+'">'+(x.mode==='draft'?'테스트':'배치')+'</span>'
+          + '<span style="flex:0 0 86px;color:#5b6378;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(who)+'</span>'
+          + '<span style="flex:1;min-width:0;color:#2a2f42"><b>'+esc(x.empName||'')+'</b> '+esc(x.text||'')+'</span></div>';
+      }).join('') : '<div style="padding:40px 0;text-align:center;color:#aab0be;font-size:13px">이 날짜에 기록된 변경이 없어요</div>')
+    + '</div></div>';
+};
+window.__clSetMode = k => { window.__clView.mode = k; window.__renderChangeLog(); };
+window.__clSetWho = k => { window.__clView.who = k; window.__renderChangeLog(); };
+
 // [DRAFT OUTBOX REPLAY] 운영팀 테스트 미전송 변경 복구
 (function(){
   let n = 0;
@@ -14657,6 +14870,7 @@ window.fbSetShared = function(){
       if(diff.layoutDraft !== undefined){
         try { await window.__backupLayoutDraft(diff.layoutDraft, 'fbSetShared before push'); } catch(_){}
       }
+      const __oldShared = Object.assign({}, window.__lastSharedSnap || {});
       let __ack = false;
       const __wd = setTimeout(async () => {
         if(__ack) return;
@@ -14672,6 +14886,13 @@ window.fbSetShared = function(){
         _clientVersion: window.__APP_VERSION || 10
       }, { merge: true });
       __ack = true; clearTimeout(__wd);
+      try {
+        const _logs = [];
+        if(diff.layoutDraft !== undefined && window.__clFromDraft) _logs.push(...window.__clFromDraft(__oldShared.layoutDraft, diff.layoutDraft));
+        if(diff.sbBase !== undefined && window.__clFromBase) _logs.push(...window.__clFromBase('sbBase', __oldShared.sbBase, diff.sbBase));
+        if(diff.storeBase !== undefined && window.__clFromBase) _logs.push(...window.__clFromBase('storeBase', __oldShared.storeBase, diff.storeBase));
+        if(_logs.length && window.__clWrite) window.__clWrite(_logs);
+      } catch(_){}
       if(diff.layoutDraft !== undefined){
         try {
           const _u = JSON.parse(localStorage.getItem('__draftUnsent_v1')||'null');
