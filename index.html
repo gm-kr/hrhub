@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 179;
+  window.__APP_VERSION = 181;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1502,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v179</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=179;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v181</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=181;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -10210,7 +10210,9 @@ function normalizePTData(raw) {
     if(typeof v === 'object') {
       const name = (v.name||'').toString().trim();
       if(!name) return null;
-      return {name, endDate: (v.endDate||'').toString().trim()};
+      const _o = {name, endDate: (v.endDate||'').toString().trim()};
+      if(v.startDate) _o.startDate = String(v.startDate).trim();
+      return _o;
     }
     return null;
   };
@@ -10301,14 +10303,15 @@ window.lvPTAdd = function(storeKey, groupKey) {
   }
 };
 // 일괄 입력 처리 (입력 텍스트 → 이름 배열 → 데이터 저장)
-window.lvPTBulkAdd = function(storeKey, groupKey, text, endDate){
+window.lvPTBulkAdd = function(storeKey, groupKey, text, endDate, startDate){
   const data = getPTData(storeKey);
   const key = ptValidKey(groupKey);
   if(!Array.isArray(data.groups[key])) data.groups[key] = [];
   // 줄바꿈/쉼표/탭/세미콜론/여러 공백 모두 구분자로 인식
   const names = (text||'').split(/[\n,\t; ]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length) return 0;
-  names.forEach(n => data.groups[key].push({name: n, endDate: endDate||''}));
+  const _sd = (startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate)) ? startDate : ptTodayIso();
+  names.forEach(n => data.groups[key].push({name: n, endDate: endDate||'', startDate: _sd}));
   if(setPTData(storeKey, data) === false) return 0;
   try { if(typeof lvRender === 'function') lvRender(); } catch(e) { console.warn('[PT] render failed:', e); }
   return names.length;
@@ -10366,13 +10369,78 @@ window.lvPTEditBase = function(storeKey, el) {
     onkeydown="if(event.key==='Enter')this.blur()"
     autofocus>`;
 };
+function ptTodayIso(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+window.ptTodayIso = ptTodayIso;
+function ptTenureText(sd){
+  if(!sd || !/^\d{4}-\d{2}-\d{2}/.test(sd)) return '';
+  const a=new Date(sd.slice(0,10)+'T00:00:00'), b=new Date(ptTodayIso()+'T00:00:00');
+  let m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()); if(b.getDate()<a.getDate()) m--;
+  if(m<0) return '입사 전';
+  if(m<1){ const d=Math.round((b-a)/86400000); return d+'일'; }
+  const y=Math.floor(m/12), mm=m%12;
+  return (y?y+'년 ':'')+(mm?mm+'개월':'');
+}
+// 파트타이머 이름 클릭 → 정보 보기 (입사일·근속·퇴사예정일) + 수정 버튼
+window.lvPTInfo = function(storeKey, groupKey, idx){
+  const data = getPTData(storeKey);
+  const key = ptValidKey(groupKey);
+  const item = (data.groups[key]||[])[idx]; if(!item) return;
+  const it = (typeof item === 'object') ? item : {name:String(item)};
+  let m = document.getElementById('pt-info-modal'); if(m) m.remove();
+  m = document.createElement('div'); m.id='pt-info-modal';
+  m.style.cssText='position:fixed;inset:0;z-index:999997;background:rgba(15,18,30,.35);display:flex;align-items:center;justify-content:center;font-family:inherit';
+  const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const ten = ptTenureText(it.startDate);
+  const under1y = it.startDate && (ten.indexOf('년')<0) && ten !== '입사 전';
+  m.innerHTML = `<div style="background:#fff;border-radius:14px;padding:18px 20px;width:320px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="font-size:15px;font-weight:800;color:#1a1d23">👤 ${esc(it.name)}</div>
+    <div style="font-size:11.5px;color:#8188a0;margin-top:2px">${esc((window.lvStoreName?lvStoreName(storeKey):storeKey))} · ${esc(getPTGroupLabel(key))}</div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:72px 1fr;row-gap:8px;font-size:12.5px;align-items:center">
+      <span style="color:#8188a0;font-weight:700">입사일</span>
+      <span>${it.startDate?esc(it.startDate):'<span style="color:#aab0be">미입력</span>'} ${ten?`<span style="margin-left:4px;font-size:11px;font-weight:800;padding:1px 7px;border-radius:8px;background:${under1y?'#fff4e6':'#eef0fe'};color:${under1y?'#e07b12':'#5b6cf8'}">${esc(ten)}${under1y?' · 1년 미만':''}</span>`:''}</span>
+      <span style="color:#8188a0;font-weight:700">퇴사예정</span>
+      <span>${it.endDate?`<span style="color:#e84040;font-weight:700">${esc(it.endDate)}</span>`:'<span style="color:#aab0be">없음</span>'}</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:16px;flex-wrap:wrap">
+      <button type="button" data-a="start" style="flex:1;height:32px;border-radius:8px;border:1px solid #e1e5f0;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📅 입사일</button>
+      <button type="button" data-a="end" style="flex:1;height:32px;border-radius:8px;border:1px solid #e1e5f0;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🚪 퇴사예정</button>
+      <button type="button" data-a="name" style="flex:1;height:32px;border-radius:8px;border:1px solid #e1e5f0;background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✏️ 이름</button>
+      <button type="button" data-a="close" style="width:100%;height:32px;border-radius:8px;border:1px solid #5b6cf8;background:#5b6cf8;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">닫기</button>
+    </div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if(e.target===m) m.remove(); });
+  m.querySelector('[data-a="close"]').onclick = () => m.remove();
+  m.querySelector('[data-a="name"]').onclick = () => { m.remove(); lvPTRename(storeKey, key, idx); };
+  m.querySelector('[data-a="end"]').onclick = () => { m.remove(); lvPTSetEndDate(storeKey, key, idx); };
+  m.querySelector('[data-a="start"]').onclick = () => {
+    const cur = it.startDate || '';
+    const box = m.querySelector('div');
+    box.innerHTML = `<div style="font-size:15px;font-weight:800;color:#1a1d23">📅 ${esc(it.name)} 입사일</div>
+      <input type="date" id="pt-start-input" value="${esc(cur)}" style="width:100%;margin-top:12px;padding:10px;border:1px solid #eaecf2;border-radius:8px;font-family:inherit;font-size:14px;box-sizing:border-box">
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" id="pt-start-cancel" style="flex:1;height:34px;border-radius:8px;border:1px solid #eaecf2;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">취소</button>
+        <button type="button" id="pt-start-save" style="flex:1.4;height:34px;border-radius:8px;border:1px solid #5b6cf8;background:#5b6cf8;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">저장</button>
+      </div>`;
+    box.querySelector('#pt-start-cancel').onclick = () => m.remove();
+    box.querySelector('#pt-start-save').onclick = () => {
+      const v = box.querySelector('#pt-start-input').value || '';
+      const d2 = getPTData(storeKey); const arr = d2.groups[key] || [];
+      const cur2 = arr[idx];
+      if(cur2 && typeof cur2 === 'object'){ if(v) cur2.startDate = v; else delete cur2.startDate; }
+      else if(cur2){ arr[idx] = {name:String(cur2), endDate:'', startDate:v}; }
+      setPTData(storeKey, d2);
+      m.remove();
+      if(typeof lvToast==='function') lvToast('💾 '+it.name+' 입사일 '+(v||'삭제'));
+    };
+  };
+};
 function buildPTGroupRow(storeKey, groupKey, label, names) {
   // names 각 항목은 객체 {name, endDate} 또는 문자열일 수 있음
   const chips = names.map((item,i) => {
     const n = (item && typeof item === 'object') ? item.name : item;
     const ed = (item && typeof item === 'object') ? (item.endDate||'') : '';
     const edDisplay = ed ? `<span class="pt-end-date" title="퇴사예정 ${ed} (자동 삭제)" onclick="event.stopPropagation();lvPTSetEndDate('${storeKey}','${groupKey}',${i})" style="font-size:9px;color:#e84040;margin-left:3px;cursor:pointer">📅${ed.slice(5)}</span>` : `<span class="pt-end-date-add" onclick="event.stopPropagation();lvPTSetEndDate('${storeKey}','${groupKey}',${i})" style="font-size:9px;color:#aab0be;margin-left:3px;cursor:pointer;opacity:.4" title="퇴사예정일 설정">📅</span>`;
-    return `<span class="pt-chip" onclick="lvPTRename('${storeKey}','${groupKey}',${i})" title="클릭하여 이름 변경">
+    return `<span class="pt-chip" onclick="lvPTInfo('${storeKey}','${groupKey}',${i})" title="클릭하여 입사일·근속 보기 / 수정">
       ${n||''}${edDisplay}<span class="pt-del" onclick="event.stopPropagation();lvPTDel('${storeKey}','${groupKey}',${i})" title="삭제">✕</span>
     </span>`;
   }).join('');
@@ -15852,6 +15920,36 @@ const COL_PT = 'partTimers';
 let _fbPTTimer = null;
 
 window.__ptInitLoaded = false;
+// [CHANGE LOG] 파트타이머 변경 → 변경 내역 기록 (추가·삭제·그룹 이동·입사일·퇴사예정일)
+window.__ptSrvStr = window.__ptSrvStr || null;
+function __ptLogDiff(oldStr, newStr){
+  let O={}, N={};
+  try { O = JSON.parse(oldStr||'{}')||{}; } catch(_){}
+  try { N = JSON.parse(newStr||'{}')||{}; } catch(_){}
+  const today = (window.ptTodayIso ? window.ptTodayIso() : new Date().toISOString().slice(0,10));
+  const glabel = k => ({weekday:'평일', weekend:'주말', friSatSun:'금토일'})[k] || (String(k).indexOf('days:')===0 ? String(k).slice(5) : k);
+  const sname = k => (window.lvStoreName ? window.lvStoreName(k) : k);
+  const flat = st => { const m = {}; const g = (st && st.groups) || {}; Object.keys(g).forEach(gk => (g[gk]||[]).forEach(it => { const n = (typeof it==='string') ? it : (it&&it.name); if(!n) return; m[n] = { g: gk, end: (it&&it.endDate)||'', start: (it&&it.startDate)||'' }; })); return m; };
+  const out = [];
+  new Set([...Object.keys(O), ...Object.keys(N)]).forEach(sk => {
+    const a = flat(O[sk]), b = flat(N[sk]);
+    Object.keys(b).forEach(n => {
+      if(!a[n]){ out.push({ mode:'actual', empId:'', empName:n, text:'파트타이머 추가 · '+sname(sk)+' '+glabel(b[n].g)+(b[n].start?(' · 입사 '+b[n].start):'') }); return; }
+      const parts = [];
+      if(a[n].g !== b[n].g) parts.push('근무 '+glabel(a[n].g)+' → '+glabel(b[n].g));
+      if(a[n].start !== b[n].start) parts.push('입사일 '+(a[n].start||'없음')+' → '+(b[n].start||'없음'));
+      if(a[n].end !== b[n].end) parts.push('퇴사예정 '+(a[n].end||'없음')+' → '+(b[n].end||'없음'));
+      if(parts.length) out.push({ mode:'actual', empId:'', empName:n, text:'파트타이머 · '+sname(sk)+' · '+parts.join(' · ') });
+    });
+    Object.keys(a).forEach(n => {
+      if(b[n]) return;
+      const auto = a[n].end && a[n].end < today;
+      out.push({ mode:'actual', empId:'', empName:n, text:'파트타이머 '+(auto?('퇴사일('+a[n].end+') 도래 → 자동 삭제'):'삭제')+' · '+sname(sk) });
+    });
+  });
+  return out;
+}
+window.__ptLogDiff = __ptLogDiff;
 window.fbSetPT = async function(data) {
   if(window.__MOBILE_READ_ONLY || window.__isStandalone || window.__isIOSStandaloneEarly){
     console.warn('[MOBILE READ-ONLY] fbSetPT 차단');
@@ -15872,8 +15970,13 @@ window.fbSetPT = async function(data) {
   clearTimeout(_fbPTTimer);
   _fbPTTimer = setTimeout(async () => {
     try {
-      await window.__fbSetDoc(window.__fbDoc(window.__fbDb, COL_PT, 'ptData'), { data: JSON.stringify(data), _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 10 });
+      const __newStr = JSON.stringify(data);
+      const __oldStr = window.__ptSrvStr;
+      await window.__fbSetDoc(window.__fbDoc(window.__fbDb, COL_PT, 'ptData'), { data: __newStr, _updatedAt: window.__fbServerTimestamp(), _updatedBy: window.__fbUser.email, _clientVersion: window.__APP_VERSION || 10 });
       console.log('[PT] Firebase 저장 완료 by', window.__fbUser.email);
+      try { if(__oldStr && window.__clWrite){ const _l = __ptLogDiff(__oldStr, __newStr); if(_l.length) window.__clWrite(_l); } } catch(_){}
+      window.__ptSrvStr = __newStr;
+      try { window.__setSync && window.__setSync('actual', 'ok', window.__fbUser.email, Date.now()); } catch(_){}
     } catch(e) { console.warn('[FB] 파트타이머 저장 오류:', e.code, e.message); }
   }, 300);
 };
@@ -15895,6 +15998,7 @@ window.fbSetPT = async function(data) {
       if (!snap.exists()) return;
       const d = snap.data();
       if (!d || !d.data) return;
+      try { if(!snap.metadata.hasPendingWrites) window.__ptSrvStr = d.data; } catch(_){}
       try {
         if (typeof window.applyPTStoreJson === 'function' && window.applyPTStoreJson(d.data, 'snapshot')) {
           console.log('[PT] 원격 → 로컬 갱신 완료');
@@ -16137,6 +16241,7 @@ window.fbSetPT = async function(data) {
     <div class="ptbm-title">👥 파트타이머 일괄 추가</div>
     <p class="ptbm-desc">이름을 줄바꿈/쉼표/탭으로 구분해서 한번에 입력하세요.<br>엑셀에서 복사 → 붙여넣기 OK</p>
     <textarea id="pt-bulk-input" class="ptbm-textarea" placeholder="홍길동&#10;김민지, 박준영&#10;이서연"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:700;color:#5b6378">📅 입사일 <input type="date" id="pt-bulk-start" style="flex:1;padding:7px 9px;border:1px solid #eaecf2;border-radius:8px;font-family:inherit;font-size:13px"></label>
     <div class="ptbm-btns">
       <button class="ptbm-btn" onclick="lvPTCloseBulk()">취소</button>
       <button class="ptbm-btn primary" onclick="lvPTConfirmBulk()">＋ 추가</button>
@@ -16151,6 +16256,7 @@ window.lvPTOpenBulk = function(storeKey, groupKey){
   if(!m) return;
   const ta = document.getElementById('pt-bulk-input'); if(ta) ta.value = '';
   const ed = document.getElementById('pt-bulk-end');   if(ed) ed.value = '';
+  const sd = document.getElementById('pt-bulk-start'); if(sd) sd.value = (window.ptTodayIso ? window.ptTodayIso() : '');
   m.classList.add('show');
   setTimeout(()=>ta&&ta.focus(), 50);
 };
@@ -16163,7 +16269,9 @@ window.lvPTConfirmBulk = function(){
   const ctx = window.__ptBulkCtx;
   if(!ctx) { lvPTCloseBulk(); return; }
   const text = (document.getElementById('pt-bulk-input')||{}).value || '';
-  const added = window.lvPTBulkAdd(ctx.storeKey, ctx.groupKey, text, '');
+  const _sd = (document.getElementById('pt-bulk-start')||{}).value || '';
+  if(!_sd){ alert('입사일을 입력해주세요'); return; }
+  const added = window.lvPTBulkAdd(ctx.storeKey, ctx.groupKey, text, '', _sd);
   lvPTCloseBulk();
   if(typeof lvToast==='function'){
     if(added > 0) lvToast(`💾 파트타이머 ${added}명 추가`);
@@ -16238,6 +16346,7 @@ window.lvPTOpenStoreBulk = function(){
         <div style="display:grid;grid-template-columns:1.4fr 0.8fr 2fr 28px;gap:6px;font-size:10.5px;font-weight:700;color:#7a8299;padding:0 2px 4px">
           <div>매장 *</div><div>그룹</div><div>이름 (쉼표/공백 구분)</div><div></div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:12px;font-weight:700;color:#5b6378">📅 입사일 (전체 공통) <input type="date" id="ptbs-start" style="padding:6px 9px;border:1px solid #eaecf2;border-radius:6px;font-family:inherit;font-size:12.5px"></label>
         <div id="ptbs-rows" style="overflow-y:auto;max-height:380px;padding:2px"></div>
         <button onclick="lvPTAddRow()" style="margin-top:6px;height:32px;border-radius:6px;border:1px dashed #5b6cf8;background:#f5f7ff;color:#5b6cf8;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer">＋ 행 추가</button>
         <div style="display:flex;gap:8px;margin-top:14px">
@@ -16255,6 +16364,7 @@ window.lvPTOpenStoreBulk = function(){
     rowsEl.innerHTML = _ptbsBuildRow() + _ptbsBuildRow();
   }
   m.style.display = 'flex';
+  try { const _s=document.getElementById('ptbs-start'); if(_s) _s.value = (window.ptTodayIso ? window.ptTodayIso() : ''); } catch(_){}
 };
 window.lvPTAddRow = function(){
   const rowsEl = document.getElementById('ptbs-rows');
@@ -16289,7 +16399,7 @@ window.lvPTConfirmStoreBulk = function(){
     }
     let added = 0;
     try {
-      added = window.lvPTBulkAdd(storeKey, groupKey, text, '');
+      added = window.lvPTBulkAdd(storeKey, groupKey, text, '', (document.getElementById('ptbs-start')||{}).value || '');
     } catch(e) {
       console.warn('[PT BULK] 행 등록 실패:', e);
       skipped.push('등록 실패');
