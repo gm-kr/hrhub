@@ -18,7 +18,7 @@
 <script>
 // [MOBILE VIEW] 모바일 감지 시 데스크톱 뷰(1400px)를 축소해서 표시 - UI 손대지 않고 안전
 (function(){
-  window.__APP_VERSION = 187;
+  window.__APP_VERSION = 190;
   var isMobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
   window.__isMobile = isMobile;
   // [FIX] 읽기 전용은 실제 모바일 기기(UA)만. 데스크톱 창을 좁게 띄웠다고 편집이 막히면 안 됨
@@ -1502,7 +1502,7 @@ tr.inv-hired-row { border-left: 4px solid #43a047; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body><nav class="nav">
-  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v187</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=187;</script></div>
+  <div class="logo"><span class="logo-dot"></span>HR Hub <span id="app-version" onclick="try{var t=window.__bootT||{};alert('로딩 시간 (페이지 연 순간부터)\n라이브러리 준비: '+((t.sdk||0)/1000).toFixed(1)+'초\n로그인 확인: '+((t.authOk||0)/1000).toFixed(1)+'초\n데이터 받기: '+((t.reads||0)/1000).toFixed(1)+'초 ('+(t.tries||0)+'회 시도)\n화면 표시: '+((t.fresh||0)/1000).toFixed(1)+'초')}catch(_){}" title="현재 배포 버전 — 새로고침 후 이 숫자가 올라가면 최신 반영됨 · 누르면 로딩 시간 표시" style="cursor:pointer;font-size:10px;color:#9aa0b3;font-weight:600;margin-left:6px;background:#f0f2f5;padding:2px 7px;border-radius:8px;letter-spacing:.3px;vertical-align:middle">v190</span><script>window.__HR_CLEAN_BUILD=true;window.__APP_VERSION=190;</script></div>
   <div class="nsep"></div>
   <div class="tabs">
     <button class="tab on" data-tab="hr" onclick="switchMain('hr')">👤 직원 관리</button>
@@ -17324,5 +17324,147 @@ document.addEventListener('keydown', e => {
 });
 </script>
 
+<script>
+// ═════════ [AUTO REFRESH] 자리 비운 사이에만 저절로 새로고침 ═════════
+//  조건(모두 충족): 5분 이상 조작 없음 · 입력/팝업 사용 중 아님 · 못 보낸 변경 없음 · 마지막 새로고침 1시간 이상
+//  새 버전이 올라오면 1시간 조건 없이 (조작 없음 1분 이상일 때) 새로고침
+(function(){
+  if(window.__isStandalone || window.__isIOSStandaloneEarly || window.__MOBILE_READ_ONLY) return; // 모바일은 기존 30분 규칙 사용
+  if(location.protocol === 'file:' || location.hostname === 'localhost') return;
+  const IDLE_MS = 5*60*1000, MIN_GAP_MS = 60*60*1000;
+  const loadedAt = Date.now();
+  let lastAct = Date.now(), newVersion = false;
+  ['mousemove','mousedown','keydown','wheel','touchstart','pointerdown','scroll'].forEach(ev =>
+    window.addEventListener(ev, () => { lastAct = Date.now(); }, { capture:true, passive:true }));
+  // 이전 자동 새로고침 직전 화면(탭·운영팀 테스트) 복원
+  try {
+    const st = JSON.parse(sessionStorage.getItem('__autoReloadState')||'null');
+    if(st){
+      sessionStorage.removeItem('__autoReloadState');
+      if(st.tab) window.__pendingMainTab = st.tab;
+      if(st.mode === 'draft'){
+        let n = 0; const t = setInterval(() => {
+          n++;
+          if(window.__freshServerLoaded && typeof window.lvSetMode === 'function'){
+            clearInterval(t);
+            try { if(sessionStorage.getItem('__lvDraftAuthed') === '1') setTimeout(() => window.lvSetMode('draft'), 800); } catch(_){}
+          } else if(n > 120) clearInterval(t);
+        }, 500);
+      }
+      if(st.y) setTimeout(() => { try { const sc = document.getElementById('lv-scroll'); if(sc) sc.scrollTop = st.y; } catch(_){} }, 3000);
+    }
+  } catch(_){}
+  function busy(){
+    try {
+      const a = document.activeElement;
+      if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return '입력 중';
+      // 떠 있는 팝업(모달) 확인
+      const modalSel = ['#cl-modal','#pt-info-modal','#pt-days-modal','#intern-alert-modal','#lv-mgr-seat-modal.open','#pt-bulk-modal.show','#pii-migrate-bar'];
+      if(modalSel.some(sel => { const el = document.querySelector(sel); return el && el.offsetParent !== null; })) return '팝업';
+      const flexModals = ['pt-bulk-store-modal','intern-extend-modal','intern-result-modal','pt-end-modal','status-date-modal','add-emp-modal'];
+      if(flexModals.some(id => { const el = document.getElementById(id); if(!el) return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && (el.classList.contains('open') || el.classList.contains('show') || cs.display === 'flex'); })) return '팝업';
+      if(document.querySelector('.lv-ctx-menu.open')) return '메뉴';
+      // 못 보낸 변경
+      if(window.__obPendingCount && window.__obPendingCount() > 0) return '미전송 변경';
+      if(localStorage.getItem('__draftUnsent_v1') || localStorage.getItem('__memoUnsent_v1')) return '미전송 변경';
+      if(window.__layoutDraftDirty === true) return '미전송 변경';
+      if(typeof window.lvIsDragBusy === 'function' && window.lvIsDragBusy()) return '드래그';
+      if(!window.__freshServerLoaded) return '로딩 중';
+    } catch(_){ return '확인 실패'; }
+    return '';
+  }
+  function doReload(why){
+    try {
+      const mode = (document.getElementById('lv-mode-draft') && document.getElementById('lv-mode-draft').classList.contains('active')) ? 'draft' : 'actual';
+      const sc = document.getElementById('lv-scroll');
+      sessionStorage.setItem('__autoReloadState', JSON.stringify({ tab: window.__currentTab || '', mode, y: sc ? sc.scrollTop : 0 }));
+      sessionStorage.setItem('__lastAutoReload', String(Date.now()));
+    } catch(_){}
+    console.log('[AUTO REFRESH]', why);
+    const u = new URL(location.href); u.searchParams.set('ts', String(Date.now()));
+    location.replace(u.toString());
+  }
+  // 새 버전 확인 (10분마다, 파일 수정시각만 가볍게)
+  setInterval(async () => {
+    try {
+      const r = await fetch(location.pathname + '?vc=' + Date.now(), { method:'HEAD', cache:'no-store' });
+      const lm = Date.parse(r.headers.get('last-modified') || ''), mine = Date.parse(document.lastModified || '');
+      if(lm && mine && lm - mine > 5000) newVersion = true;
+    } catch(_){}
+  }, 10*60*1000);
+  setInterval(() => {
+    const idle = Date.now() - lastAct;
+    const sinceLoad = Date.now() - loadedAt;
+    if(newVersion && idle >= 60*1000 && !busy()) return doReload('새 버전');
+    if(idle >= IDLE_MS && sinceLoad >= MIN_GAP_MS && !busy()) return doReload('정기 새로고침');
+  }, 30*1000);
+})();
+</script>
+<script>
+// ═════════ [UNSAVED ALERT] 변경이 서버에 반영 안 되고 있으면 눈에 띄게 알림 ═════════
+//  직원 변경·운영팀 테스트·메모 중 10초 넘게 서버 확인이 안 된 게 있으면 빨간 알림 고정 표시 → 해결되면 '✅ 모두 저장됨'
+(function(){
+  if(window.__isStandalone || window.__isIOSStandaloneEarly || window.__MOBILE_READ_ONLY) return;
+  let shownSince = 0, wasShown = false;
+  function pending(){
+    const now = Date.now(); let n = 0, oldest = now;
+    try {
+      const ob = JSON.parse(localStorage.getItem('__hrOutbox_v1')||'{}');
+      Object.keys(ob).forEach(id => { n++; oldest = Math.min(oldest, ob[id].t || now); });
+    } catch(_){}
+    try { const du = JSON.parse(localStorage.getItem('__draftUnsent_v1')||'null'); if(du && window.__layoutDraftDirty === true){ n++; oldest = Math.min(oldest, du.t || now); } } catch(_){}
+    try { const mu = JSON.parse(localStorage.getItem('__memoUnsent_v1')||'null'); if(mu){ n++; oldest = Math.min(oldest, mu.t || now); } } catch(_){}
+    return { n, age: now - oldest };
+  }
+  function bar(){
+    let b = document.getElementById('unsaved-bar');
+    if(!b){
+      b = document.createElement('div'); b.id = 'unsaved-bar';
+      b.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:2147483100;display:none;align-items:center;gap:10px;background:#fff5f5;border:1.5px solid #f3b4b4;color:#c62828;border-radius:12px;padding:9px 12px 9px 14px;box-shadow:0 10px 30px rgba(200,40,40,.18);font-size:12.5px;font-weight:700;font-family:inherit;max-width:92vw';
+      b.innerHTML = '<span id="unsaved-text"></span>'
+        + '<button type="button" id="unsaved-retry" title="다시 연결해서 보내고, 그래도 안 되면 자동으로 새로고침해요 (변경은 이 기기에 보관돼 있어 사라지지 않아요)" style="border:0;background:#c62828;color:#fff;border-radius:8px;padding:5px 12px;font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit">다시 보내기</button>';
+      document.body.appendChild(b);
+      // 버튼 하나: 다시 연결해서 보내기 → 8초 안에 해결 안 되면 자동 새로고침(보관된 변경은 새로고침 후 다시 올라감)
+      b.querySelector('#unsaved-retry').onclick = async () => {
+        const btn = b.querySelector('#unsaved-retry'); btn.disabled = true; btn.textContent = '보내는 중…';
+        try { if(window.__fsKick) await window.__fsKick('manual retry'); } catch(_){}
+        try { window.__obFlushAll && window.__obFlushAll(); } catch(_){}
+        try { if(window.__layoutDraftDirty === true || localStorage.getItem('__memoUnsent_v1')) window.fbSetShared && window.fbSetShared(); } catch(_){}
+        setTimeout(() => {
+          if(pending().n > 0){
+            btn.textContent = '새로고침 중…';
+            try { sessionStorage.setItem('__autoReloadState', JSON.stringify({ tab: window.__currentTab || '', mode: (document.getElementById('lv-mode-draft') && document.getElementById('lv-mode-draft').classList.contains('active')) ? 'draft' : 'actual' })); } catch(_){}
+            location.reload();
+          } else { btn.disabled = false; btn.textContent = '다시 보내기'; }
+        }, 8000);
+      };
+    }
+    return b;
+  }
+  setInterval(() => {
+    try {
+      if(!window.__freshServerLoaded) return;
+      const p = pending();
+      const b = bar();
+      if(p.n > 0 && p.age > 10000){
+        const sec = Math.round(p.age/1000);
+        b.querySelector('#unsaved-text').textContent = '⚠️ 서버에 반영 안 된 변경 '+p.n+'건 ('+(sec>=60?Math.round(sec/60)+'분':sec+'초')+' 째) · 다른 사람에게 아직 안 보여요';
+        b.style.display = 'flex';
+        if(!wasShown){ wasShown = true; shownSince = Date.now(); try { window.__setSync && window.__setSync('actual','err'); window.__setSync && window.__setSync('draft','err'); } catch(_){} }
+      } else if(wasShown && p.n === 0){
+        wasShown = false;
+        b.querySelector('#unsaved-text').textContent = '✅ 모두 저장됨 · 다른 사람에게도 반영됐어요';
+        b.style.background = '#f0faf4'; b.style.borderColor = '#a7dfbf'; b.style.color = '#1f8a57';
+        b.querySelector('#unsaved-retry').style.display = 'none';
+        setTimeout(() => {
+          b.style.display = 'none';
+          b.style.background = '#fff5f5'; b.style.borderColor = '#f3b4b4'; b.style.color = '#c62828';
+          const _rb = b.querySelector('#unsaved-retry'); _rb.style.display = ''; _rb.disabled = false; _rb.textContent = '다시 보내기';
+        }, 3000);
+      }
+    } catch(_){}
+  }, 3000);
+})();
+</script>
 </body>
 </html>
